@@ -1,13 +1,8 @@
-package main
+package jwks
 
 import (
 	"crypto/rsa"
-	"encoding/base64"
-	"encoding/binary"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"math/big"
 )
 
 const (
@@ -18,68 +13,43 @@ const (
 
 var (
 
+	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
+	ErrKIDNotFount = errors.New("the given key ID was not found in the JWKS")
+
 	// ErrNotExpectedKeyType indicates that the given public key was not of the expected type.
-	ErrNotExpectedKeyType = errors.New("the given public key was not of the expected type")
+	ErrNotExpectedKeyType = errors.New("the public key was not of the expected type")
 )
 
-// TODO
-type keystore struct {
-	Keys []rawKey
-}
-
-// TODO
-type rawKey struct {
+// JSONKey represents a raw key inside a JWKS.
+type JSONKey struct {
 	Exponent string `json:"e"`
 	KeyID    string `json:"kid"`
 	KeyType  string `json:"kty"`
 	Modulus  string `json:"n"`
 }
 
-func main() {
-	data, err := ioutil.ReadFile("key.json")
-	if err != nil {
-		panic(err.Error())
-	}
+// Keystore represents a JWKS.
+type Keystore map[string]JSONKey
 
-	var key rawKey
-	if err = json.Unmarshal(data, &key); err != nil {
-		panic(err.Error())
-	}
-
-	parseRawRSA(key)
+// rawKeystore represents a JWKS in JSON format.
+type rawKeystore struct {
+	Keys []JSONKey `json:"keys"`
 }
 
-// TODO
-func parseRawRSA(raw rawKey) (publicKey *rsa.PublicKey, err error) {
+// RSA retrieves an RSA public key from the JWKS.
+func (k Keystore) RSA(kid string) (publicKey *rsa.PublicKey, err error) {
 
-	// TODO Check for empty strings?
-
-	// Decode the exponent from Base64.
-	//
-	// According to RFC 7518, this is a Base64 URL unsigned integer.
-	// https://tools.ietf.org/html/rfc7518#section-6.3
-	var exponent []byte
-	if exponent, err = base64.RawURLEncoding.DecodeString(raw.Exponent); err != nil {
-		return nil, err
+	// Get the JSONKey from the JWKS.
+	key, ok := k[kid]
+	if !ok {
+		return nil, ErrKIDNotFount
 	}
 
-	// Decode the modulus from Base64.
-	var modulus []byte
-	if modulus, err = base64.RawURLEncoding.DecodeString(raw.Modulus); err != nil {
-		return nil, err
+	// Confirm the key is an RSA key.
+	if key.KeyType != KeyTypeRSA {
+		return nil, ErrNotExpectedKeyType
 	}
 
-	// Create the RSA public key.
-	publicKey = &rsa.PublicKey{}
-
-	// Turn the exponent into an integer.
-	//
-	// According to RFC 7517, these numbers are in big-endian format.
-	// https://tools.ietf.org/html/rfc7517#appendix-A.1
-	publicKey.E = int(binary.BigEndian.Uint16(exponent)) // TODO Confirm 16 bits.
-
-	// Turn the modulus into a *big.Int.
-	publicKey.N = big.NewInt(0).SetBytes(modulus)
-
-	return publicKey, nil
+	// Transform the key from JSON to an RSA key.
+	return key.RSA()
 }
