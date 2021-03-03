@@ -14,7 +14,7 @@ const (
 var (
 
 	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
-	ErrKIDNotFount = errors.New("the given key ID was not found in the JWKS")
+	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKS")
 
 	// ErrNotExpectedKeyType indicates that the given public key was not of the expected type.
 	ErrNotExpectedKeyType = errors.New("the public key was not of the expected type")
@@ -42,7 +42,7 @@ func (k Keystore) RSA(kid string) (publicKey *rsa.PublicKey, err error) {
 	// Get the JSONKey from the JWKS.
 	key, ok := k[kid]
 	if !ok {
-		return nil, ErrKIDNotFount
+		return nil, ErrKIDNotFound
 	}
 
 	// Confirm the key is an RSA key.
