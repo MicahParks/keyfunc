@@ -3,7 +3,6 @@ package jwks
 import (
 	"crypto/rsa"
 	"encoding/base64"
-	"encoding/binary"
 	"math/big"
 )
 
@@ -32,7 +31,7 @@ func (j JSONKey) RSA() (publicKey *rsa.PublicKey, err error) {
 	//
 	// According to RFC 7517, these numbers are in big-endian format.
 	// https://tools.ietf.org/html/rfc7517#appendix-A.1
-	publicKey.E = int(binary.BigEndian.Uint16(exponent)) // TODO Confirm 16 bits.
+	publicKey.E = int(big.NewInt(0).SetBytes(exponent).Uint64())
 
 	// Turn the modulus into a *big.Int.
 	publicKey.N = big.NewInt(0).SetBytes(modulus)
