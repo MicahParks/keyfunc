@@ -7,7 +7,12 @@ import (
 )
 
 // RSA parses a JSONKey and turns it into an RSA public key.
-func (j JSONKey) RSA() (publicKey *rsa.PublicKey, err error) {
+func (j *JSONKey) RSA() (publicKey *rsa.PublicKey, err error) {
+
+	// Check if the key has already been computed.
+	if j.precomputed != nil {
+		return j.precomputed.(*rsa.PublicKey), nil
+	}
 
 	// Decode the exponent from Base64.
 	//
@@ -35,6 +40,9 @@ func (j JSONKey) RSA() (publicKey *rsa.PublicKey, err error) {
 
 	// Turn the modulus into a *big.Int.
 	publicKey.N = big.NewInt(0).SetBytes(modulus)
+
+	// Keep the public key so it won't have to be computed every time.
+	j.precomputed = publicKey
 
 	return publicKey, nil
 }

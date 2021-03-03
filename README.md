@@ -2,9 +2,17 @@
 
 # jwks
 
-Don't get too excited. This repository is meant to be just enough to grab some RSA public keys from Keycloak's JWKS for
-verifying JWTs. RSA keys only.
+The scope of this package is to implement just enough of the JWKS specification to read a JWKS via HTTP and validate
+JWTs via compatible functions. Validating is done through
+[github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go). This package helps by exporting a
+[`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc).
+
+Currently, this package only supports JWTs signed with the `alg` of `RS256` (for Keycloak).
+
+## Example
+
+TODO
 
 ## TODO
 
-- [ ] Once a key has been decoded, keep a reference and return that instead, so it's not decoded on every call.
+- [ ] Make an example in the README.md.
