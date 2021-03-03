@@ -7,7 +7,7 @@ import (
 )
 
 // Get loads the JWKS at the given URL.
-func Get(client *http.Client, u string) (keystore *rawKeystore, err error) {
+func Get(client *http.Client, u string) (keystore Keystore, err error) {
 
 	// Use the default HTTP client if none was given.
 	if client == nil {
@@ -28,8 +28,15 @@ func Get(client *http.Client, u string) (keystore *rawKeystore, err error) {
 	}
 
 	// Turn the raw JWKS into the correct Go type.
-	if err = json.Unmarshal(keystoreBytes, keystore); err != nil {
+	var rawKS rawKeystore
+	if err = json.Unmarshal(keystoreBytes, &rawKS); err != nil {
 		return nil, err
+	}
+
+	// Iterate through the keys in the raw keystore. Add them to the JWKS.
+	keystore = make(map[string]JSONKey, len(rawKS.Keys))
+	for _, key := range keystore {
+		keystore[key.KeyID] = key
 	}
 
 	return keystore, nil
