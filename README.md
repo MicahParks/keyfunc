@@ -16,3 +16,4 @@ TODO
 ## TODO
 
 - [ ] Make an example in the README.md.
+- [ ] Add other signature algorithms. It appears Keycloak supports this with the `Tokens` tab.
