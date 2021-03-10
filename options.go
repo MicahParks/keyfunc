@@ -12,7 +12,7 @@ type Options struct {
 	Client *http.Client
 
 	// RefreshInterval is the duration to refresh the JWKS in the background via a new HTTP request. If this is not nil,
-	// then a background refresh will be performed in a seperate goroutine until the JWKS method EndBackground is
+	// then a background refresh will be performed in a separate goroutine until the JWKS method EndBackground is
 	// called.
 	RefreshInterval *time.Duration
 
