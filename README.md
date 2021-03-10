@@ -60,7 +60,7 @@ if jwksURL == "" {
 }
 ```
 
-#### Step 2: Get the JWKS via HTTP
+### Step 2: Get the JWKS via HTTP
 
 ```go
 // Create the JWKS from the resource at the given URL.
@@ -72,7 +72,7 @@ if err != nil {
 
 The `keyfunc.JWKS` can also be created manually from JSON by the `keyfunc.New()` function.
 
-#### Step 3: Use the `keyfunc.JWKS`'s `KeyFunc()` method as the `jwt.KeyFunc` when parsing tokens
+### Step 3: Use the `keyfunc.JWKS`'s `KeyFunc()` method as the `jwt.KeyFunc` when parsing tokens
 
 ```go
 // Parse the JWT.
