@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/MicahParks/jwks)](https://goreportcard.com/report/github.com/MicahParks/jwks) [![Go Reference](https://pkg.go.dev/badge/github.com/MicahParks/jwks.svg)](https://pkg.go.dev/github.com/MicahParks/jwks)
+[![Go Report Card](https://goreportcard.com/badge/github.com/MicahParks/keyfunc)](https://goreportcard.com/report/github.com/MicahParks/keyfunc) [![Go Reference](https://pkg.go.dev/badge/github.com/MicahParks/keyfunc.svg)](https://pkg.go.dev/github.com/MicahParks/keyfunc)
 
 # keyfunc
 
@@ -11,6 +11,9 @@ It's common for an identity provider, such as [Keycloak](https://www.keycloak.or
 endpoint. This package has the ability to consume that JWKS and produce a
 [`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc). It is important that a JWKS
 endpoint is using HTTPS to ensure the keys are from the correct trusted source.
+
+There are no dependencies other than [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) for this
+repository.
 
 ## Supported Algorithms
 
@@ -40,6 +43,10 @@ If there are cryptographic algorithms, curve types, or something else already st
 this Go package, please open an issue or pull request.
 
 ## Basic usage
+
+```go
+import "github.com/MicahParks/keyfunc"
+```
 
 ### Step 1: Acquire the JWKS URL
 
@@ -79,7 +86,13 @@ The `KeyFunc()` method will automatically select the key with the matching `kid`
 as the correct Go type to its caller.
 
 ## Test coverage
-TODO
+
+Test coverage is currently at `81.6%`.
+
+This is with current and expired JWTs, but the hard coded ones are now expired.
+Using non-expired JWTs would require signing JWTs during testing and would allow for additional error checking. But a
+bit overkill since I've already done that error checking when the JWTs were valid with no changes. A PR for this that
+does not introduce any dependencies is welcome though.
 
 ## Additional features
 
