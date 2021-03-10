@@ -97,7 +97,7 @@ func TestJWKS(t *testing.T) {
 				//
 				// Don't check for general errors. Unfortunately, an error occurs when a token is expired. All hard
 				// coded tokens are expired.
-				if _, err := jwt.Parse(tc.token, jwks.KeyFunc()); err != nil {
+				if _, err := jwt.Parse(tc.token, jwks.KeyFunc); err != nil {
 					if errors.Is(err, jwt.ErrInvalidKeyType) {
 						t.Errorf("Invaild key type selected.\nError: %s", err.Error())
 						t.FailNow()

@@ -44,11 +44,16 @@ this Go package, please open an issue or pull request.
 
 ## Basic usage
 
+Please also see the `examples` directory.
+
 ```go
 import "github.com/MicahParks/keyfunc"
 ```
 
-### Step 1: Acquire the JWKS URL
+### Step 1: Acquire the JWKS URL (optional)
+
+A JWKS URL is not required, one can be created directly from JSON with the
+[`keyfunc.New()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#New) function.
 
 ```go
 // Get the JWKS URL from an environment variable.
@@ -70,20 +75,21 @@ if err != nil {
 }
 ```
 
-The `keyfunc.JWKS` can also be created manually from JSON by the `keyfunc.New()` function.
+Addition options can be passed to the [`keyfunc.Get()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function
+via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options).
 
-### Step 3: Use the `keyfunc.JWKS`'s `KeyFunc()` method as the `jwt.KeyFunc` when parsing tokens
+### Step 3: Use the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's [`JWKS.KeyFunc()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method as the `jwt.KeyFunc` when parsing tokens
 
 ```go
 // Parse the JWT.
-token, err := jwt.Parse(jwtB64, jwks.KeyFunc())
+token, err := jwt.Parse(jwtB64, jwks.KeyFunc)
 if err != nil {
 	return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
-The `KeyFunc()` method will automatically select the key with the matching `kid` (if present) and return its public key
-as the correct Go type to its caller.
+The [`JWKS.KeyFunc()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select
+the key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
 ## Test coverage
 
@@ -96,14 +102,16 @@ does not introduce any dependencies is welcome though.
 
 ## Additional features
 
-* A background refresh of the JWKS keys can be performed. This is possible by passing `keyfunc.Options` via a variadic
-  argument to the `keyfunc.Get()` function.
+* A background refresh of the JWKS keys can be performed. This is possible by passing
+  [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
+  [`keyfunc.Get()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
     * A custom background refresh interval can be specified.
     * A custom background refresh request context timeout can be specified. Defaults to one minute.
     * A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
       silently.
-* A custom HTTP client can be used. This is possible by passing `keyfunc.Options` via a variadic argument to the
-  `keyfunc.Get()` function.
+* A custom HTTP client can be used. This is possible by passing
+  [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
+  [`keyfunc.Get()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
 
 ## TODO
 
