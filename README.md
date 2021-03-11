@@ -18,7 +18,7 @@ repository.
 ## Supported Algorithms
 
 It is recommended to only use this package for asymmetric signing keys, If you are using HMAC signing keys, this Go
-package is largely unnecessary as the algorithm is symmetric, meaning the key is pre-shared. In this case a JWKS is
+package may be unnecessary as the algorithm is symmetric, meaning the key is pre-shared. In this case a JWKS is
 likely not be the best solution.
 
 Currently, this package supports JWTs signed with an `alg` that matches one of the following:
@@ -53,7 +53,7 @@ import "github.com/MicahParks/keyfunc"
 ### Step 1: Acquire the JWKS URL (optional)
 
 A JWKS URL is not required, one can be created directly from JSON with the
-[`keyfunc.New()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#New) function.
+[`keyfunc.New`](https://pkg.go.dev/github.com/MicahParks/keyfunc#New) function.
 
 ```go
 // Get the JWKS URL from an environment variable.
@@ -71,14 +71,14 @@ if jwksURL == "" {
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err.Error())
+	log.Fatalf("Failed to get the JWKS from the given URL.\nErr`or: %s", err.Error())
 }
 ```
 
-Addition options can be passed to the [`keyfunc.Get()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function
+Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function
 via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options).
 
-### Step 3: Use the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's [`JWKS.KeyFunc()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method as the `jwt.KeyFunc` when parsing tokens
+### Step 3: Use the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method as the `jwt.KeyFunc` when parsing tokens
 
 ```go
 // Parse the JWT.
@@ -88,12 +88,12 @@ if err != nil {
 }
 ```
 
-The [`JWKS.KeyFunc()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select
+The [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select
 the key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
 ## Test coverage
 
-Test coverage is currently at `81.6%`.
+Test coverage is currently at `81.4%`.
 
 This is with current and expired JWTs, but the hard coded ones are now expired.
 Using non-expired JWTs would require signing JWTs during testing and would allow for additional error checking. But a
@@ -104,14 +104,14 @@ does not introduce any dependencies is welcome though.
 
 * A background refresh of the JWKS keys can be performed. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
-  [`keyfunc.Get()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
+  [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
     * A custom background refresh interval can be specified.
     * A custom background refresh request context timeout can be specified. Defaults to one minute.
     * A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
       silently.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
-  [`keyfunc.Get()`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
+  [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
 
 ## TODO
 
