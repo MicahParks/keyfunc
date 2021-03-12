@@ -1,8 +1,6 @@
 package keyfunc
 
 import (
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -39,10 +37,12 @@ type JWKS struct {
 	client              *http.Client
 	endBackground       chan struct{}
 	endOnce             sync.Once
+	jwksURL             string
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     *time.Duration
 	refreshTimeout      *time.Duration
+	refreshUnknownKID   bool
 }
 
 // rawJWKS represents a JWKS in JSON format.
@@ -81,36 +81,39 @@ func (j *JWKS) EndBackground() {
 	})
 }
 
-// ECDSA retrieves an ECDSA public key from the JWKS.
-func (j *JWKS) ECDSA(kid string) (publicKey *ecdsa.PublicKey, err error) {
-
-	// Lock the JWKS for async safe usage.
-	j.mux.RLock()
-	defer j.mux.RUnlock()
+// getKey gets the JSONKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
+func (j *JWKS) getKey(kid string) (jsonKey *JSONKey, err error) {
 
 	// Get the JSONKey from the JWKS.
-	key, ok := j.Keys[kid]
+	var ok bool
+	j.mux.RLock()
+	jsonKey, ok = j.Keys[kid]
+	j.mux.RUnlock()
+
+	// Check if the key was present.
 	if !ok {
+
+		// Check to see if configured to refresh on unknown kid.
+		if j.refreshUnknownKID {
+
+			// Refresh the JWKS.
+			if err = j.refresh(); err != nil && j.refreshErrorHandler != nil {
+				j.refreshErrorHandler(err)
+				err = nil
+			}
+
+			// Lock the JWKS for async safe use.
+			j.mux.RLock()
+			defer j.mux.RUnlock()
+
+			// Check if the JWKS refresh contained the requested key.
+			if jsonKey, ok = j.Keys[kid]; ok {
+				return jsonKey, nil
+			}
+		}
+
 		return nil, ErrKIDNotFound
 	}
 
-	// Transform the key from JSON to an ECDSA key.
-	return key.ECDSA()
-}
-
-// RSA retrieves an RSA public key from the JWKS.
-func (j *JWKS) RSA(kid string) (publicKey *rsa.PublicKey, err error) {
-
-	// Lock the JWKS for async safe usage.
-	j.mux.RLock()
-	defer j.mux.RUnlock()
-
-	// Get the JSONKey from the JWKS.
-	key, ok := j.Keys[kid]
-	if !ok {
-		return nil, ErrKIDNotFound
-	}
-
-	// Transform the key from JSON to an RSA key.
-	return key.RSA()
+	return jsonKey, nil
 }

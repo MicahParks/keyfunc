@@ -35,7 +35,8 @@ func TestJWKS(t *testing.T) {
 	}
 
 	// Set the JWKS URL.
-	jwksURL := server.URL + "/example_jwks.json"
+	jwksFilePath := "/example_jwks.json"
+	jwksURL := server.URL + jwksFilePath
 
 	// Create a table of options to test.
 	options := []keyfunc.Options{
@@ -51,6 +52,9 @@ func TestJWKS(t *testing.T) {
 		},
 		{
 			RefreshErrorHandler: testingRefreshErrorHandler,
+		},
+		{
+			RefreshUnknownKID: &[]bool{true}[0], // &true
 		},
 	}
 
@@ -109,4 +113,10 @@ func TestJWKS(t *testing.T) {
 		// End the background goroutine. Ineffectual without refresh interval.
 		jwks.EndBackground()
 	}
+}
+
+func TestUnknownKIDRefresh(t *testing.T) {
+
+	// Copy JWKS to temporary dir.
+	panic("implement me")
 }

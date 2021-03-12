@@ -19,7 +19,9 @@ var (
 func Get(jwksURL string, options ...Options) (jwks *JWKS, err error) {
 
 	// Create the JWKS.
-	jwks = &JWKS{}
+	jwks = &JWKS{
+		jwksURL: jwksURL,
+	}
 
 	// Apply the options to the JWKS.
 	for _, opts := range options {
@@ -42,12 +44,12 @@ func Get(jwksURL string, options ...Options) (jwks *JWKS, err error) {
 
 		// Start the background goroutine when this function returns.
 		defer func() {
-			go jwks.backgroundRefresh(jwksURL)
+			go jwks.backgroundRefresh()
 		}()
 	}
 
 	// Get the keys for the JWKS.
-	if err = jwks.refresh(jwksURL); err != nil {
+	if err = jwks.refresh(); err != nil {
 		return nil, err
 	}
 
@@ -56,13 +58,13 @@ func Get(jwksURL string, options ...Options) (jwks *JWKS, err error) {
 
 // backgroundRefresh is meant to be a separate goroutine that will update the keys in a JWKS over a given interval of
 // time.
-func (j *JWKS) backgroundRefresh(jwksURL string) {
+func (j *JWKS) backgroundRefresh() {
 	for {
 		select {
 
 		// Refresh the JWKS after the given interval.
 		case <-time.After(*j.refreshInterval):
-			err := j.refresh(jwksURL)
+			err := j.refresh()
 
 			// Handle an error, if any.
 			if err != nil && j.refreshErrorHandler != nil {
@@ -77,7 +79,7 @@ func (j *JWKS) backgroundRefresh(jwksURL string) {
 }
 
 // refresh does an HTTP GET on the JWKS URL to rebuild the JWKS.
-func (j *JWKS) refresh(jwksURL string) (err error) {
+func (j *JWKS) refresh() (err error) {
 
 	// Create a context for the request.
 	ctx, cancel := context.WithTimeout(context.Background(), *j.refreshTimeout)
@@ -85,7 +87,7 @@ func (j *JWKS) refresh(jwksURL string) (err error) {
 
 	// Create the HTTP request.
 	var req *http.Request
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, jwksURL, bytes.NewReader(nil)); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, j.jwksURL, bytes.NewReader(nil)); err != nil {
 		return err
 	}
 
