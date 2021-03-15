@@ -71,7 +71,7 @@ if jwksURL == "" {
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nErr`or: %s", err.Error())
+	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err.Error())
 }
 ```
 
