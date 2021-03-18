@@ -23,6 +23,10 @@ type Options struct {
 	// RefreshErrorHandler is a function that consumes errors that happen during a JWKS refresh. This is only effectual
 	// if RefreshInterval is not nil.
 	RefreshErrorHandler ErrorHandler
+
+	// RefreshUnknownKID indicates that the JWKS should be refreshed via HTTP every time a kid that isn't know is found.
+	// This means the
+	RefreshUnknownKID *bool
 }
 
 // applyOptions applies the given options to the given JWKS.
@@ -38,5 +42,8 @@ func applyOptions(jwks *JWKS, options Options) {
 	}
 	if options.RefreshTimeout != nil {
 		jwks.refreshTimeout = options.RefreshTimeout
+	}
+	if options.RefreshUnknownKID != nil {
+		jwks.refreshUnknownKID = *options.RefreshUnknownKID
 	}
 }

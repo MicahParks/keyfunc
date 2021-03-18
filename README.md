@@ -71,14 +71,14 @@ if jwksURL == "" {
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nErr`or: %s", err.Error())
+	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err.Error())
 }
 ```
 
 Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function
 via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options).
 
-### Step 3: Use the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method as the `jwt.KeyFunc` when parsing tokens
+### Step 3: Use the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method as the [`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc) when parsing tokens
 
 ```go
 // Parse the JWT.
@@ -93,7 +93,7 @@ the key with the matching `kid` (if present) and return its public key as the co
 
 ## Test coverage
 
-Test coverage is currently at `81.4%`.
+Test coverage is currently at `84.3%`.
 
 This is with current and expired JWTs, but the hard coded ones are now expired.
 Using non-expired JWTs would require signing JWTs during testing and would allow for additional error checking. But a
@@ -109,6 +109,7 @@ does not introduce any dependencies is welcome though.
     * A custom background refresh request context timeout can be specified. Defaults to one minute.
     * A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
       silently.
+* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKS resource.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
