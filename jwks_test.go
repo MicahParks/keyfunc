@@ -47,7 +47,7 @@ func TestJWKS(t *testing.T) {
 	jwksFile := filepath.Join(tempDir, "example_jwks.json")
 
 	// Write the empty JWKS.
-	if err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600); err != nil {
+	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -115,7 +115,6 @@ func TestJWKS(t *testing.T) {
 		}
 
 		// Wait for the interval to pass, if required.
-		//
 		if opts.RefreshInterval != nil {
 			time.Sleep(*opts.RefreshInterval)
 		}

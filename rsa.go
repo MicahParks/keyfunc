@@ -34,8 +34,7 @@ func (j *JSONKey) RSA() (publicKey *rsa.PublicKey, err error) {
 	// Check if the key has already been computed.
 	if j.precomputed != nil {
 		var ok bool
-		publicKey, ok = j.precomputed.(*rsa.PublicKey)
-		if ok {
+		if publicKey, ok = j.precomputed.(*rsa.PublicKey); ok {
 			return publicKey, nil
 		}
 	}

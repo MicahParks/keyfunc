@@ -35,8 +35,7 @@ func (j *JSONKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 	// Check if the key has already been computed.
 	if j.precomputed != nil {
 		var ok bool
-		publicKey, ok = j.precomputed.(*ecdsa.PublicKey)
-		if ok {
+		if publicKey, ok = j.precomputed.(*ecdsa.PublicKey); ok {
 			return publicKey, nil
 		}
 	}
