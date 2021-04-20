@@ -126,7 +126,6 @@ via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/Mi
 
 ### Step 3: Initialize the Middleware with the JWKS Keyfunc
 
-
 ```go
 jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
     // Ensure that we use the correct version of the KeyFunc here to support the forked lib
@@ -137,6 +136,8 @@ jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 app := jwtMiddleware.Handler(myHandler)
 http.ListenAndServe("0.0.0.0:3000", app)
 ```
+
+See [auth0/go-jwt](https://github.com/auth0/go-jwt-middleware) for more details on the middleware itself.
 
 ## Test coverage
 
