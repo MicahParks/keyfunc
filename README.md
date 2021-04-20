@@ -2,24 +2,25 @@
 
 # keyfunc
 
-The sole purpose of this package is to provide a
+Purpose of this package is to provide a
 [`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc) for the
-[github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) package using a JSON Web Key Set (JWKS) for parsing
-JSON Web Tokens (JWTs).
+[github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+and [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) packages using a JSON Web Key Set
+(JWKS) for parsing JSON Web Tokens (JWTs).
 
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/) to expose a JWKS via an HTTPS
 endpoint. This package has the ability to consume that JWKS and produce a
 [`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc). It is important that a JWKS
 endpoint is using HTTPS to ensure the keys are from the correct trusted source.
 
-There are no dependencies other than [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) for this
-repository.
+There are no dependencies other than [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+and [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) for this repository.
 
 ## Supported Algorithms
 
 It is recommended to only use this package for asymmetric signing keys, If you are using HMAC signing keys, this Go
-package may be unnecessary as the algorithm is symmetric, meaning the key is pre-shared. In this case a JWKS is
-likely not be the best solution.
+package may be unnecessary as the algorithm is symmetric, meaning the key is pre-shared. In this case a JWKS is likely
+not be the best solution.
 
 Currently, this package supports JWTs signed with an `alg` that matches one of the following:
 
@@ -88,27 +89,27 @@ if err != nil {
 }
 ```
 
-The [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select
-the key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
+The [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select the
+key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
 ## Test coverage
 
-Test coverage is currently at `84.4%`.
+Test coverage is currently at `83.1%`.
 
-This is with current and expired JWTs, but the hard coded ones are now expired.
-Using non-expired JWTs would require signing JWTs during testing and would allow for additional error checking. But a
-bit overkill since I've already done that error checking when the JWTs were valid with no changes. A PR for this that
-does not introduce any dependencies is welcome though.
+This is with current and expired JWTs, but the hard coded ones are now expired. Using non-expired JWTs would require
+signing JWTs during testing and would allow for additional error checking. But a bit overkill since I've already done
+that error checking when the JWTs were valid with no changes. A PR for this that does not introduce any dependencies is
+welcome though.
 
 ## Additional features
 
 * A background refresh of the JWKS keys can be performed. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
-    * A custom background refresh interval can be specified.
-    * A custom background refresh request context timeout can be specified. Defaults to one minute.
-    * A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
-      silently.
+	* A custom background refresh interval can be specified.
+	* A custom background refresh request context timeout can be specified. Defaults to one minute.
+	* A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
+	  silently.
 * JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKS resource.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
