@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/form3tech-oss/jwt-go"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
 	ErrUnsupportedKeyType = errors.New("the JWT key type is unsupported")
 )
 
-// KeyFunc is a compatibility function that matches the signature of github.com/dgrijalva/jwt-go's KeyFunc function.
+// KeyFunc is a compatibility function that matches the signature of github.com/form3tech-oss/jwt-go's KeyFunc function.
 func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 
 	// Get the kid from the token header.
@@ -42,6 +42,6 @@ func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 	case ps256, ps384, ps512, rs256, rs384, rs512:
 		return jsonKey.RSA()
 	default:
-		return nil, fmt.Errorf("%w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
+		return nil, fmt.Errorf("%w: %s: feel free to add a feature request or contribute to https://github.com/uswitch/keyfunc", ErrUnsupportedKeyType, keyAlg)
 	}
 }
