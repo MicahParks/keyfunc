@@ -1,4 +1,4 @@
-module go-jwt-middleware-example
+module auth0middleware
 
 go 1.16
 

@@ -18,7 +18,7 @@ and [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) f
 
 ## Supported Algorithms
 
-It is recommended to only use this package for asymmetric signing keys, If you are using HMAC signing keys, this Go
+It is recommended to only use this package for asymmetric signing keys. If you are using HMAC signing keys, this Go
 package may be unnecessary as the algorithm is symmetric, meaning the key is pre-shared. In this case a JWKS is likely
 not be the best solution.
 
