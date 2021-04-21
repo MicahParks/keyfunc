@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -16,10 +15,8 @@ func main() {
 	// This is a local Keycloak JWKS endpoint for the master realm.
 	jwksURL := "http://localhost:8080/auth/realms/master/protocol/openid-connect/certs"
 
-	// Create the keyfunc options. Refresh the JWKS every hour and log errors.
-	refreshInterval := time.Hour
+	// Create the keyfunc options. Use an error handler that logs.
 	options := keyfunc.Options{
-		RefreshInterval: &refreshInterval,
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.KeyFunc\nError: %s", err.Error())
 		},

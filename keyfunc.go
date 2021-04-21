@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
+	f3t "github.com/form3tech-oss/jwt-go"
 )
 
 var (
@@ -44,4 +45,18 @@ func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("%w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
 	}
+}
+
+// KeyFuncF3T is a compatibility function that matches the signature of github.com/form3tech-oss/jwt-go's KeyFunc
+// function.
+func (j *JWKS) KeyFuncF3T(f3tToken *f3t.Token) (interface{}, error) {
+	token := &jwt.Token{
+		Raw:       f3tToken.Raw,
+		Method:    f3tToken.Method,
+		Header:    f3tToken.Header,
+		Claims:    f3tToken.Claims,
+		Signature: f3tToken.Signature,
+		Valid:     f3tToken.Valid,
+	}
+	return j.KeyFunc(token)
 }
