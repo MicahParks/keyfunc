@@ -92,7 +92,7 @@ if err != nil {
 The [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select the
 key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
-## Support for [`auth0/go-jwt-middleware`](github.com/auth0/go-jwt-middleware)
+## Support for [`auth0/go-jwt-middleware`](https://github.com/auth0/go-jwt-middleware)
 
 Auth0 provides a useful middleware exposing a HTTP Handler that can be used to wrap other handlers with OIDC authentication checks. This lib can provide the `ValidationKeyGetter` used in the [`jwtmiddleware.Options`](https://pkg.go.dev/github.com/auth0/go-jwt-middleware#Options) struct to allow the handler to use a JWKS URL as a source for keys.
 
@@ -137,7 +137,7 @@ app := jwtMiddleware.Handler(myHandler)
 http.ListenAndServe("0.0.0.0:3000", app)
 ```
 
-See [auth0/go-jwt](https://github.com/auth0/go-jwt-middleware) for more details on the middleware itself.
+See [auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) for more details on the middleware itself.
 
 ## Test coverage
 
