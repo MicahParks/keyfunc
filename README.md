@@ -92,7 +92,7 @@ if err != nil {
 The [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select the
 key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
-## Support for [`auth0/go-jwt-middleware`](https://github.com/auth0/go-jwt-middleware)
+## Support for [`github.com/auth0/go-jwt-middleware`](https://github.com/auth0/go-jwt-middleware)
 
 Auth0 provides a useful middleware exposing a HTTP Handler that can be used to wrap other handlers with OIDC authentication checks. This lib can provide the `ValidationKeyGetter` used in the [`jwtmiddleware.Options`](https://pkg.go.dev/github.com/auth0/go-jwt-middleware#Options) struct to allow the handler to use a JWKS URL as a source for keys.
 
@@ -126,11 +126,15 @@ via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/Mi
 
 ### Step 3: Initialize the Middleware with the JWKS Keyfunc
 
+Note the usage of [`JWKS.KeyFuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFuncF3T). The [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) module uses a fork of the original [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) called [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) and thus requires a token from a different package.
+
 ```go
+// Create the middleware provider
 jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-    // Ensure that we use the correct version of the KeyFunc here to support the forked lib
-    ValidationKeyGetter: jwks.KeyFuncF3T,
-    SigningMethod: jwt.SigningMethodRS256,
+  // Use the correct version of the KeyFunc here to support the forked lib used in jwtmiddleware
+  ValidationKeyGetter: jwks.KeyFuncF3T,
+  // Always ensure that you set your signing method to avoid tokens choosing the "none" method
+  SigningMethod: jwt.SigningMethodRS256,
 })
 
 app := jwtMiddleware.Handler(myHandler)
