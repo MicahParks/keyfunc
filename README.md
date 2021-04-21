@@ -17,6 +17,8 @@ This repository has the following dependencies:
 * [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
 * [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
 
+`jwt.KeyFunc` signatures are imported from these, implemented, then exported as methods.
+
 ## Supported Algorithms
 
 It is recommended to only use this package for asymmetric signing keys. If you are using HMAC signing keys, this Go
@@ -61,7 +63,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-	log.Fatalln("JWKS_URL environment variable must be populated.")
+log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -71,7 +73,7 @@ Via HTTP:
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err.Error())
+log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err.Error())
 }
 ```
 Via JSON:
@@ -82,7 +84,7 @@ var jwksJSON json.RawMessage = []byte(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvc
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.New(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
+log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
 }
 ```
 
@@ -96,7 +98,7 @@ additional features mentioned at the bottom of this `README.md`.
 // Parse the JWT.
 token, err := jwt.Parse(jwtB64, jwks.KeyFunc)
 if err != nil {
-	return nil, fmt.Errorf("failed to parse token: %w", err)
+return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
@@ -124,15 +126,15 @@ Please also see the `examples` directory.
 // Create the middleware provider.
 jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 
-	// Use the correct version of the KeyFunc method.
-	ValidationKeyGetter: jwks.KeyFuncF3T,
+// Use the correct version of the KeyFunc method.
+ValidationKeyGetter: jwks.KeyFuncF3T,
 
-	// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
-	//
-	// This shouldn't matter for this keyfunc package, as the JWKS should be trusted and determines the key type,
-	// but it's good practice.
-	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
-	SigningMethod: jwt.SigningMethodRS256,
+// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
+//
+// This shouldn't matter for this keyfunc package, as the JWKS should be trusted and determines the key type,
+// but it's good practice.
+// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+SigningMethod: jwt.SigningMethodRS256,
 })
 ```
 
