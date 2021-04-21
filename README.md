@@ -110,7 +110,7 @@ key with the matching `kid` (if present) and return its public key as the correc
 Some packages use forks of [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go). This package aims to
 support the most popular use cases of these forks.
 
-If additional forks are required for your use case, please feel free to open an issue.
+If additional forks are required for your use case, please feel free to open an issue or PR.
 
 ### Support for [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware)
 The [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) package requires
