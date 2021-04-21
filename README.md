@@ -4,17 +4,18 @@
 
 Purpose of this package is to provide a
 [`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc) for the
-[github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
-and [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) packages using a JSON Web Key Set
-(JWKS) for parsing and verifying JSON Web Tokens (JWTs).
+[github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) package and its popular forks using a JSON Web Key
+Set (JWKS) for parsing and verifying JSON Web Tokens (JWTs).
 
-It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/) or Amazon Cognito (AWS) to expose a
-JWKS via an HTTPS endpoint. This package has the ability to consume that JWKS and produce a
+It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
+or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKS via an HTTPS endpoint. This package has the
+ability to consume that JWKS and produce a
 [`jwt.KeyFunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc). It is important that a JWKS
 endpoint is using HTTPS to ensure the keys are from the correct trusted source.
 
-There are no dependencies other than [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
-and [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) for this repository.
+This repository has the following dependencies:
+* [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+* [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
 
 ## Supported Algorithms
 
@@ -23,7 +24,6 @@ package may be unnecessary as the algorithm is symmetric, meaning the key is pre
 not be the best solution.
 
 Currently, this package supports JWTs signed with an `alg` that matches one of the following:
-
 * `ES256`
 * `ES384`
 * `ES512`
@@ -35,7 +35,6 @@ Currently, this package supports JWTs signed with an `alg` that matches one of t
 * `RS512`
 
 Additionally, the supported elliptical curve types are below:
-
 * `P-256`
 * `P-384`
 * `P-521`
@@ -104,14 +103,38 @@ if err != nil {
 The [`JWKS.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFunc) method will automatically select the
 key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
-Some packages use forks of [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go). When
-the [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) fork is required, like when
-using [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware), use
-the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) '
-s [`JWKS.KeyFuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFuncF3T).
-See [auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) for more details on the middleware itself.
+## Fork support
+
+Some packages use forks of [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go). This package aims to
+support the most popular use cases of these forks.
 
 If additional forks are required for your use case, please feel free to open an issue.
+
+### Support for [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware)
+The [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) package requires
+the [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) fork. For this use case, use
+the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's
+[`JWKS.KeyFuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFuncF3T) method.
+
+See [auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) for more details on the middleware itself.
+
+#### Example snippet
+Please also see the `examples` directory.
+```go
+// Create the middleware provider.
+jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+
+	// Use the correct version of the KeyFunc method.
+	ValidationKeyGetter: jwks.KeyFuncF3T,
+
+	// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
+	//
+	// This shouldn't matter for this keyfunc package, as the JWKS should be trusted and determines the key type,
+	// but it's good practice.
+	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+	SigningMethod: jwt.SigningMethodRS256,
+})
+```
 
 ## Test coverage
 
