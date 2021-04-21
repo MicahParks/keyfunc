@@ -118,8 +118,6 @@ the [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) f
 the [`keyfunc.JWKS`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS) 's
 [`JWKS.KeyFuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.KeyFuncF3T) method.
 
-See [auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) for more details on the middleware itself.
-
 #### Example snippet
 Please also see the `examples` directory.
 ```go
