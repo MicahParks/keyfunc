@@ -11,12 +11,12 @@ import (
 
 func main() {
 
-	// Get the JWKS URL.
+	// Get the JWKs URL.
 	//
-	// This is a sample JWKS service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
+	// This is a sample JWKs service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
 	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
 
-	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKS every hour. Timeout the JWKS refresh
+	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs every hour. Timeout the JWKs refresh
 	// request after 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
 	refreshInterval := time.Hour
 	refreshTimeout := time.Second * 10
@@ -28,10 +28,10 @@ func main() {
 		},
 	}
 
-	// Create the JWKS from the resource at the given URL.
+	// Create the JWKs from the resource at the given URL.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError: %s", err.Error())
 	}
 
 	// Get a JWT to parse.

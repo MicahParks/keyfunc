@@ -18,7 +18,7 @@ var (
 )
 
 // KeyFunc is a compatibility function that matches the signature of github.com/dgrijalva/jwt-go's KeyFunc function.
-func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
+func (j *JWKs) KeyFunc(token *jwt.Token) (interface{}, error) {
 
 	// Get the kid from the token header.
 	kidInter, ok := token.Header["kid"]
@@ -27,7 +27,7 @@ func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 	}
 	kid, ok := kidInter.(string)
 	if !ok {
-		return nil, fmt.Errorf("%w: could not convert KID in JWT header to string", ErrKID)
+		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKID)
 	}
 
 	// Get the JSONKey.
@@ -49,7 +49,7 @@ func (j *JWKS) KeyFunc(token *jwt.Token) (interface{}, error) {
 
 // KeyFuncF3T is a compatibility function that matches the signature of github.com/form3tech-oss/jwt-go's KeyFunc
 // function.
-func (j *JWKS) KeyFuncF3T(f3tToken *f3t.Token) (interface{}, error) {
+func (j *JWKs) KeyFuncF3T(f3tToken *f3t.Token) (interface{}, error) {
 	token := &jwt.Token{
 		Raw:       f3tToken.Raw,
 		Method:    f3tToken.Method,

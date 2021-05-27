@@ -12,9 +12,9 @@ import (
 
 func main() {
 
-	// Get the JWKS URL.
+	// Get the JWKs URL.
 	//
-	// This is a sample JWKS service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
+	// This is a sample JWKs service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
 	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
 
 	// Create the keyfunc options. Use an error handler that logs.
@@ -24,10 +24,10 @@ func main() {
 		},
 	}
 
-	// Create the JWKS from the resource at the given URL.
+	// Create the JWKs from the resource at the given URL.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError: %s", err.Error())
 	}
 
 	// Create the middleware provider.
@@ -38,7 +38,7 @@ func main() {
 
 		// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
 		//
-		// This shouldn't matter for this keyfunc package, as the JWKS should be trusted and determines the key type,
+		// This shouldn't matter for this keyfunc package, as the JWKs should be trusted and determines the key type,
 		// but it's good practice.
 		// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
 		SigningMethod: jwt.SigningMethodRS256,

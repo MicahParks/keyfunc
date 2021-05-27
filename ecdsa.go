@@ -60,7 +60,7 @@ func (j *JSONKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 		return nil, err
 	}
 
-	// Create the RSA public key.
+	// Create the ECDSA public key.
 	publicKey = &ecdsa.PublicKey{}
 
 	// Set the curve type.

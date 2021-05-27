@@ -11,13 +11,13 @@ import (
 
 func main() {
 
-	// Get the JWKS URL.
+	// Get the JWKs URL.
 	//
-	// This is a sample JWKS service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
+	// This is a sample JWKs service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
 	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
 
-	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKS when a JWT signed by an unknown KID
-	// is found. Timeout the initial JWKS refresh request after 10 seconds. This timeout is also used to create the
+	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
+	// is found. Timeout the initial JWKs refresh request after 10 seconds. This timeout is also used to create the
 	// initial context.Context for keyfunc.Get.
 	refreshUnknownKID := true
 	refreshTimeout := time.Second * 10
@@ -29,10 +29,10 @@ func main() {
 		RefreshUnknownKID: &refreshUnknownKID,
 	}
 
-	// Create the JWKS from the resource at the given URL.
+	// Create the JWKs from the resource at the given URL.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError: %s", err.Error())
 	}
 
 	// Get a JWT to parse.
