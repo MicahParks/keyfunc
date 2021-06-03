@@ -141,6 +141,36 @@ func TestJWKs(t *testing.T) {
 	}
 }
 
+// TestInvalidServer performs initialization + refresh initialization with a server providing invalid data.
+// The test ensures that background refresh goroutine does not causes any troubles in case of init failure.
+func TestInvalidServer(t *testing.T) {
+
+	// Create the HTTP test server.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Write(nil)
+	}))
+	defer server.Close()
+
+	// Create testing options.
+	testingRefreshErrorHandler := func(err error) {
+		t.Errorf("Unhandled JWKs error: %s", err.Error())
+		t.FailNow()
+	}
+
+	// Set the options to refresh KID when unknown.
+	refreshInterval := time.Second
+	options := keyfunc.Options{
+		RefreshInterval:     &refreshInterval,
+		RefreshErrorHandler: testingRefreshErrorHandler,
+	}
+
+	// Create the JWKs.
+	if _, err := keyfunc.Get(server.URL, options); err == nil {
+		t.Errorf("Creation of *keyfunc.JWKs with invalid server must fail.")
+		t.FailNow()
+	}
+}
+
 func TestUnknownKIDRefresh(t *testing.T) {
 
 	// Create a temporary directory to serve the JWKs from.

@@ -36,21 +36,19 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 		jwks.refreshTimeout = &defaultRefreshTimeout
 	}
 
+	// Get the keys for the JWKs.
+	if err = jwks.refresh(); err != nil {
+		return nil, err
+	}
+
 	// Check to see if a background refresh of the JWKs should happen.
 	if jwks.refreshInterval != nil {
 
 		// Attach a channel to end the background goroutine.
 		jwks.endBackground = make(chan struct{})
 
-		// Start the background goroutine when this function returns.
-		defer func() {
-			go jwks.backgroundRefresh()
-		}()
-	}
-
-	// Get the keys for the JWKs.
-	if err = jwks.refresh(); err != nil {
-		return nil, err
+		// Start the background goroutine for data refresh.
+		go jwks.backgroundRefresh()
 	}
 
 	return jwks, nil
