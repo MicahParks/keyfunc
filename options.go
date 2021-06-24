@@ -24,10 +24,15 @@ type Options struct {
 	// if RefreshInterval is not nil.
 	RefreshErrorHandler ErrorHandler
 
-	// RefreshUnknownKID indicates that the JWKs should be refreshed via HTTP every time a kid that isn't known is
-	// found. This means that a malicious client could self-sign X JWTs, send them to this service, then cause
-	// potentially high network usage proportional to X.
+	// RefreshUnknownKID indicates that the JWKs should be refreshed via HTTP every time a kid that isn't known is found.
+	// On its own, this behavior allows a malicious client to self-sign X JWTs, send them to this service, then cause
+	// potentially high network usage proportional to X. Set a RefreshUnknownMinTimespan to mitigate this issue.
 	RefreshUnknownKID *bool
+
+	// RefreshUnknownKIDminInterval is the duration that must pass between any two unknown-kid-triggered JWK refreshes.
+	// Setting this to a reasonable value helps prevent malicious clients from launching a denial of service attack by
+	// sending fake or self-signed JWTs.
+	RefreshUnknownKIDMinInterval *time.Duration
 }
 
 // applyOptions applies the given options to the given JWKs.
@@ -46,5 +51,8 @@ func applyOptions(jwks *JWKs, options Options) {
 	}
 	if options.RefreshUnknownKID != nil {
 		jwks.refreshUnknownKID = *options.RefreshUnknownKID
+	}
+	if options.RefreshUnknownKIDMinInterval != nil {
+		jwks.refreshUnknownKIDminInterval = options.RefreshUnknownKIDMinInterval
 	}
 }

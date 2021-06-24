@@ -33,16 +33,24 @@ type JSONKey struct {
 
 // JWKs represents a JSON Web Key Set.
 type JWKs struct {
-	Keys                map[string]*JSONKey
-	client              *http.Client
-	endBackground       chan struct{}
-	endOnce             sync.Once
-	jwksURL             string
-	mux                 sync.RWMutex
+	keysMux sync.RWMutex
+	Keys    map[string]*JSONKey
+
+	client *http.Client
+
+	endBackground chan struct{}
+	endOnce       sync.Once
+
+	jwksURL string
+
 	refreshErrorHandler ErrorHandler
 	refreshInterval     *time.Duration
 	refreshTimeout      *time.Duration
-	refreshUnknownKID   bool
+
+	refreshUnknownKID            bool
+	refreshUnknownMux            sync.Mutex
+	lastRefreshUnknownKID        *time.Time
+	refreshUnknownKIDminInterval *time.Duration
 }
 
 // rawJWKs represents a JWKs in JSON format.
@@ -86,34 +94,51 @@ func (j *JWKs) getKey(kid string) (jsonKey *JSONKey, err error) {
 
 	// Get the JSONKey from the JWKs.
 	var ok bool
-	j.mux.RLock()
+	j.keysMux.RLock()
 	jsonKey, ok = j.Keys[kid]
-	j.mux.RUnlock()
+	j.keysMux.RUnlock()
 
-	// Check if the key was present.
-	if !ok {
+	// Check if we can just take the happy path (key was present).
+	if ok {
+		return jsonKey, nil
+	}
 
-		// Check to see if configured to refresh on unknown kid.
-		if j.refreshUnknownKID {
-
-			// Refresh the JWKs.
-			if err = j.refresh(); err != nil && j.refreshErrorHandler != nil {
-				j.refreshErrorHandler(err)
-				err = nil
-			}
-
-			// Lock the JWKs for async safe use.
-			j.mux.RLock()
-			defer j.mux.RUnlock()
-
-			// Check if the JWKs refresh contained the requested key.
-			if jsonKey, ok = j.Keys[kid]; ok {
-				return jsonKey, nil
-			}
-		}
-
+	// If we shouldn't refresh on an unknown KID, just return an error.
+	if !j.refreshUnknownKID {
 		return nil, ErrKIDNotFound
 	}
 
-	return jsonKey, nil
+	// We need to lock `refreshUnknownMux` before we check the last unknown kid-triggered refresh time to avoid an influx
+	// of simultaneous requests with unknown kids from triggering a bunch of refresh requests.
+	j.refreshUnknownMux.Lock()
+	defer j.refreshUnknownMux.Unlock()
+
+	// We should refresh under the following conditions:
+	// 		- if the unknown kid-refresh minimum interval is not set
+	// 		- if we have not yet refreshed due to an unknown kid (i.e. last refresh time is nil)
+	// 		- if it's been longer than the specified interval since we refreshed due to an unknown kid
+	var shouldRefresh bool = (j.refreshUnknownKIDminInterval == nil) ||
+		(j.lastRefreshUnknownKID == nil) ||
+		(j.lastRefreshUnknownKID.Add(*j.refreshUnknownKIDminInterval).Before(time.Now()))
+
+	if !shouldRefresh {
+		return nil, ErrKIDNotFound
+	}
+
+	// Refresh the JWKs.
+	if err = j.refresh(); err != nil && j.refreshErrorHandler != nil {
+		j.refreshErrorHandler(err)
+		err = nil
+	}
+
+	// Lock the JWKs for async safe use.
+	j.keysMux.RLock()
+	defer j.keysMux.RUnlock()
+
+	// Check if the JWKs refresh contained the requested key.
+	if jsonKey, ok = j.Keys[kid]; ok {
+		return jsonKey, nil
+	}
+
+	return nil, ErrKIDNotFound
 }

@@ -109,8 +109,8 @@ func (j *JWKs) refresh() (err error) {
 	}
 
 	// Lock the JWKs for async safe usage.
-	j.mux.Lock()
-	defer j.mux.Unlock()
+	j.keysMux.Lock()
+	defer j.keysMux.Unlock()
 
 	// Update the keys.
 	j.Keys = updated.Keys
