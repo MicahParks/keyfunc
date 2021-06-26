@@ -17,16 +17,15 @@ func main() {
 	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
 
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
-	// is found. Timeout the initial JWKs refresh request after 10 seconds. This timeout is also used to create the
-	// initial context.Context for keyfunc.Get.
+	// is found, at a maximum of one unknown KID-triggered refresh per five minutes.
 	refreshUnknownKID := true
-	refreshTimeout := time.Second * 10
+	unknownRefreshInterval := 5 * time.Minute
 	options := keyfunc.Options{
-		RefreshTimeout: &refreshTimeout,
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.KeyFunc\nError: %s", err.Error())
 		},
-		RefreshUnknownKID: &refreshUnknownKID,
+		RefreshUnknownKID:            &refreshUnknownKID,
+		RefreshUnknownKIDMinInterval: &unknownRefreshInterval,
 	}
 
 	// Create the JWKs from the resource at the given URL.
