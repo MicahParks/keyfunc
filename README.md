@@ -154,7 +154,8 @@ welcome though.
 	* A custom background refresh request context timeout can be specified. Defaults to one minute.
 	* A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
 	  silently.
-* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKs resource.
+* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKs resource. This behavior can
+    also be rate limited to mitigate denial of service attacks.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
