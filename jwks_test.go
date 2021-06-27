@@ -216,9 +216,9 @@ func TestRateLimit(t *testing.T) {
 	jwksURL := server.URL + jwksFilePath
 
 	// Create the testing options.
-	refreshInterval := time.Second
-	refreshRateLimit := time.Millisecond * 500
-	refreshTimeout := time.Second
+	refreshInterval := time.Hour
+	refreshRateLimit := time.Second * 500
+	refreshTimeout := time.Hour
 	refreshUnknownKID := true
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {

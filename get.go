@@ -98,19 +98,20 @@ func (j *JWKs) backgroundRefresh() {
 			// Rate limit, if needed.
 			if limiter != nil && !limiter.Allow() {
 
+				// Don't make the JWT parsing goroutine wait for the JWKs to refresh.
+				cancel()
+
 				// Create a reservation to refresh the JWKs.
 				reservation := limiter.Reserve()
 
 				// If there's already a reservation, ignore the refresh request.
 				if !reservation.OK() {
-					cancel()
 					continue
 				}
 
 				// Wait for the reservation to be ready or the context to end.
 				select {
 				case <-j.ctx.Done():
-					cancel()
 					return
 				case <-time.After(reservation.Delay()):
 				}
