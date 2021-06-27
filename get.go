@@ -5,9 +5,8 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
-
-	"golang.org/x/time/rate"
 )
 
 var (
@@ -50,7 +49,7 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
 
 		// Create a channel that will accept requests to refresh the JWKs.
-		jwks.refreshRequests = make(chan context.CancelFunc)
+		jwks.refreshRequests = make(chan context.CancelFunc, 2) // TODO Make this buffer configurable?
 
 		// Start the background goroutine for data refresh.
 		go jwks.backgroundRefresh()
@@ -63,11 +62,12 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 // time.
 func (j *JWKs) backgroundRefresh() {
 
-	// Create the rate limiter.
-	var limiter *rate.Limiter
+	// Create some rate limiting assets.
+	var lastRefresh time.Time
+	var queueOnce sync.Once
+	var refreshMux sync.Mutex
 	if j.refreshRateLimit != nil {
-		every := rate.Every(*j.refreshRateLimit)
-		limiter = rate.NewLimiter(every, 1)
+		lastRefresh = time.Now().Add(-*j.refreshRateLimit)
 	}
 
 	// Create a channel that will never send anything unless there is a refresh interval.
@@ -96,42 +96,56 @@ func (j *JWKs) backgroundRefresh() {
 		case cancel := <-j.refreshRequests:
 
 			// Rate limit, if needed.
-			if limiter != nil && !limiter.Allow() {
+			refreshMux.Lock()
+			if j.refreshRateLimit != nil && lastRefresh.Add(*j.refreshRateLimit).After(time.Now()) {
 
 				// Don't make the JWT parsing goroutine wait for the JWKs to refresh.
 				cancel()
 
-				// Launch a goroutine that will get a reservation for a JWKs refresh or fail to and immediately return.
-				go func() {
+				// Only queue a refresh once.
+				queueOnce.Do(func() {
 
-					// Create a reservation to refresh the JWKs.
-					reservation := limiter.Reserve()
+					// Launch a goroutine that will get a reservation for a JWKs refresh or fail to and immediately return.
+					go func() {
 
-					// If there's already a reservation, ignore the refresh request.
-					if !reservation.OK() {
-						return
-					}
+						// Wait for the next time to refresh.
+						refreshMux.Lock()
+						wait := lastRefresh.Add(*j.refreshRateLimit).Sub(time.Now())
+						refreshMux.Unlock()
+						select {
+						case <-j.ctx.Done():
+							return
+						case <-time.After(wait):
+						}
 
-					// Wait for the reservation to be ready or the context to end.
-					select {
-					case <-j.ctx.Done():
-						return
-					case <-time.After(reservation.Delay()):
-					}
+						// Refresh the JWKs.
+						refreshMux.Lock()
+						defer refreshMux.Unlock()
+						if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
+							j.refreshErrorHandler(err)
+						}
 
-					// Refresh the JWKs.
-					if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
-						j.refreshErrorHandler(err)
-					}
-				}()
+						// Reset the last time for the refresh to now.
+						lastRefresh = time.Now()
+
+						// Allow another queue.
+						queueOnce = sync.Once{}
+					}()
+				})
 			} else {
 
 				// Refresh the JWKs.
 				if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
 					j.refreshErrorHandler(err)
 				}
+
+				// Reset the last time for the refresh to now.
+				lastRefresh = time.Now()
+
+				// Allow the JWT parsing goroutine to continue with the refreshed JWKs.
 				cancel()
 			}
+			refreshMux.Unlock()
 
 		// Clean up this goroutine when its context expires.
 		case <-j.ctx.Done():
