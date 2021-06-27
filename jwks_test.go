@@ -240,19 +240,21 @@ func TestRateLimit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Create three JWTs with unknown kids.
+	// Create four JWTs with unknown kids.
 	//
 	// These should prompt two refreshes.
 	// The first one will not be rate limited.
-	// The second will get a rate limit reservation.
-	// The third will get no rate limit reservation and will be ignored because there is already a reservation.
+	// The second will get a rate limit queue.
+	// The third will get no rate limit queue and will be ignored because there is already a one in the queue.
+	// The fourth will get no rate limit queue and will be ignored because there is already a one in the queue.
 	token1 := "eyJraWQiOiI0NWU3ZDcyMiIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJUYXNodWFuIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0NzU2OTAwLCJpYXQiOjE2MjQ3NTY4OTUsImp0aSI6IjA5ZjkzZjljLTU0ZjMtNDM5Yi04Njg2LWZhMGYwMjlmYmIwZSJ9.g643vWnvDvR5u5TeCUaCblp-Ss8SPWoZrOxBo3y6WP9xQnRW63VSbacCirl-5nGRPoX6vostZAkRyUl62ICQHpTj3bRnDY4ZbkcQ42xtrWMBsI2Sw6dAmZtGsCR_tguQZmvdKE4gVNnFWLp0hBjCeLxPVbc59vC6njMdz7XHcOdW7RXN6iUYjLFoPAr4Qg93Vbrwfo9Qmkm8bDgbnuoJ3aQq0RFa02G1KC2-cx8SuUbxso_Uu7ddY6HDRL5OPF3xS9cKO5ty4zCfGYIVDhfH7V-zA2cJZyA2dlv3Ddd-ntU42aud0M4PcTTdjHf1CE29sCZHk5wTRgxsTjfWglYQQiVQJEkw6DD6kTlQ_MwN4p_OWNj06b55mXM6Bj9c9y8TfPLETDy_PRc1lHu1PuiizLg019JaGidpTLF8IdKTa9emkEnf2n8xWi-YMkkRk57hpuc56GmnBR0d8ODfuL0XILlQp2guFsVRo9A4Sdqy7fGdZGoSS4XzSR-TIEw7W_KSqlYCtWC0xNk1Kze3xSY2mDqrn1YFFlvXgXQlgzU8GN1eL7QRRQlxaPGti2wEH6OYH4A160nR_OM-zFBobpQn79g8HsK8yZgPiY0p94F6pvKBQtSHDBvAe3W0-UHYfspwT9cQGVgqCGol6A8XNeBlVQpko9ves4UgCRSb6o9u_p4"
 	token2 := "eyJraWQiOiIyYTFkODRhMCIsInR5cCI6IkpXVCIsImFsZyI6IkVTMzg0In0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJUYXNodWFuIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0NzU3MjExLCJpYXQiOjE2MjQ3NTcyMDYsImp0aSI6ImU4YjQ1YmIwLTczZjgtNDkzNi04MjQxLWE1OGFlZWMyZWE2NCJ9.6Isd4unU2TAmRB1SouaHBV9LUjFGIuhOrxkQlDjh6qKRgb7UsiPtQm87S2qrriLaFjyCmrmU6cDpVBpTOutjPxweIqT-1EfsS-dkENIVWPVgQ5-KuNu2jXyGYpPeFBUA"
 	token3 := "eyJraWQiOiIxZjEyOGFkZSIsInR5cCI6IkpXVCIsImFsZyI6IkVTMjU2In0.eyJzdWIiOiJSZWJlY2NhIiwiYXVkIjoiQWxpY2UiLCJpc3MiOiJqd2tzLXNlcnZpY2UuYXBwc3BvdC5jb20iLCJleHAiOjE2MjQ3NTkzODIsImlhdCI6MTYyNDc1OTM3NywianRpIjoiMzU2MWY4MDctNDRkNi00OWE5LWFlYWItMmQ1MjQ2YWYxNDhlIn0.5eZbJlvnaFsRwPhBHmXljp9vgsrB0Q9d3dSz4va29ahTKsFGFo8tYy0e69ehqSb-dbFy9azRRtygwwtYuaEFuA"
+	token4 := "eyJraWQiOiIyZDQ3NjUwYSIsInR5cCI6IkpXVCIsImFsZyI6IlBTMzg0In0.eyJzdWIiOiJGcmVkYSIsImF1ZCI6Ikx1Y2lhIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0ODA0MTk0LCJpYXQiOjE2MjQ4MDQxODksImp0aSI6IjdjNTQ2Y2RmLTYwMTEtNDI3Ny04Y2Q0LTMwNjZmZTYwNTExZSJ9.hQm-OP_MMk8_S13-ohiINRuDP2IlCiB3yn8Ov6qTjeFbq4gZ6MegeJH_qiZOvXqlzOAwpwd5P4nm5JeS6LlNGdW6V_agwYwnAd08GI7APQNRib692_sEk1DKdSk-S-Y8V_ZAgeTT8asdaSDw4EBPxkDvROcuEqesZrfqnrOcpdqqa2BcmwX8q5sLtQ8TMp4cOvEZg-J8_0j2kdCUkv_n9ZdsRoA3EUT8M1bYqnGRRxIRqflsm-S_xq3HxMAnPF5hPlqIKFVKuRsU0SKgcHZGwXpuK2lJqPobl6MI987tGrc9sPPFzVkNYxeltcxu34-ZjzN6iCQN8r0w-mfqCZav7A"
 
 	// Use the JWKs jwk.KeyFunc to parse the tokens signed with unknown kids at nearly the same time.
 	waitGroup := sync.WaitGroup{}
-	waitGroup.Add(2)
+	waitGroup.Add(3)
 	go func() {
 		defer waitGroup.Done()
 		if _, parseErr := jwt.Parse(token1, jwks.KeyFunc); parseErr != nil {
@@ -269,7 +271,15 @@ func TestRateLimit(t *testing.T) {
 			}
 		}
 	}()
-	if _, parseErr := jwt.Parse(token3, jwks.KeyFunc); parseErr != nil {
+	go func() {
+		defer waitGroup.Done()
+		if _, parseErr := jwt.Parse(token3, jwks.KeyFunc); parseErr != nil {
+			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
+				t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+			}
+		}
+	}()
+	if _, parseErr := jwt.Parse(token4, jwks.KeyFunc); parseErr != nil {
 		if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
 			t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
 			t.FailNow()
