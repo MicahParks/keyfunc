@@ -105,6 +105,10 @@ func (j *JWKs) getKey(kid string) (jsonKey *JSONKey, err error) {
 			case <-j.ctx.Done():
 				return
 			case j.refreshRequests <- cancel:
+			default:
+
+				// If the j.refreshRequests channel is full, return the error early.
+				return nil, ErrKIDNotFound
 			}
 
 			// Wait for the JWKs refresh to done.
