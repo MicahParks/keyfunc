@@ -91,7 +91,8 @@ func TestJWKs(t *testing.T) {
 	defer server.Close()
 
 	// Create testing options.
-	testingRefreshInterval := time.Millisecond * 500
+	testingRefreshInterval := time.Second
+	testingRateLimit := time.Millisecond * 500
 	testingRefreshTimeout := time.Second
 	testingRefreshErrorHandler := func(err error) {
 		t.Errorf("Unhandled JWKs error: %s", err.Error())
@@ -116,6 +117,9 @@ func TestJWKs(t *testing.T) {
 		},
 		{
 			RefreshErrorHandler: testingRefreshErrorHandler,
+		},
+		{
+			RefreshRateLimit: &testingRateLimit,
 		},
 	}
 
@@ -217,7 +221,7 @@ func TestRateLimit(t *testing.T) {
 	// Create the testing options.
 	refreshInterval := time.Second
 	refreshRateLimit := time.Millisecond * 500
-	refreshTimeout := time.Minute
+	refreshTimeout := time.Second
 	refreshUnknownKID := true
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
