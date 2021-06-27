@@ -20,9 +20,9 @@ type Options struct {
 	// EndBackground is called.
 	RefreshInterval *time.Duration
 
-	// RefreshRateLimit limits the rate at which refresh requests are granted. Only one refresh request can be reserved
-	// at a time any refresh requests received while there is already a reservation are ignored. It does not make sense
-	// to have RefreshInterval's value shorter than this.
+	// RefreshRateLimit limits the rate at which refresh requests are granted. Only one refresh request can be queued
+	// at a time any refresh requests received while there is already a queue are ignored. It does not make sense to
+	// have RefreshInterval's value shorter than this.
 	RefreshRateLimit *time.Duration
 
 	// RefreshTimeout is the duration for the context used to create the HTTP request for a refresh of the JWKs. This
