@@ -215,8 +215,8 @@ func TestRateLimit(t *testing.T) {
 	jwksURL := server.URL + jwksFilePath
 
 	// Create the testing options.
-	refreshInterval := time.Second * 3
-	refreshRateLimit := time.Second
+	refreshInterval := time.Millisecond * 400
+	refreshRateLimit := time.Millisecond * 200
 	refreshTimeout := time.Minute
 	refreshUnknownKID := true
 	options := keyfunc.Options{
@@ -294,6 +294,7 @@ func TestRateLimit(t *testing.T) {
 
 	// Wait for the refresh interval to occur.
 	time.Sleep(refreshInterval)
+	refreshMux.Lock()
 	expected = uint(4)
 	if refreshes != expected {
 		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
