@@ -296,7 +296,7 @@ func TestRateLimit(t *testing.T) {
 	}
 	refreshMux.Unlock()
 
-	// Wait for the rate limiter to take the next reservation.
+	// Wait for the rate limiter to take the next queue.
 	time.Sleep(refreshRateLimit + time.Millisecond*100)
 	refreshMux.Lock()
 	expected = uint(3)
