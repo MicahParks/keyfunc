@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -171,6 +172,102 @@ func TestJWKs(t *testing.T) {
 		// End the background goroutine. Ineffectual without refresh interval.
 		jwks.EndBackground()
 	}
+}
+
+// TestRateLimit performs a test to confirm the rate limiter works as expected.
+func TestRateLimit(t *testing.T) {
+
+	// Create a temporary directory to serve the JWKs from.
+	tempDir, err := ioutil.TempDir("", "*")
+	if err != nil {
+		t.Errorf("Failed to create a temporary directory.\nError:%s\n", err.Error())
+		t.FailNow()
+	}
+	defer func() {
+		if err = os.RemoveAll(tempDir); err != nil {
+			t.Errorf("Failed to remove temporary directory.\nError:%s\n", err.Error())
+			t.FailNow()
+		}
+	}()
+
+	// Create an integer to keep track of how many times the JWKs has been refreshed.
+	refreshes := uint(0)
+	refreshMux := sync.Mutex{}
+
+	// Create the HTTP test server.
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+
+		// Increment the number of refreshes that have occurred.
+		refreshMux.Lock()
+		refreshes++
+		refreshMux.Unlock()
+
+		// Write the JWKs to the response, regardless of the request.
+		writer.WriteHeader(200)
+		writer.Header()["content-type"] = []string{"text/plain"} // TODO Change to application/json?
+		if _, serveErr := writer.Write([]byte(jwksJSON)); serveErr != nil {
+			t.Errorf("Failed to serve JWKs.\nError: %s\n", err.Error())
+		}
+	}))
+	defer server.Close()
+
+	// Set the JWKs URL.
+	jwksFilePath := "/example_jwks.json"
+	jwksURL := server.URL + jwksFilePath
+
+	// Create the testing options.
+	refreshInterval := time.Second
+	refreshRateLimit := time.Millisecond * 500
+	refreshTimeout := time.Second
+	refreshUnknownKID := true
+	options := keyfunc.Options{
+		RefreshErrorHandler: func(err error) {
+			t.Errorf("The package itself had an error.\nError: %s\n", err.Error())
+		},
+		RefreshInterval:   &refreshInterval,
+		RefreshRateLimit:  &refreshRateLimit,
+		RefreshTimeout:    &refreshTimeout,
+		RefreshUnknownKID: &refreshUnknownKID,
+	}
+
+	// Create the JWKs.
+	var jwks *keyfunc.JWKs
+	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
+		t.Errorf("Failed to create *keyfunc.JWKs.\nError:%s\n", err.Error())
+		t.FailNow()
+	}
+
+	// Create two JWTs with unknown kids.
+	token1 := "eyJraWQiOiI0NWU3ZDcyMiIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJUYXNodWFuIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0NzU2OTAwLCJpYXQiOjE2MjQ3NTY4OTUsImp0aSI6IjA5ZjkzZjljLTU0ZjMtNDM5Yi04Njg2LWZhMGYwMjlmYmIwZSJ9.g643vWnvDvR5u5TeCUaCblp-Ss8SPWoZrOxBo3y6WP9xQnRW63VSbacCirl-5nGRPoX6vostZAkRyUl62ICQHpTj3bRnDY4ZbkcQ42xtrWMBsI2Sw6dAmZtGsCR_tguQZmvdKE4gVNnFWLp0hBjCeLxPVbc59vC6njMdz7XHcOdW7RXN6iUYjLFoPAr4Qg93Vbrwfo9Qmkm8bDgbnuoJ3aQq0RFa02G1KC2-cx8SuUbxso_Uu7ddY6HDRL5OPF3xS9cKO5ty4zCfGYIVDhfH7V-zA2cJZyA2dlv3Ddd-ntU42aud0M4PcTTdjHf1CE29sCZHk5wTRgxsTjfWglYQQiVQJEkw6DD6kTlQ_MwN4p_OWNj06b55mXM6Bj9c9y8TfPLETDy_PRc1lHu1PuiizLg019JaGidpTLF8IdKTa9emkEnf2n8xWi-YMkkRk57hpuc56GmnBR0d8ODfuL0XILlQp2guFsVRo9A4Sdqy7fGdZGoSS4XzSR-TIEw7W_KSqlYCtWC0xNk1Kze3xSY2mDqrn1YFFlvXgXQlgzU8GN1eL7QRRQlxaPGti2wEH6OYH4A160nR_OM-zFBobpQn79g8HsK8yZgPiY0p94F6pvKBQtSHDBvAe3W0-UHYfspwT9cQGVgqCGol6A8XNeBlVQpko9ves4UgCRSb6o9u_p4"
+	token2 := "eyJraWQiOiIyYTFkODRhMCIsInR5cCI6IkpXVCIsImFsZyI6IkVTMzg0In0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJUYXNodWFuIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0NzU3MjExLCJpYXQiOjE2MjQ3NTcyMDYsImp0aSI6ImU4YjQ1YmIwLTczZjgtNDkzNi04MjQxLWE1OGFlZWMyZWE2NCJ9.6Isd4unU2TAmRB1SouaHBV9LUjFGIuhOrxkQlDjh6qKRgb7UsiPtQm87S2qrriLaFjyCmrmU6cDpVBpTOutjPxweIqT-1EfsS-dkENIVWPVgQ5-KuNu2jXyGYpPeFBUA"
+
+	// Use the JWKs jwk.KeyFunc to parse the tokens signed with unknown kids at nearly the same time.
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+	go func() {
+		defer waitGroup.Done()
+		if _, parseErr := jwt.Parse(token1, jwks.KeyFunc); parseErr != nil {
+			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
+				t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+			}
+		}
+	}()
+	if _, parseErr := jwt.Parse(token2, jwks.KeyFunc); parseErr != nil {
+		if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
+			t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+			t.FailNow()
+		}
+	}
+	waitGroup.Wait()
+
+	// Confirm the JWKs was only refreshed once.
+	refreshMux.Lock()
+	expected := uint(2)
+	if refreshes != expected {
+		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
+		t.FailNow()
+	}
+	refreshMux.Unlock()
 }
 
 // TestUnknownKIDRefresh performs a test to confirm that an Unknown kid with refresh the JWKs.
