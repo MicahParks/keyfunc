@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -42,13 +44,16 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 	}
 
 	// Check to see if a background refresh of the JWKs should happen.
-	if jwks.refreshInterval != nil {
+	if jwks.refreshInterval != nil { // TODO More conditions can allow this code.
 
 		// Attach a channel to end the background goroutine.
-		jwks.endBackground = make(chan struct{})
+		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
+
+		// Create a channel that will accept requests to refresh the JWKs.
+		jwks.refreshRequests = make(chan context.CancelFunc)
 
 		// Start the background goroutine for data refresh.
-		go jwks.backgroundRefresh()
+		go jwks.backgroundRefresh() // TODO Pass all options not needed in refresh?
 	}
 
 	return jwks, nil
@@ -57,20 +62,68 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 // backgroundRefresh is meant to be a separate goroutine that will update the keys in a JWKs over a given interval of
 // time.
 func (j *JWKs) backgroundRefresh() {
+
+	// Create the rate limiter.
+	var limiter *rate.Limiter
+	if j.refreshRateLimit != nil {
+		every := rate.Every(*j.refreshRateLimit)
+		limiter = rate.NewLimiter(every, 1)
+	}
+
+	// Create a channel that will never send anything unless there is a refresh interval.
+	refreshInterval := make(<-chan time.Time)
+
+	// Enter an infinite loop that ends when the background ends.
 	for {
+
+		// If there is a refresh interval, create the channel for it.
+		if j.refreshInterval != nil {
+			refreshInterval = time.After(*j.refreshInterval)
+		}
+
+		// Wait for a refresh to occur or the background to end.
 		select {
 
-		// Refresh the JWKs after the given interval.
-		case <-time.After(*j.refreshInterval):
-			err := j.refresh()
-
-			// Handle an error, if any.
-			if err != nil && j.refreshErrorHandler != nil {
-				j.refreshErrorHandler(err)
+		// Send a refresh request the JWKs after the given interval.
+		case <-refreshInterval:
+			select {
+			case <-j.ctx.Done():
+				return
+			case j.refreshRequests <- func() {}:
 			}
 
-		// Clean up this goroutine.
-		case <-j.endBackground:
+		// Accept refresh requests.
+		case cancel := <-j.refreshRequests:
+
+			// Rate limit, if needed.
+			if limiter != nil && !limiter.Allow() {
+
+				// Create a reservation to refresh the JWKs.
+				reservation := limiter.Reserve()
+
+				// If there's already a reservation, ignore the refresh request.
+				if !reservation.OK() {
+					cancel()
+					continue
+				}
+
+				// Wait for the reservation to be ready or the context to end.
+				select {
+				case <-j.ctx.Done():
+					cancel()
+					return
+				case <-time.After(reservation.Delay()):
+				}
+			}
+
+			// Refresh the JWKs.
+			if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
+				j.refreshErrorHandler(err)
+			}
+			cancel()
+
+		// Clean up this goroutine when its context expires.
+		case <-j.ctx.Done():
 			return
 		}
 	}

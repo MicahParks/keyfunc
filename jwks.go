@@ -1,6 +1,7 @@
 package keyfunc
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -34,13 +35,15 @@ type JSONKey struct {
 // JWKs represents a JSON Web Key Set.
 type JWKs struct {
 	Keys                map[string]*JSONKey
+	cancel              context.CancelFunc
 	client              *http.Client
-	endBackground       chan struct{}
-	endOnce             sync.Once
+	ctx                 context.Context
 	jwksURL             string
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     *time.Duration
+	refreshRateLimit    *time.Duration
+	refreshRequests     chan context.CancelFunc
 	refreshTimeout      *time.Duration
 	refreshUnknownKID   bool
 }
@@ -74,11 +77,9 @@ func New(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
 // EndBackground ends the background goroutine to update the JWKs. It can only happen once and is only effective if the
 // JWKs has a background goroutine refreshing the JWKs keys.
 func (j *JWKs) EndBackground() {
-	j.endOnce.Do(func() {
-		if j.endBackground != nil {
-			close(j.endBackground)
-		}
-	})
+	if j.cancel != nil {
+		j.cancel()
+	}
 }
 
 // getKey gets the JSONKey from the given KID from the JWKs. It may refresh the JWKs if configured to.
@@ -96,11 +97,18 @@ func (j *JWKs) getKey(kid string) (jsonKey *JSONKey, err error) {
 		// Check to see if configured to refresh on unknown kid.
 		if j.refreshUnknownKID {
 
+			// Create a context for refreshing the JWKs.
+			ctx, cancel := context.WithCancel(j.ctx)
+
 			// Refresh the JWKs.
-			if err = j.refresh(); err != nil && j.refreshErrorHandler != nil {
-				j.refreshErrorHandler(err)
-				err = nil
+			select {
+			case <-j.ctx.Done():
+				return
+			case j.refreshRequests <- cancel:
 			}
+
+			// Wait for the JWKs refresh to done.
+			<-ctx.Done()
 
 			// Lock the JWKs for async safe use.
 			j.mux.RLock()
