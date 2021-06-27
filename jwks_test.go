@@ -215,8 +215,8 @@ func TestRateLimit(t *testing.T) {
 	jwksURL := server.URL + jwksFilePath
 
 	// Create the testing options.
-	refreshInterval := time.Millisecond * 400
-	refreshRateLimit := time.Millisecond * 200
+	refreshInterval := time.Second
+	refreshRateLimit := time.Millisecond * 500
 	refreshTimeout := time.Minute
 	refreshUnknownKID := true
 	options := keyfunc.Options{
@@ -283,7 +283,7 @@ func TestRateLimit(t *testing.T) {
 	refreshMux.Unlock()
 
 	// Wait for the rate limiter to take the next reservation.
-	time.Sleep(refreshRateLimit)
+	time.Sleep(refreshRateLimit + time.Millisecond*100)
 	refreshMux.Lock()
 	expected = uint(3)
 	if refreshes != expected {
@@ -293,7 +293,7 @@ func TestRateLimit(t *testing.T) {
 	refreshMux.Unlock()
 
 	// Wait for the refresh interval to occur.
-	time.Sleep(refreshInterval)
+	time.Sleep(refreshInterval + time.Millisecond*100)
 	refreshMux.Lock()
 	expected = uint(4)
 	if refreshes != expected {
