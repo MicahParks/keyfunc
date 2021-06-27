@@ -49,7 +49,7 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
 
 		// Create a channel that will accept requests to refresh the JWKs.
-		jwks.refreshRequests = make(chan context.CancelFunc, 2) // TODO Make this buffer configurable?
+		jwks.refreshRequests = make(chan context.CancelFunc, 1)
 
 		// Start the background goroutine for data refresh.
 		go jwks.backgroundRefresh()
@@ -90,6 +90,7 @@ func (j *JWKs) backgroundRefresh() {
 			case <-j.ctx.Done():
 				return
 			case j.refreshRequests <- func() {}:
+			default: // If the j.refreshRequests channel is full, don't don't send another request.
 			}
 
 		// Accept refresh requests.
