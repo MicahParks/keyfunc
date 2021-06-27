@@ -111,7 +111,7 @@ func (j *JWKs) backgroundRefresh() {
 
 						// Wait for the next time to refresh.
 						refreshMux.Lock()
-						wait := lastRefresh.Add(*j.refreshRateLimit).Sub(time.Now())
+						wait := time.Until(lastRefresh.Add(*j.refreshRateLimit))
 						refreshMux.Unlock()
 						select {
 						case <-j.ctx.Done():
