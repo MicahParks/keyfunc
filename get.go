@@ -46,7 +46,7 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 	// Check to see if a background refresh of the JWKs should happen.
 	if jwks.refreshInterval != nil || jwks.refreshRateLimit != nil || jwks.refreshUnknownKID {
 
-		// Attach a channel to end the background goroutine.
+		// Attach a context used to end the background goroutine.
 		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
 
 		// Create a channel that will accept requests to refresh the JWKs.
