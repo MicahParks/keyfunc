@@ -16,6 +16,7 @@ endpoint is using HTTPS to ensure the keys are from the correct trusted source.
 This repository has the following dependencies:
 * [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
 * [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
+* [golang.org/x/time](https://cs.opensource.google/go/x/time) (For rate limiting.)
 
 `jwt.Keyfunc` signatures are imported from these, implemented, then exported as methods.
 
@@ -73,7 +74,7 @@ Via HTTP:
 // Create the JWKs from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-	log.Fatalf("Failed to get the JWKs from the given URL.\nError: %s", err.Error())
+	log.Fatalf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
 }
 ```
 Via JSON:
@@ -84,7 +85,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKs from the resource at the given URL.
 jwks, err := keyfunc.New(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKs from JSON.\nError: %s", err.Error())
+	log.Fatalf("Failed to create JWKs from JSON.\nError:%s\n", err.Error())
 }
 ```
 
@@ -154,7 +155,9 @@ welcome though.
 	* A custom background refresh request context timeout can be specified. Defaults to one minute.
 	* A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
 	  silently.
-* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKs resource.
+	* A custom rate limit can be specified to prevent too many requests for a JWKs refresh.
+	* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKs resource. This should be
+	  paired with `RefreshRateLimit` to prevent abuse.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.

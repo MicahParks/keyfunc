@@ -20,14 +20,14 @@ func main() {
 	// Create the keyfunc options. Use an error handler that logs.
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
-			log.Printf("There was an error with the jwt.KeyFunc\nError: %s", err.Error())
+			log.Printf("There was an error with the jwt.KeyFunc\nError:%s\n", err.Error())
 		},
 	}
 
 	// Create the JWKs from the resource at the given URL.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError:%s\n", err.Error())
 	}
 
 	// Create the middleware provider.
