@@ -101,27 +101,37 @@ func (j *JWKs) backgroundRefresh() {
 				// Don't make the JWT parsing goroutine wait for the JWKs to refresh.
 				cancel()
 
-				// Create a reservation to refresh the JWKs.
-				reservation := limiter.Reserve()
+				// Launch a goroutine that will get a reservation for a JWKs refresh or fail to and immediately return.
+				go func() {
 
-				// If there's already a reservation, ignore the refresh request.
-				if !reservation.OK() {
-					continue
+					// Create a reservation to refresh the JWKs.
+					reservation := limiter.Reserve()
+
+					// If there's already a reservation, ignore the refresh request.
+					if !reservation.OK() {
+						return
+					}
+
+					// Wait for the reservation to be ready or the context to end.
+					select {
+					case <-j.ctx.Done():
+						return
+					case <-time.After(reservation.Delay()):
+					}
+
+					// Refresh the JWKs.
+					if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
+						j.refreshErrorHandler(err)
+					}
+				}()
+			} else {
+
+				// Refresh the JWKs.
+				if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
+					j.refreshErrorHandler(err)
 				}
-
-				// Wait for the reservation to be ready or the context to end.
-				select {
-				case <-j.ctx.Done():
-					return
-				case <-time.After(reservation.Delay()):
-				}
+				cancel()
 			}
-
-			// Refresh the JWKs.
-			if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
-				j.refreshErrorHandler(err)
-			}
-			cancel()
 
 		// Clean up this goroutine when its context expires.
 		case <-j.ctx.Done():
@@ -134,7 +144,13 @@ func (j *JWKs) backgroundRefresh() {
 func (j *JWKs) refresh() (err error) {
 
 	// Create a context for the request.
-	ctx, cancel := context.WithTimeout(context.Background(), *j.refreshTimeout)
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if j.ctx != nil {
+		ctx, cancel = context.WithTimeout(j.ctx, *j.refreshTimeout)
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), *j.refreshTimeout)
+	}
 	defer cancel()
 
 	// Create the HTTP request.
