@@ -17,7 +17,7 @@ func main() {
 	// Create the JWKs from the resource at the given URL.
 	jwks, err := keyfunc.New(jwksJSON)
 	if err != nil {
-		log.Fatalf("Failed to create JWKs from JSON.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKs from JSON.\nError:%s\n", err.Error())
 	}
 
 	// Get a JWT to parse.
@@ -26,7 +26,7 @@ func main() {
 	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwks.KeyFunc)
 	if err != nil {
-		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to parse the JWT.\nError:%s\n", err.Error())
 	}
 
 	// Check if the token is valid.
