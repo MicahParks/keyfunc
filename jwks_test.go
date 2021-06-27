@@ -204,7 +204,6 @@ func TestRateLimit(t *testing.T) {
 
 		// Write the JWKs to the response, regardless of the request.
 		writer.WriteHeader(200)
-		writer.Header()["content-type"] = []string{"text/plain"} // TODO Change to application/json?
 		if _, serveErr := writer.Write([]byte(jwksJSON)); serveErr != nil {
 			t.Errorf("Failed to serve JWKs.\nError: %s\n", err.Error())
 		}
@@ -216,9 +215,9 @@ func TestRateLimit(t *testing.T) {
 	jwksURL := server.URL + jwksFilePath
 
 	// Create the testing options.
-	refreshInterval := time.Hour
-	refreshRateLimit := time.Second * 500
-	refreshTimeout := time.Hour
+	refreshInterval := time.Second * 3
+	refreshRateLimit := time.Second
+	refreshTimeout := time.Minute
 	refreshUnknownKID := true
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
@@ -237,13 +236,19 @@ func TestRateLimit(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Create two JWTs with unknown kids.
+	// Create three JWTs with unknown kids.
+	//
+	// These should prompt two refreshes.
+	// The first one will not be rate limited.
+	// The second will get a rate limit reservation.
+	// The third will get no rate limit reservation and will be ignored because there is already a reservation.
 	token1 := "eyJraWQiOiI0NWU3ZDcyMiIsInR5cCI6IkpXVCIsImFsZyI6IlJTNTEyIn0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJUYXNodWFuIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0NzU2OTAwLCJpYXQiOjE2MjQ3NTY4OTUsImp0aSI6IjA5ZjkzZjljLTU0ZjMtNDM5Yi04Njg2LWZhMGYwMjlmYmIwZSJ9.g643vWnvDvR5u5TeCUaCblp-Ss8SPWoZrOxBo3y6WP9xQnRW63VSbacCirl-5nGRPoX6vostZAkRyUl62ICQHpTj3bRnDY4ZbkcQ42xtrWMBsI2Sw6dAmZtGsCR_tguQZmvdKE4gVNnFWLp0hBjCeLxPVbc59vC6njMdz7XHcOdW7RXN6iUYjLFoPAr4Qg93Vbrwfo9Qmkm8bDgbnuoJ3aQq0RFa02G1KC2-cx8SuUbxso_Uu7ddY6HDRL5OPF3xS9cKO5ty4zCfGYIVDhfH7V-zA2cJZyA2dlv3Ddd-ntU42aud0M4PcTTdjHf1CE29sCZHk5wTRgxsTjfWglYQQiVQJEkw6DD6kTlQ_MwN4p_OWNj06b55mXM6Bj9c9y8TfPLETDy_PRc1lHu1PuiizLg019JaGidpTLF8IdKTa9emkEnf2n8xWi-YMkkRk57hpuc56GmnBR0d8ODfuL0XILlQp2guFsVRo9A4Sdqy7fGdZGoSS4XzSR-TIEw7W_KSqlYCtWC0xNk1Kze3xSY2mDqrn1YFFlvXgXQlgzU8GN1eL7QRRQlxaPGti2wEH6OYH4A160nR_OM-zFBobpQn79g8HsK8yZgPiY0p94F6pvKBQtSHDBvAe3W0-UHYfspwT9cQGVgqCGol6A8XNeBlVQpko9ves4UgCRSb6o9u_p4"
 	token2 := "eyJraWQiOiIyYTFkODRhMCIsInR5cCI6IkpXVCIsImFsZyI6IkVTMzg0In0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJUYXNodWFuIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0NzU3MjExLCJpYXQiOjE2MjQ3NTcyMDYsImp0aSI6ImU4YjQ1YmIwLTczZjgtNDkzNi04MjQxLWE1OGFlZWMyZWE2NCJ9.6Isd4unU2TAmRB1SouaHBV9LUjFGIuhOrxkQlDjh6qKRgb7UsiPtQm87S2qrriLaFjyCmrmU6cDpVBpTOutjPxweIqT-1EfsS-dkENIVWPVgQ5-KuNu2jXyGYpPeFBUA"
+	token3 := "eyJraWQiOiIxZjEyOGFkZSIsInR5cCI6IkpXVCIsImFsZyI6IkVTMjU2In0.eyJzdWIiOiJSZWJlY2NhIiwiYXVkIjoiQWxpY2UiLCJpc3MiOiJqd2tzLXNlcnZpY2UuYXBwc3BvdC5jb20iLCJleHAiOjE2MjQ3NTkzODIsImlhdCI6MTYyNDc1OTM3NywianRpIjoiMzU2MWY4MDctNDRkNi00OWE5LWFlYWItMmQ1MjQ2YWYxNDhlIn0.5eZbJlvnaFsRwPhBHmXljp9vgsrB0Q9d3dSz4va29ahTKsFGFo8tYy0e69ehqSb-dbFy9azRRtygwwtYuaEFuA"
 
 	// Use the JWKs jwk.KeyFunc to parse the tokens signed with unknown kids at nearly the same time.
 	waitGroup := sync.WaitGroup{}
-	waitGroup.Add(1)
+	waitGroup.Add(2)
 	go func() {
 		defer waitGroup.Done()
 		if _, parseErr := jwt.Parse(token1, jwks.KeyFunc); parseErr != nil {
@@ -252,7 +257,15 @@ func TestRateLimit(t *testing.T) {
 			}
 		}
 	}()
-	if _, parseErr := jwt.Parse(token2, jwks.KeyFunc); parseErr != nil {
+	go func() {
+		defer waitGroup.Done()
+		if _, parseErr := jwt.Parse(token2, jwks.KeyFunc); parseErr != nil {
+			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
+				t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+			}
+		}
+	}()
+	if _, parseErr := jwt.Parse(token3, jwks.KeyFunc); parseErr != nil {
 		if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
 			t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
 			t.FailNow()
@@ -260,9 +273,28 @@ func TestRateLimit(t *testing.T) {
 	}
 	waitGroup.Wait()
 
-	// Confirm the JWKs was only refreshed once.
+	// Confirm the JWKs was only refreshed once. (Refresh counter was first incremented on the creation of the JWKs.)
 	refreshMux.Lock()
 	expected := uint(2)
+	if refreshes != expected {
+		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
+		t.FailNow()
+	}
+	refreshMux.Unlock()
+
+	// Wait for the rate limiter to take the next reservation.
+	time.Sleep(refreshRateLimit)
+	refreshMux.Lock()
+	expected = uint(3)
+	if refreshes != expected {
+		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
+		t.FailNow()
+	}
+	refreshMux.Unlock()
+
+	// Wait for the refresh interval to occur.
+	time.Sleep(refreshInterval)
+	expected = uint(4)
 	if refreshes != expected {
 		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
 		t.FailNow()
