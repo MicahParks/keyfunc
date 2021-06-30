@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	legacy "github.com/dgrijalva/jwt-go"
 	f3t "github.com/form3tech-oss/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 var (
@@ -57,6 +58,20 @@ func (j *JWKs) KeyFuncF3T(f3tToken *f3t.Token) (interface{}, error) {
 		Claims:    f3tToken.Claims,
 		Signature: f3tToken.Signature,
 		Valid:     f3tToken.Valid,
+	}
+	return j.KeyFunc(token)
+}
+
+// KeyFuncLegacy is a compatibility function that matches the signature of the legacy github.com/dgrijalva/jwt-go's
+// KeyFunc function.
+func (j *JWKs) KeyFuncLegacy(legacyToken *legacy.Token) (interface{}, error) {
+	token := &jwt.Token{
+		Raw:       legacyToken.Raw,
+		Method:    legacyToken.Method,
+		Header:    legacyToken.Header,
+		Claims:    legacyToken.Claims,
+		Signature: legacyToken.Signature,
+		Valid:     legacyToken.Valid,
 	}
 	return j.KeyFunc(token)
 }
