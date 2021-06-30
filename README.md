@@ -139,6 +139,12 @@ jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 })
 ```
 
+### Support for [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+This project originally only supported [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go), but since it
+is no longer maintained, it's method was moved
+to [`JWKs.KeyFuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFuncLegacy) if you have not moved to
+[github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt) yet.
+
 ## Test coverage
 
 Test coverage is currently at `87.4%`.
