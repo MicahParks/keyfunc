@@ -66,7 +66,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-log.Fatalln("JWKS_URL environment variable must be populated.")
+	log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -76,7 +76,7 @@ Via HTTP:
 // Create the JWKs from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-log.Fatalf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
+	log.Fatalf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
 }
 ```
 Via JSON:
@@ -87,7 +87,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKs from the resource at the given URL.
 jwks, err := keyfunc.New(jwksJSON)
 if err != nil {
-log.Fatalf("Failed to create JWKs from JSON.\nError:%s\n", err.Error())
+	log.Fatalf("Failed to create JWKs from JSON.\nError:%s\n", err.Error())
 }
 ```
 
@@ -101,7 +101,7 @@ additional features mentioned at the bottom of this `README.md`.
 // Parse the JWT.
 token, err := jwt.Parse(jwtB64, jwks.KeyFunc)
 if err != nil {
-return nil, fmt.Errorf("failed to parse token: %w", err)
+	return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
@@ -127,15 +127,15 @@ Please also see the `examples` directory.
 // Create the middleware provider.
 jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 
-// Use the correct version of the KeyFunc method.
-ValidationKeyGetter: jwks.KeyFuncF3T,
+	// Use the correct version of the KeyFunc method.
+	ValidationKeyGetter: jwks.KeyFuncF3T,
 
-// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
-//
-// This shouldn't matter for this keyfunc package, as the JWKs should be trusted and determines the key type,
-// but it's good practice.
-// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
-SigningMethod: jwt.SigningMethodRS256,
+	// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
+	//
+	// This shouldn't matter for this keyfunc package, as the JWKs should be trusted and determines the key type,
+	// but it's good practice.
+	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+	SigningMethod: jwt.SigningMethodRS256,
 })
 ```
 
