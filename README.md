@@ -3,17 +3,20 @@
 # keyfunc
 
 Purpose of this package is to provide a
-[`jwt.Keyfunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc) for the
-[github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) package and its popular forks using a JSON Web Key
-Set (JWKs) for parsing and verifying JSON Web Tokens (JWTs).
+[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt#Keyfunc) for the
+[github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt) package and its popular forks using a JSON Web Key Set
+(JWKs) for parsing and verifying JSON Web Tokens (JWTs). This
+was [formally](https://github.com/dgrijalva/jwt-go/issues/462)
+the [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) package.
 
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKs via an HTTPS endpoint. This package has the
 ability to consume that JWKs and produce a
-[`jwt.Keyfunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc). It is important that a JWKs
+[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt#Keyfunc). It is important that a JWKs
 endpoint is using HTTPS to ensure the keys are from the correct trusted source.
 
 This repository has the following dependencies:
+* [github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt)
 * [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
 * [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
 
@@ -63,7 +66,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-	log.Fatalln("JWKS_URL environment variable must be populated.")
+log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -73,7 +76,7 @@ Via HTTP:
 // Create the JWKs from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL)
 if err != nil {
-	log.Fatalf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
+log.Fatalf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
 }
 ```
 Via JSON:
@@ -84,7 +87,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKs from the resource at the given URL.
 jwks, err := keyfunc.New(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKs from JSON.\nError:%s\n", err.Error())
+log.Fatalf("Failed to create JWKs from JSON.\nError:%s\n", err.Error())
 }
 ```
 
@@ -92,13 +95,13 @@ Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/githu
 via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) and the
 additional features mentioned at the bottom of this `README.md`.
 
-### Step 2: Use the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's [`JWKs.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/dgrijalva/jwt-go@v3.2.0+incompatible#Keyfunc) when parsing tokens
+### Step 2: Use the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's [`JWKs.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt#Keyfunc) when parsing tokens
 
 ```go
 // Parse the JWT.
 token, err := jwt.Parse(jwtB64, jwks.KeyFunc)
 if err != nil {
-	return nil, fmt.Errorf("failed to parse token: %w", err)
+return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
@@ -107,8 +110,8 @@ key with the matching `kid` (if present) and return its public key as the correc
 
 ## Fork support
 
-Some packages use forks of [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go). This package aims to
-support the most popular use cases of these forks.
+Some packages use forks of [github.com/golang-jwt/jwt](https://github.com/golang-jwt/jwt). This package aims to support
+the most popular use cases of these forks.
 
 If additional forks are required for your use case, please feel free to open an issue or PR.
 
@@ -124,15 +127,15 @@ Please also see the `examples` directory.
 // Create the middleware provider.
 jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 
-	// Use the correct version of the KeyFunc method.
-	ValidationKeyGetter: jwks.KeyFuncF3T,
+// Use the correct version of the KeyFunc method.
+ValidationKeyGetter: jwks.KeyFuncF3T,
 
-	// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
-	//
-	// This shouldn't matter for this keyfunc package, as the JWKs should be trusted and determines the key type,
-	// but it's good practice.
-	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
-	SigningMethod: jwt.SigningMethodRS256,
+// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
+//
+// This shouldn't matter for this keyfunc package, as the JWKs should be trusted and determines the key type,
+// but it's good practice.
+// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+SigningMethod: jwt.SigningMethodRS256,
 })
 ```
 
