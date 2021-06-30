@@ -138,7 +138,7 @@ jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 
 ## Test coverage
 
-Test coverage is currently at `88.5%`.
+Test coverage is currently at `87.4%`.
 
 This is with current and expired JWTs, but the hard coded ones are now expired. Using non-expired JWTs would require
 signing JWTs during testing and would allow for additional error checking. But a bit overkill since I've already done
