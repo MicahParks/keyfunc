@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -15,7 +16,9 @@ func main() {
 	//
 	// See the AWS docs here:
 	// https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
-	jwksURL := "https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json"
+	regionID := ""   // TODO Get the region ID for your AWS Cognito instance.
+	userPoolID := "" // TODO Get the user pool ID of your AWS Cognito instance.
+	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, userPoolID)
 
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
 	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKs refresh request after
