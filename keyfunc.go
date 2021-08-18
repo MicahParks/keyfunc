@@ -6,7 +6,7 @@ import (
 
 	legacy "github.com/dgrijalva/jwt-go"
 	f3t "github.com/form3tech-oss/jwt-go"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 var (
