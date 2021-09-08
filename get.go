@@ -200,5 +200,14 @@ func (j *JWKs) refresh() (err error) {
 	// Update the keys.
 	j.Keys = updated.Keys
 
+	// If the JWKs have given keys, add them to the map.
+	if j.GivenKeys != nil {
+		for kid, key := range j.GivenKeys {
+			j.Keys[kid] = &JSONKey{
+				precomputed: key,
+			}
+		}
+	}
+
 	return nil
 }

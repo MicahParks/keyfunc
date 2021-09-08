@@ -33,8 +33,9 @@ type JSONKey struct {
 }
 
 // JWKs represents a JSON Web Key Set.
-type JWKs struct {
-	Keys                map[string]*JSONKey
+type JWKs struct { // It's JWKs, not JWKS https://datatracker.ietf.org/doc/html/rfc7517#section-2
+	Keys                map[string]*JSONKey // TODO Make this a map to not pointers.
+	GivenKeys           map[string]GivenKey
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context

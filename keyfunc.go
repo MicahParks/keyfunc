@@ -18,7 +18,7 @@ var (
 	ErrUnsupportedKeyType = errors.New("the JWT key type is unsupported")
 )
 
-// KeyFunc is a compatibility function that matches the signature of github.com/dgrijalva/jwt-go's KeyFunc function.
+// KeyFunc is a compatibility function that matches the signature of github.com/golang-jwt/jwt/v4's KeyFunc function.
 func (j *JWKs) KeyFunc(token *jwt.Token) (interface{}, error) {
 
 	// Get the kid from the token header.
@@ -43,8 +43,15 @@ func (j *JWKs) KeyFunc(token *jwt.Token) (interface{}, error) {
 		return jsonKey.ECDSA()
 	case ps256, ps384, ps512, rs256, rs384, rs512:
 		return jsonKey.RSA()
+	case hs256, hs384, hs512:
+		return jsonKey.HMAC()
 	default:
-		return nil, fmt.Errorf("%w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
+
+		// Assume there's a given key for a custom algorithm.
+		if jsonKey.precomputed != nil {
+			return jsonKey.precomputed, nil
+		}
+		return nil, fmt.Errorf("unable to find given key for kid: %w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
 	}
 }
 
