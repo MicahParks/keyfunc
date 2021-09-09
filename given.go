@@ -25,7 +25,7 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKs) {
 
 	// Return a JWKs with the map of cryptographic keys.
 	return &JWKs{
-		Keys: keys,
+		keys: keys,
 	}
 }
 

@@ -34,12 +34,12 @@ type JSONKey struct {
 
 // JWKs represents a JSON Web Key Set.
 type JWKs struct { // It's JWKs, not JWKS https://datatracker.ietf.org/doc/html/rfc7517#section-2
-	Keys                map[string]*JSONKey
-	GivenKeys           map[string]GivenKey
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
+	givenKeys           map[string]GivenKey
 	jwksURL             string
+	keys                map[string]*JSONKey
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     *time.Duration
@@ -65,11 +65,11 @@ func New(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
 
 	// Iterate through the keys in the raw JWKs. Add them to the JWKs.
 	jwks = &JWKs{
-		Keys: make(map[string]*JSONKey, len(rawKS.Keys)),
+		keys: make(map[string]*JSONKey, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
 		key := key
-		jwks.Keys[key.ID] = &key
+		jwks.keys[key.ID] = &key
 	}
 
 	return jwks, nil
@@ -89,7 +89,7 @@ func (j *JWKs) getKey(kid string) (jsonKey *JSONKey, err error) {
 	// Get the JSONKey from the JWKs.
 	var ok bool
 	j.mux.RLock()
-	jsonKey, ok = j.Keys[kid]
+	jsonKey, ok = j.keys[kid]
 	j.mux.RUnlock()
 
 	// Check if the key was present.
@@ -120,7 +120,7 @@ func (j *JWKs) getKey(kid string) (jsonKey *JSONKey, err error) {
 			defer j.mux.RUnlock()
 
 			// Check if the JWKs refresh contained the requested key.
-			if jsonKey, ok = j.Keys[kid]; ok {
+			if jsonKey, ok = j.keys[kid]; ok {
 				return jsonKey, nil
 			}
 		}

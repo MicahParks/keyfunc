@@ -1,6 +1,7 @@
 package keyfunc
 
 import (
+	"context"
 	"net/http"
 	"time"
 )
@@ -10,6 +11,10 @@ type Options struct {
 
 	// Client is the HTTP client used to get the JWKs via HTTP.
 	Client *http.Client
+
+	// Ctx is the context for the keyfunc's background refresh. When the context expires or is canceled, the background
+	// goroutine will end.
+	Ctx context.Context
 
 	// GivenKeys is a map of JWT key IDs, `kid`, to their given keys. If the JWKs is set to refresh in the background,
 	// these values persist across JWKs refreshes, but will be overwritten if the remote JWKs resource contains a key
@@ -45,12 +50,15 @@ func applyOptions(jwks *JWKs, options Options) {
 	if options.Client != nil {
 		jwks.client = options.Client
 	}
+	if options.Ctx != nil {
+		jwks.ctx, jwks.cancel = context.WithCancel(options.Ctx)
+	}
 	if options.GivenKeys != nil {
-		if jwks.GivenKeys == nil {
-			jwks.GivenKeys = make(map[string]GivenKey)
+		if jwks.givenKeys == nil {
+			jwks.givenKeys = make(map[string]GivenKey)
 		}
 		for kid, key := range options.GivenKeys {
-			jwks.GivenKeys[kid] = key
+			jwks.givenKeys[kid] = key
 		}
 	}
 	if options.RefreshErrorHandler != nil {

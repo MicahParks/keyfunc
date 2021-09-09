@@ -198,12 +198,12 @@ func (j *JWKs) refresh() (err error) {
 	defer j.mux.Unlock()
 
 	// Update the keys.
-	j.Keys = updated.Keys
+	j.keys = updated.keys
 
 	// If the JWKs have given keys, add them to the map.
-	if j.GivenKeys != nil {
-		for kid, key := range j.GivenKeys {
-			j.Keys[kid] = &JSONKey{
+	if j.givenKeys != nil {
+		for kid, key := range j.givenKeys {
+			j.keys[kid] = &JSONKey{
 				precomputed: key,
 			}
 		}
