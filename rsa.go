@@ -28,8 +28,8 @@ const (
 	ps512 = "PS512"
 )
 
-// RSA parses a JSONKey and turns it into an RSA public key.
-func (j *JSONKey) RSA() (publicKey *rsa.PublicKey, err error) {
+// RSA parses a jsonKey and turns it into an RSA public key.
+func (j *jsonKey) RSA() (publicKey *rsa.PublicKey, err error) {
 
 	// Check if the key has already been computed.
 	if j.precomputed != nil {

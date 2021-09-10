@@ -18,8 +18,8 @@ const (
 
 // HMAC returns the HMAC key used for parsing and verifying the JWT.
 //
-// The JSONKey data structure does not
-func (j *JSONKey) HMAC() (key []byte, err error) {
+// The jsonKey data structure does not
+func (j *jsonKey) HMAC() (key []byte, err error) {
 
 	// Confirm the key is already present as expected.
 	if j.precomputed != nil {
