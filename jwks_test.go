@@ -1,6 +1,7 @@
 package keyfunc_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	jwtLegacy "github.com/dgrijalva/jwt-go"
+	jwtF3T "github.com/form3tech-oss/jwt-go"
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/MicahParks/keyfunc"
@@ -33,7 +36,7 @@ func TestInvalidServer(t *testing.T) {
 	// Create the HTTP test server.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		if _, err := w.Write(nil); err != nil {
-			t.Errorf("Failed to write empty response.\nError: %s\n", err.Error())
+			t.Errorf("Failed to write empty response.\nError: %s", err.Error())
 			t.FailNow()
 		}
 	}))
@@ -62,17 +65,15 @@ func TestInvalidServer(t *testing.T) {
 // TestJWKs performs a table test on the JWKs code.
 func TestJWKs(t *testing.T) {
 
-	// Could add a test with an invalid JWKs endpoint.
-
 	// Create a temporary directory to serve the JWKs from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError:%s\n", err.Error())
+		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 	defer func() {
 		if err = os.RemoveAll(tempDir); err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError:%s\n", err.Error())
+			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
 	}()
@@ -82,7 +83,7 @@ func TestJWKs(t *testing.T) {
 
 	// Write the empty JWKs.
 	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
-		t.Errorf("Failed to write JWKs file to temporary directory.\nError:%s\n", err.Error())
+		t.Errorf("Failed to write JWKs file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
@@ -95,8 +96,7 @@ func TestJWKs(t *testing.T) {
 	testingRateLimit := time.Millisecond * 500
 	testingRefreshTimeout := time.Second
 	testingRefreshErrorHandler := func(err error) {
-		t.Errorf("Unhandled JWKs error: %s", err.Error())
-		t.FailNow()
+		panic(fmt.Sprintf("Unhandled JWKs error: %s", err.Error()))
 	}
 
 	// Set the JWKs URL.
@@ -110,16 +110,22 @@ func TestJWKs(t *testing.T) {
 			Client: http.DefaultClient, // Should be ineffectual. Just for code coverage.
 		},
 		{
-			RefreshInterval: &testingRefreshInterval,
+			Ctx: context.Background(), // Should be ineffectual. Just for code coverage.
 		},
 		{
-			RefreshTimeout: &testingRefreshTimeout,
+			GivenKeys: nil, // TODO
 		},
 		{
 			RefreshErrorHandler: testingRefreshErrorHandler,
 		},
 		{
+			RefreshInterval: &testingRefreshInterval,
+		},
+		{
 			RefreshRateLimit: &testingRateLimit,
+		},
+		{
+			RefreshTimeout: &testingRefreshTimeout,
 		},
 	}
 
@@ -129,7 +135,7 @@ func TestJWKs(t *testing.T) {
 		// Create the JWKs from the resource at the testing URL.
 		jwks, err := keyfunc.Get(jwksURL, opts)
 		if err != nil {
-			t.Errorf("Failed to get JWKs from testing URL.\nError:%s\n", err.Error())
+			t.Errorf("Failed to get JWKs from testing URL.\nError: %s", err.Error())
 			t.FailNow()
 		}
 
@@ -160,13 +166,27 @@ func TestJWKs(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("token: %s", tc.token), func(t *testing.T) {
 
-				// Use the JWKs jwk.KeyFunc to parse the token.
+				// Use the JWKs jwt.Keyfunc to parse the token.
 				//
 				// Don't check for general errors. Unfortunately, an error occurs when a token is expired. All hard
 				// coded tokens are expired.
-				if _, err = jwt.Parse(tc.token, jwks.KeyFunc); err != nil {
+				if _, err = jwt.Parse(tc.token, jwks.Keyfunc); err != nil {
 					if errors.Is(err, jwt.ErrInvalidKeyType) {
-						t.Errorf("Invaild key type selected.\nError:%s\n", err.Error())
+						t.Errorf("Invaild key type selected.\nError: %s", err.Error())
+						t.FailNow()
+					}
+				}
+
+				// Use the JWKs jwt.Keyfunc to parse the token for supported forks.
+				if _, err = jwtLegacy.Parse(tc.token, jwks.KeyfuncLegacy); err != nil {
+					if errors.Is(err, jwt.ErrInvalidKeyType) {
+						t.Errorf("Invaild key type selected for legacy.\nError: %s", err.Error())
+						t.FailNow()
+					}
+				}
+				if _, err = jwtF3T.Parse(tc.token, jwks.KeyfuncF3T); err != nil {
+					if errors.Is(err, jwt.ErrInvalidKeyType) {
+						t.Errorf("Invaild key type selected for F3T.\nError: %s", err.Error())
 						t.FailNow()
 					}
 				}
@@ -184,12 +204,12 @@ func TestRateLimit(t *testing.T) {
 	// Create a temporary directory to serve the JWKs from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError:%s\n", err.Error())
+		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 	defer func() {
 		if err = os.RemoveAll(tempDir); err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError:%s\n", err.Error())
+			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
 	}()
@@ -209,7 +229,7 @@ func TestRateLimit(t *testing.T) {
 		// Write the JWKs to the response, regardless of the request.
 		writer.WriteHeader(200)
 		if _, serveErr := writer.Write([]byte(jwksJSON)); serveErr != nil {
-			t.Errorf("Failed to serve JWKs.\nError: %s\n", err.Error())
+			t.Errorf("Failed to serve JWKs.\nError: %s", err.Error())
 		}
 	}))
 	defer server.Close()
@@ -225,7 +245,7 @@ func TestRateLimit(t *testing.T) {
 	refreshUnknownKID := true
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
-			t.Errorf("The package itself had an error.\nError: %s\n", err.Error())
+			t.Errorf("The package itself had an error.\nError: %s", err.Error())
 		},
 		RefreshInterval:   &refreshInterval,
 		RefreshRateLimit:  &refreshRateLimit,
@@ -236,7 +256,7 @@ func TestRateLimit(t *testing.T) {
 	// Create the JWKs.
 	var jwks *keyfunc.JWKs
 	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
-		t.Errorf("Failed to create *keyfunc.JWKs.\nError:%s\n", err.Error())
+		t.Errorf("Failed to create *keyfunc.JWKs.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
@@ -252,36 +272,36 @@ func TestRateLimit(t *testing.T) {
 	token3 := "eyJraWQiOiIxZjEyOGFkZSIsInR5cCI6IkpXVCIsImFsZyI6IkVTMjU2In0.eyJzdWIiOiJSZWJlY2NhIiwiYXVkIjoiQWxpY2UiLCJpc3MiOiJqd2tzLXNlcnZpY2UuYXBwc3BvdC5jb20iLCJleHAiOjE2MjQ3NTkzODIsImlhdCI6MTYyNDc1OTM3NywianRpIjoiMzU2MWY4MDctNDRkNi00OWE5LWFlYWItMmQ1MjQ2YWYxNDhlIn0.5eZbJlvnaFsRwPhBHmXljp9vgsrB0Q9d3dSz4va29ahTKsFGFo8tYy0e69ehqSb-dbFy9azRRtygwwtYuaEFuA"
 	token4 := "eyJraWQiOiIyZDQ3NjUwYSIsInR5cCI6IkpXVCIsImFsZyI6IlBTMzg0In0.eyJzdWIiOiJGcmVkYSIsImF1ZCI6Ikx1Y2lhIiwiaXNzIjoiandrcy1zZXJ2aWNlLmFwcHNwb3QuY29tIiwiZXhwIjoxNjI0ODA0MTk0LCJpYXQiOjE2MjQ4MDQxODksImp0aSI6IjdjNTQ2Y2RmLTYwMTEtNDI3Ny04Y2Q0LTMwNjZmZTYwNTExZSJ9.hQm-OP_MMk8_S13-ohiINRuDP2IlCiB3yn8Ov6qTjeFbq4gZ6MegeJH_qiZOvXqlzOAwpwd5P4nm5JeS6LlNGdW6V_agwYwnAd08GI7APQNRib692_sEk1DKdSk-S-Y8V_ZAgeTT8asdaSDw4EBPxkDvROcuEqesZrfqnrOcpdqqa2BcmwX8q5sLtQ8TMp4cOvEZg-J8_0j2kdCUkv_n9ZdsRoA3EUT8M1bYqnGRRxIRqflsm-S_xq3HxMAnPF5hPlqIKFVKuRsU0SKgcHZGwXpuK2lJqPobl6MI987tGrc9sPPFzVkNYxeltcxu34-ZjzN6iCQN8r0w-mfqCZav7A"
 
-	// Use the JWKs jwk.KeyFunc to parse the tokens signed with unknown kids at nearly the same time.
+	// Use the JWKs jwk.Keyfunc to parse the tokens signed with unknown kids at nearly the same time.
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(3)
 	go func() {
 		defer waitGroup.Done()
-		if _, parseErr := jwt.Parse(token1, jwks.KeyFunc); parseErr != nil {
+		if _, parseErr := jwt.Parse(token1, jwks.Keyfunc); parseErr != nil {
 			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-				t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+				t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
 			}
 		}
 	}()
 	go func() {
 		defer waitGroup.Done()
-		if _, parseErr := jwt.Parse(token2, jwks.KeyFunc); parseErr != nil {
+		if _, parseErr := jwt.Parse(token2, jwks.Keyfunc); parseErr != nil {
 			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-				t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+				t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
 			}
 		}
 	}()
 	go func() {
 		defer waitGroup.Done()
-		if _, parseErr := jwt.Parse(token3, jwks.KeyFunc); parseErr != nil {
+		if _, parseErr := jwt.Parse(token3, jwks.Keyfunc); parseErr != nil {
 			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-				t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+				t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
 			}
 		}
 	}()
-	if _, parseErr := jwt.Parse(token4, jwks.KeyFunc); parseErr != nil {
+	if _, parseErr := jwt.Parse(token4, jwks.Keyfunc); parseErr != nil {
 		if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-			t.Errorf("Invaild key type selected.\nError:%s\n", parseErr.Error())
+			t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
 			t.FailNow()
 		}
 	}
@@ -323,12 +343,12 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	// Create a temporary directory to serve the JWKs from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError:%s\n", err.Error())
+		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 	defer func() {
 		if err = os.RemoveAll(tempDir); err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError:%s\n", err.Error())
+			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
 	}()
@@ -338,7 +358,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 
 	// Write the empty JWKs.
 	if err = ioutil.WriteFile(jwksFile, []byte(emptyJWKsJSON), 0600); err != nil {
-		t.Errorf("Failed to write JWKs file to temporary directory.\nError:%s\n", err.Error())
+		t.Errorf("Failed to write JWKs file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
@@ -365,26 +385,26 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	// Create the JWKs.
 	var jwks *keyfunc.JWKs
 	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
-		t.Errorf("Failed to create *keyfunc.JWKs.\nError:%s\n", err.Error())
+		t.Errorf("Failed to create *keyfunc.JWKs.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
 	// Write the empty JWKs.
 	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
-		t.Errorf("Failed to write JWKs file to temporary directory.\nError:%s\n", err.Error())
+		t.Errorf("Failed to write JWKs file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
 	// Use any JWT signed by a key in the non-empty JWKs.
 	token := "eyJhbGciOiJFUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJDR3QwWldTNExjNWZhaUtTZGkwdFUwZmpDQWR2R1JPUVJHVTlpUjd0VjBBIn0.eyJleHAiOjE2MTU0MDY4NjEsImlhdCI6MTYxNTQwNjgwMSwianRpIjoiYWVmOWQ5YjItN2EyYy00ZmQ4LTk4MzktODRiMzQ0Y2VmYzZhIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhZDEyOGRmMS0xMTQwLTRlNGMtYjA5Ny1hY2RjZTcwNWJkOWIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ0b2tlbmRlbG1lIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwiY2xpZW50SG9zdCI6IjE3Mi4yMC4wLjEiLCJjbGllbnRJZCI6InRva2VuZGVsbWUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UtYWNjb3VudC10b2tlbmRlbG1lIiwiY2xpZW50QWRkcmVzcyI6IjE3Mi4yMC4wLjEifQ.iQ77QGoPDNjR2oWLu3zT851mswP8J-h_nrGhs3fpa_tFB3FT1deKPGkjef9JOTYFI-CIVxdCFtW3KODOaw9Nrw"
 
-	// Use the JWKs jwk.KeyFunc to parse the token.
+	// Use the JWKs jwk.Keyfunc to parse the token.
 	//
 	// Don't check for general errors. Unfortunately, an error occurs when a token is expired. All hard
 	// coded tokens are expired.
-	if _, err = jwt.Parse(token, jwks.KeyFunc); err != nil {
+	if _, err = jwt.Parse(token, jwks.Keyfunc); err != nil {
 		if errors.Is(err, jwt.ErrInvalidKeyType) {
-			t.Errorf("Invaild key type selected.\nError:%s\n", err.Error())
+			t.Errorf("Invaild key type selected.\nError: %s", err.Error())
 			t.FailNow()
 		}
 	}

@@ -29,8 +29,8 @@ const (
 	p521 = "P-521"
 )
 
-// ECDSA parses a JSONKey and turns it into an ECDSA public key.
-func (j *JSONKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
+// ECDSA parses a jsonKey and turns it into an ECDSA public key.
+func (j *jsonKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 
 	// Check if the key has already been computed.
 	if j.precomputed != nil {

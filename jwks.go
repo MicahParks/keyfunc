@@ -21,8 +21,8 @@ var (
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
 
-// JSONKey represents a raw key inside a JWKs.
-type JSONKey struct {
+// jsonKey represents a raw key inside a JWKs.
+type jsonKey struct {
 	Curve       string `json:"crv"`
 	Exponent    string `json:"e"`
 	ID          string `json:"kid"`
@@ -38,8 +38,9 @@ type JWKs struct { // It's JWKs, not JWKS https://datatracker.ietf.org/doc/html/
 	client              *http.Client
 	ctx                 context.Context
 	givenKeys           map[string]GivenKey
+	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]*JSONKey
+	keys                map[string]*jsonKey
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     *time.Duration
@@ -51,7 +52,7 @@ type JWKs struct { // It's JWKs, not JWKS https://datatracker.ietf.org/doc/html/
 
 // rawJWKs represents a JWKs in JSON format.
 type rawJWKs struct {
-	Keys []JSONKey `json:"keys"`
+	Keys []jsonKey `json:"keys"`
 }
 
 // New creates a new JWKs from a raw JSON message.
@@ -65,7 +66,7 @@ func New(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
 
 	// Iterate through the keys in the raw JWKs. Add them to the JWKs.
 	jwks = &JWKs{
-		keys: make(map[string]*JSONKey, len(rawKS.Keys)),
+		keys: make(map[string]*jsonKey, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
 		key := key
@@ -83,10 +84,10 @@ func (j *JWKs) EndBackground() {
 	}
 }
 
-// getKey gets the JSONKey from the given KID from the JWKs. It may refresh the JWKs if configured to.
-func (j *JWKs) getKey(kid string) (jsonKey *JSONKey, err error) {
+// getKey gets the jsonKey from the given KID from the JWKs. It may refresh the JWKs if configured to.
+func (j *JWKs) getKey(kid string) (jsonKey *jsonKey, err error) {
 
-	// Get the JSONKey from the JWKs.
+	// Get the jsonKey from the JWKs.
 	var ok bool
 	j.mux.RLock()
 	jsonKey, ok = j.keys[kid]

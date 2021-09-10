@@ -43,7 +43,7 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 	}
 
 	// Check to see if a background refresh of the JWKs should happen.
-	if jwks.refreshInterval != nil || jwks.refreshRateLimit != nil || jwks.refreshUnknownKID {
+	if jwks.refreshInterval != nil || jwks.refreshUnknownKID {
 
 		// Attach a context used to end the background goroutine.
 		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
@@ -200,10 +200,20 @@ func (j *JWKs) refresh() (err error) {
 	// Update the keys.
 	j.keys = updated.keys
 
-	// If the JWKs have given keys, add them to the map.
+	// If given keys were provided, add them back into the refreshed JWKs.
+	var ok bool
 	if j.givenKeys != nil {
 		for kid, key := range j.givenKeys {
-			j.keys[kid] = &JSONKey{
+
+			// Only overwrite the key if configured to do so.
+			if !j.givenKIDOverride {
+				if _, ok = j.keys[kid]; ok {
+					continue
+				}
+			}
+
+			// Write the given key to the JWKs.
+			j.keys[kid] = &jsonKey{
 				precomputed: key,
 			}
 		}

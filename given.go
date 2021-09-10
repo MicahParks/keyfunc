@@ -14,11 +14,11 @@ type GivenKey struct {
 func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKs) {
 
 	// Initialize the map of kid to cryptographic keys.
-	keys := make(map[string]*JSONKey)
+	keys := make(map[string]*jsonKey)
 
 	// Copy the given keys to the map of cryptographic keys.
 	for kid, given := range givenKeys {
-		keys[kid] = &JSONKey{
+		keys[kid] = &jsonKey{
 			precomputed: given.precomputed,
 		}
 	}
@@ -29,12 +29,12 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKs) {
 	}
 }
 
-// NewGivenKeyCustom creates a new GivenKey given an untyped variable. The key argument is expected to be a supported
+// NewGivenCustom creates a new GivenKey given an untyped variable. The key argument is expected to be a supported
 // by the jwt package used.
 //
 // See the https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod function for registering an unsupported
 // signing method.
-func NewGivenKeyCustom(key interface{}) (givenKey GivenKey) {
+func NewGivenCustom(key interface{}) (givenKey GivenKey) {
 	return GivenKey{
 		precomputed: key,
 	}
@@ -47,15 +47,15 @@ func NewGivenECDSA(key *ecdsa.PublicKey) (givenKey GivenKey) {
 	}
 }
 
-// NewGivenKeyHMAC creates a new GivenKey given an HMAC key in a byte slice.
-func NewGivenKeyHMAC(key []byte) (givenKey GivenKey) {
+// NewGivenHMAC creates a new GivenKey given an HMAC key in a byte slice.
+func NewGivenHMAC(key []byte) (givenKey GivenKey) {
 	return GivenKey{
 		precomputed: key,
 	}
 }
 
-// NewGivenKeyRSA creates a new GivenKey given an RSA public key.
-func NewGivenKeyRSA(key *rsa.PublicKey) (givenKey GivenKey) {
+// NewGivenRSA creates a new GivenKey given an RSA public key.
+func NewGivenRSA(key *rsa.PublicKey) (givenKey GivenKey) {
 	return GivenKey{
 		precomputed: key,
 	}

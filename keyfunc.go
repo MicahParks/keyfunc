@@ -18,8 +18,9 @@ var (
 	ErrUnsupportedKeyType = errors.New("the JWT key type is unsupported")
 )
 
-// KeyFunc is a compatibility function that matches the signature of github.com/golang-jwt/jwt/v4's KeyFunc function.
-func (j *JWKs) KeyFunc(token *jwt.Token) (interface{}, error) {
+// Keyfunc is a compatibility function that matches the signature of github.com/golang-jwt/jwt/v4's jwt.Keyfunc
+// function.
+func (j *JWKs) Keyfunc(token *jwt.Token) (interface{}, error) {
 
 	// Get the kid from the token header.
 	kidInter, ok := token.Header["kid"]
@@ -31,8 +32,8 @@ func (j *JWKs) KeyFunc(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKID)
 	}
 
-	// Get the JSONKey.
-	jsonKey, err := j.getKey(kid)
+	// Get the jsonKey.
+	key, err := j.getKey(kid)
 	if err != nil {
 		return nil, err
 	}
@@ -40,24 +41,24 @@ func (j *JWKs) KeyFunc(token *jwt.Token) (interface{}, error) {
 	// Determine the key's algorithm and return the appropriate public key.
 	switch keyAlg := token.Header["alg"]; keyAlg {
 	case es256, es384, es512:
-		return jsonKey.ECDSA()
+		return key.ECDSA()
 	case ps256, ps384, ps512, rs256, rs384, rs512:
-		return jsonKey.RSA()
+		return key.RSA()
 	case hs256, hs384, hs512:
-		return jsonKey.HMAC()
+		return key.HMAC()
 	default:
 
 		// Assume there's a given key for a custom algorithm.
-		if jsonKey.precomputed != nil {
-			return jsonKey.precomputed, nil
+		if key.precomputed != nil {
+			return key.precomputed, nil
 		}
 		return nil, fmt.Errorf("unable to find given key for kid: %w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
 	}
 }
 
-// KeyFuncF3T is a compatibility function that matches the signature of github.com/form3tech-oss/jwt-go's KeyFunc
+// KeyfuncF3T is a compatibility function that matches the signature of github.com/form3tech-oss/jwt-go's Keyfunc
 // function.
-func (j *JWKs) KeyFuncF3T(f3tToken *f3t.Token) (interface{}, error) {
+func (j *JWKs) KeyfuncF3T(f3tToken *f3t.Token) (interface{}, error) {
 	token := &jwt.Token{
 		Raw:       f3tToken.Raw,
 		Method:    f3tToken.Method,
@@ -66,12 +67,12 @@ func (j *JWKs) KeyFuncF3T(f3tToken *f3t.Token) (interface{}, error) {
 		Signature: f3tToken.Signature,
 		Valid:     f3tToken.Valid,
 	}
-	return j.KeyFunc(token)
+	return j.Keyfunc(token)
 }
 
-// KeyFuncLegacy is a compatibility function that matches the signature of the legacy github.com/dgrijalva/jwt-go's
-// KeyFunc function.
-func (j *JWKs) KeyFuncLegacy(legacyToken *legacy.Token) (interface{}, error) {
+// KeyfuncLegacy is a compatibility function that matches the signature of the legacy github.com/dgrijalva/jwt-go's
+// Keyfunc function.
+func (j *JWKs) KeyfuncLegacy(legacyToken *legacy.Token) (interface{}, error) {
 	token := &jwt.Token{
 		Raw:       legacyToken.Raw,
 		Method:    legacyToken.Method,
@@ -80,5 +81,5 @@ func (j *JWKs) KeyFuncLegacy(legacyToken *legacy.Token) (interface{}, error) {
 		Signature: legacyToken.Signature,
 		Valid:     legacyToken.Valid,
 	}
-	return j.KeyFunc(token)
+	return j.Keyfunc(token)
 }
