@@ -3,6 +3,7 @@ package keyfunc_test
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/MicahParks/keyfunc"
 )
@@ -29,9 +32,9 @@ type pseudoJWKs struct {
 
 // TODO
 type pseudoJSONKey struct {
-	KID string   `json:"kid"`
-	E   int      `json:"e"`
-	N   *big.Int `json:"n"`
+	KID string `json:"kid"`
+	E   string `json:"e"`
+	N   string `json:"n"`
 }
 
 // TestNewGiven tests that given keys will be added to a JWKs with a remote resource.
@@ -51,10 +54,17 @@ func TestNewGiven(t *testing.T) {
 	}()
 
 	// Create the JWKs file path.
-	jwksFile := filepath.Join(tempDir, "example_jwks.json")
+	jwksFile := filepath.Join(tempDir, jwksFilePath)
+
+	// Create the keys used for this test.
+	givenKeys, givenPrivateKeys, jwksBytes, _, err := keysAndJWKs() // TODO
+	if err != nil {
+		t.Errorf("Failed to create cryptographic keys for the test: %s.", err.Error())
+		t.FailNow()
+	}
 
 	// Write the empty JWKs.
-	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
+	if err = ioutil.WriteFile(jwksFile, jwksBytes, 0600); err != nil {
 		t.Errorf("Failed to write JWKs file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -69,16 +79,11 @@ func TestNewGiven(t *testing.T) {
 	}
 
 	// Set the JWKs URL.
-	jwksFilePath := "/example_jwks.json"
 	jwksURL := server.URL + jwksFilePath
-
-	// Create the given keys.
-	givenKeys := make(map[string]keyfunc.GivenKey)
 
 	// Create the test options.
 	options := keyfunc.Options{
-		GivenKeys:           nil,
-		GivenKIDOverride:    nil,
+		GivenKeys:           givenKeys,
 		RefreshErrorHandler: testingRefreshErrorHandler,
 	}
 
@@ -88,63 +93,37 @@ func TestNewGiven(t *testing.T) {
 		t.Errorf("Failed to get the JWKs the testing URL.\nError: %s", err.Error())
 		t.FailNow()
 	}
+
+	// Create, sign, parse, and validate the given token with a unique key ID.
+	createSignParseValidate(t, givenPrivateKeys, jwks, givenKID, true)
 }
 
-// TestNewGivenOverride
-func TestNewGivenOverride(t *testing.T) {
+// TODO
+func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks *keyfunc.JWKs, kid string, shouldValidate bool) {
 
-	// Create a temporary directory to serve the JWKs from.
-	tempDir, err := ioutil.TempDir("", "*")
+	// Create the JWT.
+	unsignedToken := jwt.New(jwt.SigningMethodRS256)
+	unsignedToken.Header[kidAttribute] = kid
+
+	// Sign the JWT.
+	tokenString, err := unsignedToken.SignedString(keys[kid])
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
-	}
-	defer func() {
-		if err = os.RemoveAll(tempDir); err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
-		}
-	}()
-
-	// Create the JWKs file path.
-	jwksFile := filepath.Join(tempDir, "example_jwks.json")
-
-	// Create the keys used for this test.
-	givenKeys, givenPrivateKeys, jwksBytes, remotePrivateKeys, err := keysAndJWKs() // TODO
-
-	// Write the JWKs.
-	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
-		t.Errorf("Failed to write JWKs file to temporary directory.\nError: %s", err.Error())
+		t.Errorf("Failed to sign the JWT: %s.", err.Error())
 		t.FailNow()
 	}
 
-	// Create the HTTP test server.
-	server := httptest.NewServer(http.FileServer(http.FS(os.DirFS(tempDir))))
-	defer server.Close()
-
-	// Create testing options.
-	testingRefreshErrorHandler := func(err error) {
-		panic(fmt.Sprintf("Unhandled JWKs error: %s", err.Error()))
+	// Parse the JWT.
+	var token *jwt.Token
+	if token, err = jwt.Parse(tokenString, jwks.Keyfunc); err != nil {
+		t.Errorf("Failed to parse the JWT: %s", err.Error())
+		t.FailNow()
 	}
 
-	// Set the JWKs URL.
-	jwksFilePath := "/example_jwks.json"
-	jwksURL := server.URL + jwksFilePath
-	givenKIDOverride := true
-
-	// Create the test options.
-	options := keyfunc.Options{
-		GivenKeys:           nil,
-		GivenKIDOverride:    &givenKIDOverride,
-		RefreshErrorHandler: testingRefreshErrorHandler,
+	// Validate the JWT.
+	if !token.Valid {
+		t.Errorf("The JWT is not valid.")
+		t.FailNow()
 	}
-
-	// TODO
-}
-
-// givenTestKeys creates two given test keys. One is randomly generated, the other is from the hardcoded JWKs.
-func givenTestKeys() {
-	// TODO
 }
 
 // TODO
@@ -180,8 +159,8 @@ func keysAndJWKs() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 	// Create a pseudo-JWKs.
 	jwks := pseudoJWKs{Keys: []pseudoJSONKey{{
 		KID: remoteKID,
-		E:   key3.PublicKey.E,
-		N:   key3.PublicKey.N,
+		E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key3.PublicKey.E)).Bytes()),
+		N:   base64.RawURLEncoding.EncodeToString(key3.PublicKey.N.Bytes()),
 	}}}
 
 	// Marshal the JWKs to JSON.
