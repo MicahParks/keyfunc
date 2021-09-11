@@ -12,15 +12,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/examples/custom/method"
 )
 
 const (
 
 	// algAttribute is the JSON attribute for the JWT encryption algorithm.
 	algAttribute = "alg"
-
-	// customAlg is the `alg` JSON attribute's value for the test custom jwt.SigningMethod.
-	customAlg = "customalg"
 
 	// kidAttribute is the JSON attribute for the Key ID.
 	kidAttribute = "kid"
@@ -29,30 +27,12 @@ const (
 	testKID = "testkid"
 )
 
-// emptyCustomSigningMethod implements the jwt.SigningMethod interface. It will not sign or verify anything.
-type emptyCustomSigningMethod struct{}
-
-// Verify helps implement the jwt.SigningMethod interface. It does not verify.
-func (e emptyCustomSigningMethod) Verify(_, _ string, _ interface{}) error {
-	return nil
-}
-
-// Sign helps implement the jwt.SigningMethod interface. It does not sign anything.
-func (e emptyCustomSigningMethod) Sign(_ string, _ interface{}) (string, error) {
-	return customAlg, nil
-}
-
-// Alg helps implement the jwt.SigningMethod. It returns the `alg` JSON attribute for JWTs signed with this method.
-func (e emptyCustomSigningMethod) Alg() string {
-	return customAlg
-}
-
 // TestNewGivenCustom tests that a custom jwt.SigningMethod can be used to create a JWKs and a proper jwt.Keyfunc.
 func TestNewGivenCustom(t *testing.T) {
 
 	// Register the signing method.
-	jwt.RegisterSigningMethod(customAlg, func() jwt.SigningMethod {
-		return emptyCustomSigningMethod{}
+	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+		return method.EmptyCustom{}
 	})
 
 	// Create the map of given keys.
@@ -63,8 +43,8 @@ func TestNewGivenCustom(t *testing.T) {
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
-	token := jwt.New(emptyCustomSigningMethod{})
-	token.Header[algAttribute] = customAlg
+	token := jwt.New(method.EmptyCustom{})
+	token.Header[algAttribute] = method.CustomAlg
 	token.Header[kidAttribute] = testKID
 
 	// Sign, parse, and validate the JWT.
@@ -193,14 +173,14 @@ func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *ke
 	// Sign the token.
 	jwtB64, err := token.SignedString(key)
 	if err != nil {
-		t.Errorf("Failed to sign the JWT: %s", err.Error())
+		t.Errorf("Failed to sign the JWT.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
 	// Parse the JWT using the JWKs.
 	var parsed *jwt.Token
 	if parsed, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
-		t.Errorf("Failed to parse the JWT: %s.", err.Error())
+		t.Errorf("Failed to parse the JWT.\nError: %s.", err.Error())
 		t.FailNow()
 	}
 

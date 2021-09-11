@@ -7,14 +7,29 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/examples/custom/method"
 )
 
 func main() {
 
-	// Get the JWKs URL.
-	//
-	// This is a sample JWKs service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
-	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
+	const key = ""
+	const exampleKID = "exampleKeyID"
+
+	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+		return method.EmptyCustom{}
+	})
+
+	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
+		exampleKID: keyfunc.NewGivenCustom(method.EmptyCustom{}),
+	})
+
+	unsignedToken := jwt.New(method.EmptyCustom{})
+	unsignedToken.Header["kid"] = exampleKID
+
+	jwtB64, err := unsignedToken.SignedString(key)
+	if err != nil {
+		log.Fatalf("Failed to self sign a custom token.\nError: %s.", err.Error())
+	}
 
 	// Create the keyfunc options. Use an error handler that logs. Timeout the initial JWKs refresh request after 10
 	// seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
