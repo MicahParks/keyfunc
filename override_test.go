@@ -21,17 +21,20 @@ import (
 )
 
 const (
-	// TODO
-	givenKID  = "givenKID"
+
+	// givenKID is the key ID for the given key with a unique ID.
+	givenKID = "givenKID"
+
+	// remoteKID is the key ID for the remote key and given key that has a conflicting key ID.
 	remoteKID = "remoteKID"
 )
 
-// TODO
+// pseudoJWKs is a data structure used to JSON marshal a JWKs but is not fullyfeatured.
 type pseudoJWKs struct {
 	Keys []pseudoJSONKey `json:"keys"`
 }
 
-// TODO
+// pseudoJSONKey is a data structure that is used to JSON marshal a JWK that is not fully featured.
 type pseudoJSONKey struct {
 	KID string `json:"kid"`
 	E   string `json:"e"`
@@ -123,7 +126,7 @@ func TestNewGiven(t *testing.T) {
 
 }
 
-// TODO
+// createSignParseValidate creates, signs, parses, and validates a JWT.
 func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks *keyfunc.JWKs, kid string, shouldValidate bool) {
 
 	// Create the JWT.
@@ -160,7 +163,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 	}
 }
 
-// TODO
+// keysAndJWKs creates a couple of cryptographic keys and the remote JWKs associated with them.
 func keysAndJWKs() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[string]*rsa.PrivateKey, jwksBytes []byte, remotePrivateKeys map[string]*rsa.PrivateKey, err error) {
 
 	// Initialize the function's assets.
