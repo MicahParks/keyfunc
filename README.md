@@ -148,7 +148,7 @@ to [`JWKs.KeyfuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.
 
 ## Test coverage
 
-Test coverage is currently at `90.5%`.
+Test coverage is currently at `91.0%`.
 
 Testing could be improved by signing all JWTs during the tests themselves. There are some hard-coded JWTs which are
 expired. This means the tests with hard coded JWTs cannot check for parsing and validation errors, just errors within

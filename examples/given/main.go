@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -16,20 +17,33 @@ func main() {
 	// This is a sample JWKs service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
 	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
 
+	// Create a context that, when cancelled, ends the JWKs background refresh goroutine.
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Create the given keys.
-	hmacSecret := []byte("example secret") // TODO
+	hmacSecret := []byte("example secret")
+	const givenKID = "givenKID"
+	givenKeys := map[string]keyfunc.GivenKey{
+		givenKID: keyfunc.NewGivenHMAC(hmacSecret),
+	}
+
+	// Do not override keys with the same key ID, `kid`, in the remote JWKs. This is the default behavoir.
+	//
+	// For a more complex example where remote keys are overwritten by given keys, see override_test.go.
+	givenKIDOverride := false
 
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
 	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKs refresh request after
-	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
+	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get. Add in some given
+	// keys to the JWKs.
 	refreshInterval := time.Hour
 	refreshRateLimit := time.Minute * 5
 	refreshTimeout := time.Second * 10
 	refreshUnknownKID := true
 	options := keyfunc.Options{
 		Ctx:              ctx,
-		GivenKeys:        nil,
-		GivenKIDOverride: nil,
+		GivenKeys:        givenKeys,
+		GivenKIDOverride: &givenKIDOverride,
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
@@ -45,21 +59,37 @@ func main() {
 		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError: %s", err.Error())
 	}
 
-	// Get a JWT to parse.
-	jwtB64 := "eyJraWQiOiJmNTVkOWE0ZSIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJLZXNoYSIsImF1ZCI6IlRhc2h1YW4iLCJpc3MiOiJqd2tzLXNlcnZpY2UuYXBwc3BvdC5jb20iLCJleHAiOjE2MTkwMjUyMTEsImlhdCI6MTYxOTAyNTE3NywianRpIjoiMWY3MTgwNzAtZTBiOC00OGNmLTlmMDItMGE1M2ZiZWNhYWQwIn0.vetsI8W0c4Z-bs2YCVcPb9HsBm1BrMhxTBSQto1koG_lV-2nHwksz8vMuk7J7Q1sMa7WUkXxgthqu9RGVgtGO2xor6Ub0WBhZfIlFeaRGd6ZZKiapb-ASNK7EyRIeX20htRf9MzFGwpWjtrS5NIGvn1a7_x9WcXU9hlnkXaAWBTUJ2H73UbjDdVtlKFZGWM5VGANY4VG7gSMaJqCIKMxRPn2jnYbvPIYz81sjjbd-sc2-ePRjso7Rk6s382YdOm-lDUDl2APE-gqkLWdOJcj68fc6EBIociradX_ADytj-JYEI6v0-zI-8jSckYIGTUF5wjamcDfF5qyKpjsmdrZJA"
+	// Create a JWT signed by the give HMAC key.
+	token := jwt.New(jwt.SigningMethodHS256)
+	token.Header["kid"] = givenKID
+	var jwtB64 string
+	if jwtB64, err = token.SignedString(hmacSecret); err != nil {
+		log.Fatalf("Failed to sign a JWT with the HMAC secret.\nError: %s.", err.Error())
+	}
 
-	// Parse the JWT.
-	var token *jwt.Token
+	// Parse and validate a JWT. This one is signed by the given HMAC key.
 	if token, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
-		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to parse the JWT signed by the given HMAC key.\nError: %s.", err.Error())
 	}
-
-	// Check if the token is valid.
 	if !token.Valid {
-		log.Fatalf("The token is not valid.")
+		log.Fatalf("The token signed by the given HMAC key is not valid.")
 	}
-	log.Println("The token is valid.")
+	log.Println("The token signed by the given HMAC key is valid.")
+
+	// Parse and validate a JWT. This one is signed by a non-given key and is expired.
+	jwtB64 = "eyJraWQiOiJlZThkNjI2ZCIsInR5cCI6IkpXVCIsImFsZyI6IlBTMzg0In0.eyJzdWIiOiJBbmRyZWEiLCJhdWQiOiJBcmp1biIsImlzcyI6Imp3a3Mtc2VydmljZS5hcHBzcG90LmNvbSIsImV4cCI6MTYzMTM2ODY2NSwiaWF0IjoxNjMxMzY4NjU1LCJqdGkiOiI0MTQzYTA0ZC1mM2Y4LTQwYTMtYTZkYS03OTE4MjM4MzZkOTIifQ.VpNqxYu5bVgvi6TfZV1N_r9s7hbJJFLMaGG-eJOQzoH0OV5R-G8XO5M-DyJHIW1svcEiWvmDz1_FanzdGqY3l06vQTd1MvegKUgsqOupjbqf26p0xy3Jdxz5dksvRTt03eakEmPbUyKLiqOHIfUSzvH6M3f9IXQXNT2BjDwuJpjOcp3M2ciCxxUOZ37OmP72QzInxRtDfKBuKILGx9P2E1GGwaIxNbX_Idem5g2aapIpWRtldhZ5Hv-0uli6I1pnpHLAA4IgPeRFyogq-uGQdEYIvdhWp4cqWbWLE4OnOMNxZHxoqk-iciavEz0WsK08J_P8GrLiL18zX6NhOhZFBQ"
+	if token, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
+		log.Fatalf("Failed to parse the JWT signed by a non-given key in the remote JWKs.\nError: %s.", err.Error())
+	}
+	if !token.Valid {
+		log.Fatalf("The token signed by a non-given key in the remote JWKs is not valid.")
+	}
+	log.Println("The token signed by a non-given key in the remote JWKs is valid.")
 
 	// End the background refresh goroutine when it's no longer needed.
+	cancel()
+
+	// This will be ineffectual because the line above this canceled the parent context.Context.
+	// This method call is idempotent similar to context.CancelFunc.
 	jwks.EndBackground()
 }
