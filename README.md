@@ -43,7 +43,8 @@ Additionally, the supported elliptical curve types are below:
 * `P-384`
 * `P-521`
 
-This _does_ include HMAC keys. For an example using HMAC keys, please see the `examples/hmac` directory.
+This _does_ include HMAC keys. For an example using HMAC keys, please see the `examples/hmac` directory. Do _not_ expose
+HMAC keys in public facing JWKs, as HMAC keys are secret keys (not using public key cryptography).
 
 If there are cryptographic algorithms, curve types, or something else already standardized that you'd like supported in
 this Go package, please open an issue or pull request.
