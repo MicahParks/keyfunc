@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -16,6 +17,9 @@ func main() {
 	// This is a sample JWKs service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.
 	jwksURL := "https://jwks-service.appspot.com/.well-known/jwks.json"
 
+	// Create a context that, when cancelled, ends the JWKs background refresh goroutine.
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
 	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKs refresh request after
 	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
@@ -24,6 +28,7 @@ func main() {
 	refreshTimeout := time.Second * 10
 	refreshUnknownKID := true
 	options := keyfunc.Options{
+		Ctx: ctx,
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
@@ -55,5 +60,9 @@ func main() {
 	log.Println("The token is valid.")
 
 	// End the background refresh goroutine when it's no longer needed.
+	cancel()
+
+	// This will be ineffectual because the line above this canceled the parent context.Context.
+	// This method call is idempotent simliar to context.CancelFunc.
 	jwks.EndBackground()
 }
