@@ -191,7 +191,7 @@ func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.Private
 func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *keyfunc.JWKs) {
 
 	// Sign the token.
-	tokenString, err := token.SignedString(key)
+	jwtB64, err := token.SignedString(key)
 	if err != nil {
 		t.Errorf("Failed to sign the JWT: %s", err.Error())
 		t.FailNow()
@@ -199,7 +199,7 @@ func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *ke
 
 	// Parse the JWT using the JWKs.
 	var parsed *jwt.Token
-	if parsed, err = jwt.Parse(tokenString, jwks.Keyfunc); err != nil {
+	if parsed, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
 		t.Errorf("Failed to parse the JWT: %s.", err.Error())
 		t.FailNow()
 	}
