@@ -63,7 +63,7 @@ func TestNewGiven(t *testing.T) {
 	// Create the keys used for this test.
 	givenKeys, givenPrivateKeys, jwksBytes, remotePrivateKeys, err := keysAndJWKs()
 	if err != nil {
-		t.Errorf("Failed to create cryptographic keys for the test: %s.", err.Error())
+		t.Errorf("Failed to create cryptographic keys for the test.\nError: %s.", err.Error())
 		t.FailNow()
 	}
 
@@ -79,7 +79,7 @@ func TestNewGiven(t *testing.T) {
 
 	// Create testing options.
 	testingRefreshErrorHandler := func(err error) {
-		panic(fmt.Sprintf("Unhandled JWKs error: %s", err.Error()))
+		panic(fmt.Sprintf("Unhandled JWKs error.\nError: %s", err.Error()))
 	}
 
 	// Set the JWKs URL.
@@ -111,7 +111,7 @@ func TestNewGiven(t *testing.T) {
 	givenKidOverride := true
 	options.GivenKIDOverride = &givenKidOverride
 	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
-		t.Errorf("Failed to recreate JWKs: %s.", err.Error())
+		t.Errorf("Failed to recreate JWKs.\nError: %s.", err.Error())
 		t.FailNow()
 	}
 
@@ -136,7 +136,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 	// Sign the JWT.
 	jwtB64, err := unsignedToken.SignedString(keys[kid])
 	if err != nil {
-		t.Errorf("Failed to sign the JWT: %s.", err.Error())
+		t.Errorf("Failed to sign the JWT.\nError: %s.", err.Error())
 		t.FailNow()
 	}
 
@@ -147,7 +147,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 		if !shouldValidate && !errors.Is(err, rsa.ErrVerification) {
 			return
 		}
-		t.Errorf("Failed to parse the JWT: %s", err.Error())
+		t.Errorf("Failed to parse the JWT.\nError: %s", err.Error())
 		t.FailNow()
 
 	}
