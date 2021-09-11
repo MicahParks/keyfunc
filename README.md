@@ -2,7 +2,7 @@
 
 # keyfunc
 
-Purpose of this package is to provide a
+The purpose of this package is to provide a
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) for the
 [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package and its popular forks using a JSON Web Key Set
 (JWKs) for parsing and verifying JSON Web Tokens (JWTs). This
@@ -96,7 +96,7 @@ Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/githu
 via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) and the
 additional features mentioned at the bottom of this `README.md`.
 
-### Step 2: Use the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's [`JWKs.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.Keyfunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) when parsing tokens
+### Step 2: Use the [`JWKs.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.Keyfunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) when parsing tokens
 
 ```go
 // Parse the JWT.
@@ -150,22 +150,26 @@ to [`JWKs.KeyfuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.
 
 Test coverage is currently at `91.0%`.
 
-Testing could be improved by signing all JWTs during the tests themselves. There are some hard-coded JWTs which are
-expired. This means the tests with hard coded JWTs cannot check for parsing and validation errors, just errors within
-the `jwt.Keyfunc` itself.
+Testing could be improved by signing all JWTs during the tests themselves. Alternatively, using JWTs that do not expire
+would accomplish the same purpose. There are some hard-coded JWTs which are expired. This means the tests with hard
+coded JWTs cannot check for parsing and validation errors, just errors within the `jwt.Keyfunc` itself.
 
 ## Additional features
 
 * A background refresh of the JWKs keys can be performed. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
-	* A custom background refresh interval can be specified.
-	* A custom background refresh request context timeout can be specified. Defaults to one minute.
+	* A custom background refresh interval can be specified. For an example, please see the `examples/interval`
+	  directory.
+	* A custom background refresh request context timeout can be specified. Defaults to one minute. For an example,
+	  please see the `examples/ctx` directory.
 	* A custom background refresh error handling function can be specified. If none is specified, errors go unhandled
-	  silently.
-	* A custom rate limit can be specified to prevent too many requests for a JWKs refresh.
+	  silently. For an example, please see the `examples/recommended_options` directory.
+	* A custom rate limit can be specified to prevent too many requests for a JWKs refresh. For an example, please see
+	  the `examples/recommended_options` directory.
 	* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKs resource. This should be
-	  paired with `RefreshRateLimit` to prevent abuse.
+	  paired with `RefreshRateLimit` to prevent abuse. For an example, please see the `examples/recommended_options`
+	  directory.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
@@ -173,4 +177,4 @@ the `jwt.Keyfunc` itself.
   the `examples/given` directory.
 * Custom cryptographic algorithms can be used. Make sure to
   use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
-  parsing JWTs.
+  parsing JWTs. For an example, see the `examples/custom` directory.
