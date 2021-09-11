@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -57,7 +58,7 @@ func TestNewGiven(t *testing.T) {
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
 	// Create the keys used for this test.
-	givenKeys, givenPrivateKeys, jwksBytes, _, err := keysAndJWKs() // TODO
+	givenKeys, givenPrivateKeys, jwksBytes, remotePrivateKeys, err := keysAndJWKs()
 	if err != nil {
 		t.Errorf("Failed to create cryptographic keys for the test: %s.", err.Error())
 		t.FailNow()
@@ -94,8 +95,32 @@ func TestNewGiven(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Create, sign, parse, and validate the given token with a unique key ID.
+	// Test the given key with a unique key ID.
 	createSignParseValidate(t, givenPrivateKeys, jwks, givenKID, true)
+
+	// Test the given key with a non-unique key ID that should be overwritten.
+	createSignParseValidate(t, givenPrivateKeys, jwks, remoteKID, false)
+
+	// Test the remote key that should not have been overwritten.
+	createSignParseValidate(t, remotePrivateKeys, jwks, remoteKID, true)
+
+	// Change the JWKs options to overwrite remote keys.
+	givenKidOverride := true
+	options.GivenKIDOverride = &givenKidOverride
+	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
+		t.Errorf("Failed to recreate JWKs: %s.", err.Error())
+		t.FailNow()
+	}
+
+	// Test the given key with a unique key ID.
+	createSignParseValidate(t, givenPrivateKeys, jwks, givenKID, true)
+
+	// Test the given key with a non-unique key ID that should overwrite the remote key.
+	createSignParseValidate(t, givenPrivateKeys, jwks, remoteKID, true)
+
+	// Test the remote key that should have been overwritten.
+	createSignParseValidate(t, remotePrivateKeys, jwks, remoteKID, false)
+
 }
 
 // TODO
@@ -114,8 +139,17 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 
 	// Parse the JWT.
 	var token *jwt.Token
-	if token, err = jwt.Parse(tokenString, jwks.Keyfunc); err != nil {
+	token, err = jwt.Parse(tokenString, jwks.Keyfunc)
+	if err != nil {
+		if !shouldValidate && !errors.Is(err, rsa.ErrVerification) {
+			return
+		}
 		t.Errorf("Failed to parse the JWT: %s", err.Error())
+		t.FailNow()
+
+	}
+	if !shouldValidate {
+		t.Errorf("The token should not have parsed properly.")
 		t.FailNow()
 	}
 
