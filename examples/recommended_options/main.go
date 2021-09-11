@@ -63,6 +63,6 @@ func main() {
 	cancel()
 
 	// This will be ineffectual because the line above this canceled the parent context.Context.
-	// This method call is idempotent simliar to context.CancelFunc.
+	// This method call is idempotent similar to context.CancelFunc.
 	jwks.EndBackground()
 }
