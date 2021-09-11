@@ -189,7 +189,7 @@ func (j *JWKs) refresh() (err error) {
 
 	// Create an updated JWKs.
 	var updated *JWKs
-	if updated, err = New(jwksBytes); err != nil {
+	if updated, err = NewJSON(jwksBytes); err != nil {
 		return err
 	}
 

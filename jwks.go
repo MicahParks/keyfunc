@@ -55,8 +55,8 @@ type rawJWKs struct {
 	Keys []jsonKey `json:"keys"`
 }
 
-// New creates a new JWKs from a raw JSON message.
-func New(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
+// NewJSON creates a new JWKs from a raw JSON message.
+func NewJSON(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
 
 	// Turn the raw JWKs into the correct Go type.
 	var rawKS rawJWKs

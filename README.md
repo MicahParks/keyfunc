@@ -12,8 +12,8 @@ the [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) package.
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKs via an HTTPS endpoint. This package has the
 ability to consume that JWKs and produce a
-[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc). It is important that a JWKs
-endpoint is using HTTPS to ensure the keys are from the correct trusted source.
+[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc). It is important that a JWKs endpoint is using
+HTTPS to ensure the keys are from the correct trusted source.
 
 This repository has the following dependencies:
 * [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt)
@@ -24,14 +24,13 @@ This repository has the following dependencies:
 
 ## Supported Algorithms
 
-It is recommended to only use this package for asymmetric signing keys. If you are using HMAC signing keys, this Go
-package may be unnecessary as the algorithm is symmetric, meaning the key is pre-shared. In this case a JWKs is likely
-not be the best solution.
-
 Currently, this package supports JWTs signed with an `alg` that matches one of the following:
 * `ES256`
 * `ES384`
 * `ES512`
+* `HS256`
+* `HS384`
+* `HS512`
 * `PS256`
 * `PS384`
 * `PS512`
@@ -43,6 +42,8 @@ Additionally, the supported elliptical curve types are below:
 * `P-256`
 * `P-384`
 * `P-521`
+
+This _does_ include HMAC keys. For an example using HMAC keys, please see the `examples/hmac` directory.
 
 If there are cryptographic algorithms, curve types, or something else already standardized that you'd like supported in
 this Go package, please open an issue or pull request.
@@ -95,23 +96,23 @@ Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/githu
 via variadic arguments. See [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) and the
 additional features mentioned at the bottom of this `README.md`.
 
-### Step 2: Use the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's [`JWKs.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) when parsing tokens
+### Step 2: Use the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's [`JWKs.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.Keyfunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) when parsing tokens
 
 ```go
 // Parse the JWT.
-token, err := jwt.Parse(jwtB64, jwks.KeyFunc)
+token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 if err != nil {
 	return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
-The [`JWKs.KeyFunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFunc) method will automatically select the
+The [`JWKs.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.Keyfunc) method will automatically select the
 key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
 ## Fork support
 
-Some packages use forks of [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt). This package aims to support
-the most popular use cases of these forks.
+Some packages use forks of [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt). This package aims to
+support the most popular use cases of these forks.
 
 If additional forks are required for your use case, please feel free to open an issue or PR.
 
@@ -119,7 +120,7 @@ If additional forks are required for your use case, please feel free to open an 
 The [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) package requires
 the [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) fork. For this use case, use
 the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's
-[`JWKs.KeyFuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFuncF3T) method.
+[`JWKs.KeyfuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyfuncF3T) method.
 
 #### Example snippet
 Please also see the `examples` directory.
@@ -127,8 +128,8 @@ Please also see the `examples` directory.
 // Create the middleware provider.
 jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 
-	// Use the correct version of the KeyFunc method.
-	ValidationKeyGetter: jwks.KeyFuncF3T,
+	// Use the correct version of the Keyfunc method.
+	ValidationKeyGetter: jwks.KeyfuncF3T,
 
 	// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
 	//
@@ -142,17 +143,16 @@ jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 ### Support for [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
 This project originally only supported [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go), but since it
 is no longer maintained, it's method was moved
-to [`JWKs.KeyFuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyFuncLegacy) if you have not moved to
+to [`JWKs.KeyfuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyfuncLegacy) if you have not moved to
 [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) yet.
 
 ## Test coverage
 
-Test coverage is currently at `87.4%`.
+Test coverage is currently at `90.5%`.
 
-This is with current and expired JWTs, but the hard coded ones are now expired. Using non-expired JWTs would require
-signing JWTs during testing and would allow for additional error checking. But a bit overkill since I've already done
-that error checking when the JWTs were valid with no changes. A PR for this that does not introduce any dependencies is
-welcome though.
+Testing could be improved by signing all JWTs during the tests themselves. There are some hard-coded JWTs which are
+expired. This means the tests with hard coded JWTs cannot check for parsing and validation errors, just errors within
+the `jwt.Keyfunc` itself.
 
 ## Additional features
 
@@ -169,7 +169,8 @@ welcome though.
 * A custom HTTP client can be used. This is possible by passing
   [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
   [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
-
-## TODO
-
-- [ ] Add HMAC support?
+* A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
+  the `examples/given` directory.
+* Custom cryptographic algorithms can be used. Make sure to
+  use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
+  parsing JWTs.
