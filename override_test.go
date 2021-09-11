@@ -134,7 +134,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 	unsignedToken.Header[kidAttribute] = kid
 
 	// Sign the JWT.
-	tokenString, err := unsignedToken.SignedString(keys[kid])
+	jwtB64, err := unsignedToken.SignedString(keys[kid])
 	if err != nil {
 		t.Errorf("Failed to sign the JWT: %s.", err.Error())
 		t.FailNow()
@@ -142,7 +142,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 
 	// Parse the JWT.
 	var token *jwt.Token
-	token, err = jwt.Parse(tokenString, jwks.Keyfunc)
+	token, err = jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
 		if !shouldValidate && !errors.Is(err, rsa.ErrVerification) {
 			return
