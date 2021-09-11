@@ -36,6 +36,8 @@ func (j *jsonKey) RSA() (publicKey *rsa.PublicKey, err error) {
 		var ok bool
 		if publicKey, ok = j.precomputed.(*rsa.PublicKey); ok {
 			return publicKey, nil
+		} else {
+			println("butt")
 		}
 	}
 

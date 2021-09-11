@@ -214,7 +214,7 @@ func (j *JWKs) refresh() (err error) {
 
 			// Write the given key to the JWKs.
 			j.keys[kid] = &jsonKey{
-				precomputed: key,
+				precomputed: key.precomputed,
 			}
 		}
 	}
