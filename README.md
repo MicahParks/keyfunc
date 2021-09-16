@@ -17,7 +17,6 @@ HTTPS to ensure the keys are from the correct trusted source.
 
 This repository has the following dependencies:
 * [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt)
-* [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
 * [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
 
 `jwt.Keyfunc` signatures are imported from these, implemented, then exported as methods.
@@ -141,11 +140,15 @@ jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 })
 ```
 
-### Support for [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+### Support for [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) (**DEPRECATED**)
 This project originally only supported [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go), but since it
 is no longer maintained, it's method was moved
 to [`JWKs.KeyfuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyfuncLegacy) if you have not moved to
 [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) yet.
+
+**NOTE**: The dependency on [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) has since been removed to
+reduce the potential for someone to fall into the [CVE-2020-26160](https://github.com/advisories/GHSA-w73w-5m7g-f7qc) 
+security vulnerability.
 
 ## Test coverage
 
