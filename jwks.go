@@ -33,8 +33,8 @@ type jsonKey struct {
 	precomputedMux sync.RWMutex
 }
 
-// JWKs represents a JSON Web Key Set.
-type JWKs struct { // It's JWKs, not JWKS https://datatracker.ietf.org/doc/html/rfc7517#section-2
+// JWKs represents a JSON Web Key Set (JWK Set).
+type JWKs struct {
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
@@ -53,7 +53,7 @@ type JWKs struct { // It's JWKs, not JWKS https://datatracker.ietf.org/doc/html/
 
 // rawJWKs represents a JWKs in JSON format.
 type rawJWKs struct {
-	Keys []jsonKey `json:"keys"`
+	Keys []*jsonKey `json:"keys"`
 }
 
 // NewJSON creates a new JWKs from a raw JSON message.
@@ -71,7 +71,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
 	}
 	for _, key := range rawKS.Keys {
 		key := key
-		jwks.keys[key.ID] = &key
+		jwks.keys[key.ID] = key
 	}
 
 	return jwks, nil
@@ -127,7 +127,7 @@ func (j *JWKs) getKey(kid string) (jsonKey *jsonKey, err error) {
 				return nil, ErrKIDNotFound
 			}
 
-			// Wait for the JWKs refresh to done.
+			// Wait for the JWKs refresh to finish.
 			<-ctx.Done()
 
 			// Lock the JWKs for async safe use.

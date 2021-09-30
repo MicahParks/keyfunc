@@ -34,7 +34,7 @@ const (
 )
 
 // TestInvalidServer performs initialization + refresh initialization with a server providing invalid data.
-// The test ensures that background refresh goroutine does not causes any troubles in case of init failure.
+// The test ensures that background refresh goroutine does not cause any trouble in case of init failure.
 func TestInvalidServer(t *testing.T) {
 
 	// Create the HTTP test server.
@@ -92,7 +92,7 @@ func TestJWKs(t *testing.T) {
 	}
 
 	// Create the HTTP test server.
-	server := httptest.NewServer(http.FileServer(http.FS(os.DirFS(tempDir))))
+	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
 	// Create testing options.
@@ -413,7 +413,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	}
 
 	// Create the HTTP test server.
-	server := httptest.NewServer(http.FileServer(http.FS(os.DirFS(tempDir))))
+	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
 	// Create testing options.

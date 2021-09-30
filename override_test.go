@@ -29,7 +29,7 @@ const (
 	remoteKID = "remoteKID"
 )
 
-// pseudoJWKs is a data structure used to JSON marshal a JWKs but is not fullyfeatured.
+// pseudoJWKs is a data structure used to JSON marshal a JWKs but is not fully featured.
 type pseudoJWKs struct {
 	Keys []pseudoJSONKey `json:"keys"`
 }
@@ -74,7 +74,7 @@ func TestNewGiven(t *testing.T) {
 	}
 
 	// Create the HTTP test server.
-	server := httptest.NewServer(http.FileServer(http.FS(os.DirFS(tempDir))))
+	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
 	// Create testing options.
