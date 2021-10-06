@@ -16,6 +16,9 @@ var (
 
 	// ErrUnsupportedKeyType indicates the JWT key type is an unsupported type.
 	ErrUnsupportedKeyType = errors.New("the JWT key type is unsupported")
+
+	// ErrNilJWKs indicates that an invalid JWKs (nil pointer) is being used
+	ErrNilJWKs = errors.New("the used JWKs should not be nil")
 )
 
 // Keyfunc is a compatibility function that matches the signature of github.com/golang-jwt/jwt/v4's jwt.Keyfunc
@@ -32,6 +35,12 @@ func (j *JWKs) Keyfunc(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKID)
 	}
 
+	// Check if the JWKs is nil
+	if j == nil {
+		// If the pointer is pointing to nil, return the respective error
+		// in order to avoid nil pointer dereference.
+		return nil, ErrNilJWKs
+	}
 	// Get the jsonKey.
 	key, err := j.getKey(kid)
 	if err != nil {
