@@ -16,6 +16,9 @@ var (
 
 	// ErrMissingAssets indicates there are required assets missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
+
+	// ErrNilJWKs indicates that an invalid JWKs (nil pointer) is being used
+	ErrNilJWKs = errors.New("the used JWKs should not be nil")
 )
 
 // ErrorHandler is a function signature that consumes an error.
@@ -100,6 +103,13 @@ func (j *JWKs) KIDs() (kids []string) {
 
 // getKey gets the jsonKey from the given KID from the JWKs. It may refresh the JWKs if configured to.
 func (j *JWKs) getKey(kid string) (jsonKey *jsonKey, err error) {
+
+	// Check if the JWKs is nil
+	if j == nil {
+		// If the pointer is pointing to nil, return the respective error
+		// in order to avoid nil pointer dereference.
+		return nil, ErrNilJWKs
+	}
 
 	// Get the jsonKey from the JWKs.
 	var ok bool
