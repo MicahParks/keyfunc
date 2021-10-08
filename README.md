@@ -5,9 +5,7 @@
 The purpose of this package is to provide a
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) for the
 [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package and its popular forks using a JSON Web Key Set
-(JWKs) for parsing and verifying JSON Web Tokens (JWTs). This
-was [formally](https://github.com/dgrijalva/jwt-go/issues/462)
-the [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go) package.
+(JWKs) for parsing and verifying JSON Web Tokens (JWTs). 
 
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKs via an HTTPS endpoint. This package has the
@@ -17,7 +15,6 @@ HTTPS to ensure the keys are from the correct trusted source.
 
 This repository has the following dependencies:
 * [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt)
-* [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
 * [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
 
 `jwt.Keyfunc` signatures are imported from these, implemented, then exported as methods.
@@ -153,12 +150,6 @@ jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 	SigningMethod: jwt.SigningMethodRS256,
 })
 ```
-
-### Support for [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
-This project originally only supported [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go), but since it
-is no longer maintained, it's method was moved
-to [`JWKs.KeyfuncLegacy`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyfuncLegacy) if you have not moved to
-[github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) yet.
 
 ## Test coverage
 
