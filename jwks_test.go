@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	jwtF3T "github.com/form3tech-oss/jwt-go"
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/MicahParks/keyfunc"
@@ -172,13 +171,6 @@ func TestJWKs(t *testing.T) {
 				if _, err = jwt.Parse(tc.token, jwks.Keyfunc); err != nil {
 					if errors.Is(err, jwt.ErrInvalidKeyType) {
 						t.Errorf("Invaild key type selected.\nError: %s", err.Error())
-						t.FailNow()
-					}
-				}
-
-				if _, err = jwtF3T.Parse(tc.token, jwks.KeyfuncF3T); err != nil {
-					if errors.Is(err, jwt.ErrInvalidKeyType) {
-						t.Errorf("Invaild key type selected for F3T.\nError: %s", err.Error())
 						t.FailNow()
 					}
 				}

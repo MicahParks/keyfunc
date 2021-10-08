@@ -4,8 +4,12 @@
 
 The purpose of this package is to provide a
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) for the
-[github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package and its popular forks using a JSON Web Key Set
-(JWKs) for parsing and verifying JSON Web Tokens (JWTs). 
+[github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWKs) for parsing
+and verifying JSON Web Tokens (JWTs).
+
+There is legacy support for `github.com/dgrijalva/jwt-go` and its popular forks. It's in a separate project to keep this
+project minimal. If your use case supports a legacy fork, please
+see: [github.com/MicahParks/compatibility-keyfunc](https://github.com/MicahParks/compatibility-keyfunc).
 
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKs via an HTTPS endpoint. This package has the
@@ -13,9 +17,7 @@ ability to consume that JWKs and produce a
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc). It is important that a JWKs endpoint is using
 HTTPS to ensure the keys are from the correct trusted source.
 
-This repository has the following dependencies:
-* [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt)
-* [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go)
+This repository only depends on: [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt)
 
 `jwt.Keyfunc` signatures are imported from these, implemented, then exported as methods.
 
@@ -119,37 +121,6 @@ if err != nil {
 
 The [`JWKs.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.Keyfunc) method will automatically select the
 key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
-
-## Fork support
-
-Some packages use forks of [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt). This package aims to
-support the most popular use cases of these forks.
-
-If additional forks are required for your use case, please feel free to open an issue or PR.
-
-### Support for [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware)
-The [github.com/auth0/go-jwt-middleware](https://github.com/auth0/go-jwt-middleware) package requires
-the [github.com/form3tech-oss/jwt-go](https://github.com/form3tech-oss/jwt-go) fork. For this use case, use
-the [`keyfunc.JWKs`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs) 's
-[`JWKs.KeyfuncF3T`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKs.KeyfuncF3T) method.
-
-#### Example snippet
-Please also see the `examples` directory.
-```go
-// Create the middleware provider.
-jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-
-	// Use the correct version of the Keyfunc method.
-	ValidationKeyGetter: jwks.KeyfuncF3T,
-
-	// Always ensure that you set your signing method to avoid tokens choosing the "none" method.
-	//
-	// This shouldn't matter for this keyfunc package, as the JWKs should be trusted and determines the key type,
-	// but it's good practice.
-	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
-	SigningMethod: jwt.SigningMethodRS256,
-})
-```
 
 ## Test coverage
 
