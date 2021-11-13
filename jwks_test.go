@@ -275,7 +275,6 @@ func TestRateLimit(t *testing.T) {
 	refreshInterval := time.Second
 	refreshRateLimit := time.Millisecond * 500
 	refreshTimeout := time.Second
-	refreshUnknownKID := true
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
 			t.Errorf("The package itself had an error.\nError: %s", err.Error())
@@ -283,7 +282,7 @@ func TestRateLimit(t *testing.T) {
 		RefreshInterval:   refreshInterval,
 		RefreshRateLimit:  refreshRateLimit,
 		RefreshTimeout:    refreshTimeout,
-		RefreshUnknownKID: &refreshUnknownKID,
+		RefreshUnknownKID: true,
 	}
 
 	// Create the JWKs.
@@ -412,7 +411,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	// Set the options to refresh KID when unknown.
 	options := keyfunc.Options{
 		RefreshErrorHandler: testingRefreshErrorHandler,
-		RefreshUnknownKID:   &[]bool{true}[0],
+		RefreshUnknownKID:   true,
 	}
 
 	// Create the JWKs.
