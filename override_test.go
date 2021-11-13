@@ -108,8 +108,7 @@ func TestNewGiven(t *testing.T) {
 	createSignParseValidate(t, remotePrivateKeys, jwks, remoteKID, true)
 
 	// Change the JWKs options to overwrite remote keys.
-	givenKidOverride := true
-	options.GivenKIDOverride = &givenKidOverride
+	options.GivenKIDOverride = true
 	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
 		t.Errorf("Failed to recreate JWKs.\nError: %s.", err.Error())
 		t.FailNow()

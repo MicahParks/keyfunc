@@ -30,7 +30,7 @@ type Options struct {
 
 	// GivenKIDOverride will make a GivenKey override any keys with the same ID (`kid`) in the remote JWKs. The is only
 	// effectual if GivenKeys is provided.
-	GivenKIDOverride *bool
+	GivenKIDOverride bool
 
 	// RefreshErrorHandler is a function that consumes errors that happen during a JWKs refresh. This is only effectual
 	// if a background refresh goroutine is active.
@@ -54,7 +54,7 @@ type Options struct {
 	// This is done through a background goroutine. Without specifying a RefreshInterval a malicious client could
 	// self-sign X JWTs, send them to this service, then cause potentially high network usage proportional to X. Make
 	// sure to call the JWKs.EndBackground method to end this goroutine when it's no longer needed.
-	RefreshUnknownKID *bool
+	RefreshUnknownKID bool
 }
 
 // applyOptions applies the given options to the given JWKs.
@@ -73,8 +73,8 @@ func applyOptions(jwks *JWKs, options Options) {
 			jwks.givenKeys[kid] = key
 		}
 	}
-	if options.GivenKIDOverride != nil {
-		jwks.givenKIDOverride = *options.GivenKIDOverride
+	if options.GivenKIDOverride {
+		jwks.givenKIDOverride = true
 	}
 	if options.RefreshErrorHandler != nil {
 		jwks.refreshErrorHandler = options.RefreshErrorHandler
@@ -88,7 +88,7 @@ func applyOptions(jwks *JWKs, options Options) {
 	if options.RefreshTimeout != 0 {
 		jwks.refreshTimeout = options.RefreshTimeout
 	}
-	if options.RefreshUnknownKID != nil {
-		jwks.refreshUnknownKID = *options.RefreshUnknownKID
+	if options.RefreshUnknownKID {
+		jwks.refreshUnknownKID = true
 	}
 }
