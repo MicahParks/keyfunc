@@ -4,8 +4,8 @@
 
 The purpose of this package is to provide a
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) for the
-[github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWKS) for parsing
-and verifying JSON Web Tokens (JWTs).
+[github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWK Set or JWKS) for
+parsing and verifying JSON Web Tokens (JWTs).
 
 There is legacy support for `github.com/dgrijalva/jwt-go` and its popular forks. It's in a separate project to keep this
 project minimal. If your use case supports a legacy fork, please
