@@ -22,7 +22,7 @@ func main() {
 		log.Fatalf("Failed to self sign an HMAC token.\nError: %s.", err.Error())
 	}
 
-	// Create the JWKs from the HMAC key.
+	// Create the JWKS from the HMAC key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
 		exampleKID: keyfunc.NewGivenHMAC(key),
 	})

@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	// Get the JWKs URL from your AWS region and userPoolId.
+	// Get the JWKS URL from your AWS region and userPoolId.
 	//
 	// See the AWS docs here:
 	// https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
@@ -20,8 +20,8 @@ func main() {
 	userPoolID := "" // TODO Get the user pool ID of your AWS Cognito instance.
 	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, userPoolID)
 
-	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
-	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKs refresh request after
+	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKS when a JWT signed by an unknown KID
+	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKS refresh request after
 	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
@@ -33,10 +33,10 @@ func main() {
 		RefreshUnknownKID: true,
 	}
 
-	// Create the JWKs from the resource at the given URL.
+	// Create the JWKS from the resource at the given URL.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		log.Fatalf("Failed to create JWKs from resource at the given URL.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
 	}
 
 	// Get a JWT to parse.
