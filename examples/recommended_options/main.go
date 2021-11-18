@@ -23,19 +23,15 @@ func main() {
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
 	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKs refresh request after
 	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
-	refreshInterval := time.Hour
-	refreshRateLimit := time.Minute * 5
-	refreshTimeout := time.Second * 10
-	refreshUnknownKID := true
 	options := keyfunc.Options{
 		Ctx: ctx,
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
-		RefreshInterval:   refreshInterval,
-		RefreshRateLimit:  refreshRateLimit,
-		RefreshTimeout:    refreshTimeout,
-		RefreshUnknownKID: &refreshUnknownKID,
+		RefreshInterval:   time.Hour,
+		RefreshRateLimit:  time.Minute * 5,
+		RefreshTimeout:    time.Second * 10,
+		RefreshUnknownKID: true,
 	}
 
 	// Create the JWKs from the resource at the given URL.

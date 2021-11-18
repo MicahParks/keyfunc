@@ -27,30 +27,25 @@ func main() {
 		givenKID: keyfunc.NewGivenHMAC(hmacSecret),
 	}
 
-	// Do not override keys with the same key ID, `kid`, in the remote JWKs. This is the default behavior.
-	//
-	// For a more complex example where remote keys are overwritten by given keys, see override_test.go.
-	givenKIDOverride := false
-
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKs when a JWT signed by an unknown KID
 	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKs refresh request after
 	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get. Add in some given
 	// keys to the JWKs.
-	refreshInterval := time.Hour
-	refreshRateLimit := time.Minute * 5
-	refreshTimeout := time.Second * 10
-	refreshUnknownKID := true
+	//
+	// Do not override keys with the same key ID, `kid`, in the remote JWKs. This is the default behavior.
+	//
+	// For a more complex example where remote keys are overwritten by given keys, see override_test.go.
 	options := keyfunc.Options{
 		Ctx:              ctx,
 		GivenKeys:        givenKeys,
-		GivenKIDOverride: &givenKIDOverride,
+		GivenKIDOverride: false, // Default value.
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
-		RefreshInterval:   refreshInterval,
-		RefreshRateLimit:  refreshRateLimit,
-		RefreshTimeout:    refreshTimeout,
-		RefreshUnknownKID: &refreshUnknownKID,
+		RefreshInterval:   time.Hour,
+		RefreshRateLimit:  time.Minute * 5,
+		RefreshTimeout:    time.Second * 10,
+		RefreshUnknownKID: true,
 	}
 
 	// Create the JWKs from the resource at the given URL.

@@ -17,7 +17,7 @@ var (
 )
 
 // Get loads the JWKs at the given URL.
-func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
+func Get(jwksURL string, options Options) (jwks *JWKs, err error) {
 
 	// Create the JWKs.
 	jwks = &JWKs{
@@ -25,9 +25,7 @@ func Get(jwksURL string, options ...Options) (jwks *JWKs, err error) {
 	}
 
 	// Apply the options to the JWKs.
-	for _, opts := range options {
-		applyOptions(jwks, opts)
-	}
+	applyOptions(jwks, options)
 
 	// Apply some defaults if options were not provided.
 	if jwks.client == nil {

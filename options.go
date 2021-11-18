@@ -59,36 +59,20 @@ type Options struct {
 
 // applyOptions applies the given options to the given JWKs.
 func applyOptions(jwks *JWKs, options Options) {
-	if options.Client != nil {
-		jwks.client = options.Client
-	}
 	if options.Ctx != nil {
 		jwks.ctx, jwks.cancel = context.WithCancel(options.Ctx)
 	}
 	if options.GivenKeys != nil {
-		if jwks.givenKeys == nil {
-			jwks.givenKeys = make(map[string]GivenKey)
-		}
+		jwks.givenKeys = make(map[string]GivenKey)
 		for kid, key := range options.GivenKeys {
 			jwks.givenKeys[kid] = key
 		}
 	}
-	if options.GivenKIDOverride {
-		jwks.givenKIDOverride = true
-	}
-	if options.RefreshErrorHandler != nil {
-		jwks.refreshErrorHandler = options.RefreshErrorHandler
-	}
-	if options.RefreshInterval != 0 {
-		jwks.refreshInterval = options.RefreshInterval
-	}
-	if options.RefreshRateLimit != 0 {
-		jwks.refreshRateLimit = options.RefreshRateLimit
-	}
-	if options.RefreshTimeout != 0 {
-		jwks.refreshTimeout = options.RefreshTimeout
-	}
-	if options.RefreshUnknownKID {
-		jwks.refreshUnknownKID = true
-	}
+	jwks.client = options.Client
+	jwks.givenKIDOverride = options.GivenKIDOverride
+	jwks.refreshErrorHandler = options.RefreshErrorHandler
+	jwks.refreshInterval = options.RefreshInterval
+	jwks.refreshRateLimit = options.RefreshRateLimit
+	jwks.refreshTimeout = options.RefreshTimeout
+	jwks.refreshUnknownKID = options.RefreshUnknownKID
 }

@@ -18,9 +18,8 @@ func main() {
 
 	// Create the keyfunc options. Use an error handler that logs. Timeout the initial JWKs refresh request after 10
 	// seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
-	refreshTimeout := time.Second * 10
 	options := keyfunc.Options{
-		RefreshTimeout: refreshTimeout,
+		RefreshTimeout: time.Second * 10,
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
