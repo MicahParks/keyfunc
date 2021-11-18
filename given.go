@@ -5,13 +5,13 @@ import (
 	"crypto/rsa"
 )
 
-// GivenKey represents a cryptographic key that resides in a JWKs. In conjuncture with Options.
+// GivenKey represents a cryptographic key that resides in a JWKS. In conjuncture with Options.
 type GivenKey struct {
 	precomputed interface{}
 }
 
-// NewGiven creates a JWKs from a map of given keys.
-func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKs) {
+// NewGiven creates a JWKS from a map of given keys.
+func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
 
 	// Initialize the map of kid to cryptographic keys.
 	keys := make(map[string]*jsonKey)
@@ -23,8 +23,8 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKs) {
 		}
 	}
 
-	// Return a JWKs with the map of cryptographic keys.
-	return &JWKs{
+	// Return a JWKS with the map of cryptographic keys.
+	return &JWKS{
 		keys: keys,
 	}
 }

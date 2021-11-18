@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf("Failed to self sign a custom token.\nError: %s.", err.Error())
 	}
 
-	// Create the JWKs from the given signing method's key.
+	// Create the JWKS from the given signing method's key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
 		exampleKID: keyfunc.NewGivenCustom(key),
 	})

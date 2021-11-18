@@ -27,7 +27,7 @@ const (
 	testKID = "testkid"
 )
 
-// TestNewGivenCustom tests that a custom jwt.SigningMethod can be used to create a JWKs and a proper jwt.Keyfunc.
+// TestNewGivenCustom tests that a custom jwt.SigningMethod can be used to create a JWKS and a proper jwt.Keyfunc.
 func TestNewGivenCustom(t *testing.T) {
 
 	// Register the signing method.
@@ -39,7 +39,7 @@ func TestNewGivenCustom(t *testing.T) {
 	givenKeys := make(map[string]keyfunc.GivenKey)
 	key := addCustom(givenKeys, testKID)
 
-	// Use the custom key to create a JWKs.
+	// Use the custom key to create a JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
@@ -51,7 +51,7 @@ func TestNewGivenCustom(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
-// TestNewGivenKeyECDSA tests that a generated ECDSA key can be added to the JWKs and create a proper jwt.Keyfunc.
+// TestNewGivenKeyECDSA tests that a generated ECDSA key can be added to the JWKS and create a proper jwt.Keyfunc.
 func TestNewGivenKeyECDSA(t *testing.T) {
 
 	// Create the map of given keys.
@@ -62,7 +62,7 @@ func TestNewGivenKeyECDSA(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Use the RSA public key to create a JWKs.
+	// Use the RSA public key to create a JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
@@ -73,7 +73,7 @@ func TestNewGivenKeyECDSA(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
-// TestNewGivenKeyHMAC tests that a generated HMAC key can be added to a JWKs and create a proper jwt.Keyfunc.
+// TestNewGivenKeyHMAC tests that a generated HMAC key can be added to a JWKS and create a proper jwt.Keyfunc.
 func TestNewGivenKeyHMAC(t *testing.T) {
 
 	// Create the map of given keys.
@@ -84,7 +84,7 @@ func TestNewGivenKeyHMAC(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Use an HMAC secret to create a given JWKs.
+	// Use an HMAC secret to create a given JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create a JWT with the appropriate key ID.
@@ -95,7 +95,7 @@ func TestNewGivenKeyHMAC(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
-// TestNewGivenKeyRSA tests that a generated RSA key can be added to the JWKs and create a proper jwt.Keyfunc.
+// TestNewGivenKeyRSA tests that a generated RSA key can be added to the JWKS and create a proper jwt.Keyfunc.
 func TestNewGivenKeyRSA(t *testing.T) {
 
 	// Create the map of given keys.
@@ -106,7 +106,7 @@ func TestNewGivenKeyRSA(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Use the RSA public key to create a JWKs.
+	// Use the RSA public key to create a JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
@@ -167,8 +167,8 @@ func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.Private
 	return key, nil
 }
 
-// signParseValidate signs the JWT, parses it using the given JWKs, then validates it.
-func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *keyfunc.JWKs) {
+// signParseValidate signs the JWT, parses it using the given JWKS, then validates it.
+func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *keyfunc.JWKS) {
 
 	// Sign the token.
 	jwtB64, err := token.SignedString(key)
@@ -177,7 +177,7 @@ func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *ke
 		t.FailNow()
 	}
 
-	// Parse the JWT using the JWKs.
+	// Parse the JWT using the JWKS.
 	var parsed *jwt.Token
 	if parsed, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
 		t.Errorf("Failed to parse the JWT.\nError: %s.", err.Error())
