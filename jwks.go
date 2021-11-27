@@ -133,9 +133,9 @@ func (j *JWKS) KIDs() (kids []string) {
 
 // ReadOnlyKeys returns a read-only copy of the mapping of key IDs (`kid`) to cryptographic keys.
 func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
-	keys := make(map[string]interface{}, len(j.keys))
+	keys := make(map[string]interface{})
 	j.mux.Lock()
-	for kid, cryptoKey := range keys {
+	for kid, cryptoKey := range j.keys {
 		keys[kid] = cryptoKey
 	}
 	j.mux.Unlock()

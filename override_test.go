@@ -195,7 +195,7 @@ func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 	// Create a pseudo-JWKS.
 	jwks := pseudoJWKS{Keys: []pseudoJSONKey{{
 		KID: remoteKID,
-		KTY: "RSA", // TODO Make a constant?
+		KTY: "RSA",
 		E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key3.PublicKey.E)).Bytes()),
 		N:   base64.RawURLEncoding.EncodeToString(key3.PublicKey.N.Bytes()),
 	}}}
