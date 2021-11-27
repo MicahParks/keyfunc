@@ -3,6 +3,7 @@ package keyfunc
 import (
 	"bytes"
 	"context"
+	"hash/fnv"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -183,6 +184,18 @@ func (j *JWKS) refresh() (err error) {
 	var jwksBytes []byte
 	if jwksBytes, err = ioutil.ReadAll(resp.Body); err != nil {
 		return err
+	}
+
+	// TODO
+	h := fnv.New64a()
+	if _, err = h.Write(jwksBytes); err != nil {
+		return err
+	}
+	checksum := h.Sum64()
+	if checksum != j.fnv { // TODO Add a test for this.
+		j.fnv = checksum
+	} else {
+		return nil
 	}
 
 	// Create an updated JWKS.
