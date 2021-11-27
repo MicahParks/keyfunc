@@ -11,9 +11,6 @@ var (
 
 	// ErrKID indicates that the JWT had an invalid kid.
 	ErrKID = errors.New("the JWT has an invalid kid")
-
-	// ErrUnsupportedKeyType indicates the JWT key type is an unsupported type.
-	ErrUnsupportedKeyType = errors.New("the JWT key type is unsupported")
 )
 
 // Keyfunc is a compatibility function that matches the signature of github.com/golang-jwt/jwt/v4's jwt.Keyfunc
@@ -30,28 +27,6 @@ func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKID)
 	}
 
-	// Get the jsonKey.
-	key, err := j.getKey(kid)
-	if err != nil {
-		return nil, err
-	}
-
-	// Determine the key's algorithm and return the appropriate public key.
-	switch keyAlg := token.Header["alg"]; keyAlg {
-	case es256, es384, es512:
-		return key.ECDSA()
-	case ps256, ps384, ps512, rs256, rs384, rs512:
-		return key.RSA()
-	case hs256, hs384, hs512:
-		return key.HMAC()
-	default:
-
-		// Assume there's a given key for a custom algorithm.
-		key.precomputedMux.RLock()
-		defer key.precomputedMux.RUnlock()
-		if key.precomputed != nil {
-			return key.precomputed, nil
-		}
-		return nil, fmt.Errorf("unable to find given key for kid: %w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
-	}
+	// Get the Go type for the correct cryptographic key.
+	return j.getKey(kid)
 }

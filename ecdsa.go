@@ -29,19 +29,8 @@ const (
 	p521 = "P-521"
 )
 
-// ECDSA parses a jsonKey and turns it into an ECDSA public key.
-func (j *jsonKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
-
-	// Check if the key has already been computed.
-	j.precomputedMux.RLock()
-	if j.precomputed != nil {
-		var ok bool
-		if publicKey, ok = j.precomputed.(*ecdsa.PublicKey); ok {
-			j.precomputedMux.RUnlock()
-			return publicKey, nil
-		}
-	}
-	j.precomputedMux.RUnlock()
+// ECDSA parses a jsonWebKey and turns it into an ECDSA public key.
+func (j *jsonWebKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 
 	// Confirm everything needed is present.
 	if j.X == "" || j.Y == "" || j.Curve == "" {
@@ -84,11 +73,6 @@ func (j *jsonKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 
 	// Turn the Y coordinate into a *big.Int.
 	publicKey.Y = big.NewInt(0).SetBytes(yCoordinate)
-
-	// Keep the public key so it won't have to be computed every time.
-	j.precomputedMux.Lock()
-	j.precomputed = publicKey
-	j.precomputedMux.Unlock()
 
 	return publicKey, nil
 }

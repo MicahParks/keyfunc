@@ -28,19 +28,8 @@ const (
 	ps512 = "PS512"
 )
 
-// RSA parses a jsonKey and turns it into an RSA public key.
-func (j *jsonKey) RSA() (publicKey *rsa.PublicKey, err error) {
-
-	// Check if the key has already been computed.
-	j.precomputedMux.RLock()
-	if j.precomputed != nil {
-		var ok bool
-		if publicKey, ok = j.precomputed.(*rsa.PublicKey); ok {
-			j.precomputedMux.RUnlock()
-			return publicKey, nil
-		}
-	}
-	j.precomputedMux.RUnlock()
+// RSA parses a jsonWebKey and turns it into an RSA public key.
+func (j *jsonWebKey) RSA() (publicKey *rsa.PublicKey, err error) {
 
 	// Confirm everything needed is present.
 	if j.Exponent == "" || j.Modulus == "" {
@@ -59,7 +48,7 @@ func (j *jsonKey) RSA() (publicKey *rsa.PublicKey, err error) {
 	// Decode the modulus from Base64.
 	var modulus []byte
 	if modulus, err = base64.RawURLEncoding.DecodeString(j.Modulus); err != nil {
-		return nil, err
+		return nil, err // TODO Add error details?
 	}
 
 	// Create the RSA public key.
@@ -73,11 +62,6 @@ func (j *jsonKey) RSA() (publicKey *rsa.PublicKey, err error) {
 
 	// Turn the modulus into a *big.Int.
 	publicKey.N = big.NewInt(0).SetBytes(modulus)
-
-	// Keep the public key so it won't have to be computed every time.
-	j.precomputedMux.Lock()
-	j.precomputed = publicKey
-	j.precomputedMux.Unlock()
 
 	return publicKey, nil
 }
