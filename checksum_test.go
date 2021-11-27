@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -62,9 +63,9 @@ func TestChecksum(t *testing.T) {
 	defer jwks.EndBackground()
 
 	// Get a map of all interface pointers for the JWKS.
-	cryptoKeyPointers := make(map[interface{}]struct{})
-	for _, cryptoKey := range jwks.ReadOnlyKeys() {
-		cryptoKeyPointers[cryptoKey] = struct{}{}
+	cryptoKeyPointers := make(map[string]interface{})
+	for kid, cryptoKey := range jwks.ReadOnlyKeys() {
+		cryptoKeyPointers[kid] = cryptoKey
 	}
 
 	// Create a JWT that will not be in the JWKS.
@@ -85,8 +86,8 @@ func TestChecksum(t *testing.T) {
 		t.Errorf("The number of keys should not be different.")
 		t.FailNow()
 	}
-	for _, cryptoKey := range newKeys {
-		if _, ok := cryptoKeyPointers[cryptoKey]; !ok {
+	for kid, cryptoKey := range newKeys {
+		if !reflect.DeepEqual(cryptoKeyPointers[kid], cryptoKey) {
 			t.Errorf("The JWKS should not have refreshed without a checksum change.")
 			t.FailNow()
 		}
@@ -111,8 +112,8 @@ func TestChecksum(t *testing.T) {
 	// Confirm the keys in the JWKS have been refreshed.
 	newKeys = jwks.ReadOnlyKeys()
 	different := false
-	for _, cryptoKey := range newKeys {
-		if _, ok := cryptoKeyPointers[cryptoKey]; !ok {
+	for kid, cryptoKey := range newKeys {
+		if !reflect.DeepEqual(cryptoKeyPointers[kid], cryptoKey) {
 			different = true
 			break
 		}
