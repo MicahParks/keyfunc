@@ -23,24 +23,18 @@ This repository only depends on: [github.com/golang-jwt/jwt/v4](https://github.c
 
 ## Supported Algorithms
 
-Currently, this package supports JWTs signed with an `alg` that matches one of the following:
-* `ES256`
-* `ES384`
-* `ES512`
-* `HS256`
-* `HS384`
-* `HS512`
-* `PS256`
-* `PS384`
-* `PS512`
-* `RS256`
-* `RS384`
-* `RS512`
+Currently, this package supports JWTs signed with a `kty` that matches one of the following:
+* `EC` [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
+* `RSA` [Rivest–Shamir–Adleman (RSA)](https://en.wikipedia.org/wiki/RSA_(cryptosystem))
+* `OKP` [Edwards-curve Digital Signature Algorithm (EdDSA)](https://en.wikipedia.org/wiki/EdDSA)
+* `OCT` [HMAC](https://en.wikipedia.org/wiki/HMAC), [AES Key Wrap](https://en.wikipedia.org/wiki/Key_Wrap), and others
 
-Additionally, the supported elliptical curve types are below:
+Additionally, the supported `EC` elliptical curve types are below:
 * `P-256`
 * `P-384`
 * `P-521`
+
+For `OKP`, EdDSA, only the
 
 This _does_ include HMAC keys. For an example using HMAC keys, please see the `examples/hmac` directory. Do _not_ expose
 HMAC keys in public facing JWKS, as HMAC keys are secret keys that do not use public key cryptography.
@@ -55,6 +49,14 @@ For complete examples, please see the `examples` directory.
 ```go
 import "github.com/MicahParks/keyfunc"
 ```
+
+#### A note on read-only keys
+The [`JWKS.ReadOnlyKeys`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.ReadOnlyKeys) method returns a read-only
+copy of a `map[string]interface{}`. The key to this map is the key ID, `kid`, and the value is the cryptographic key.
+This is a useful map for use of keys within a JWKS outside of `github.com/golang-jwt/jwt/v4`.
+
+The map itself is a copy. So it can be modified safely. However, the values are of type `interface{}`. If these values
+are modified, it may cause undefined behavior.
 
 ### Preconditions: Acquire the JWKS URL, JSON, or gather cryptographic keys (given keys)
 
@@ -154,3 +156,10 @@ coded JWTs cannot check for parsing and validation errors, just errors within th
 * Custom cryptographic algorithms can be used. Make sure to
   use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
   parsing JWTs. For an example, see the `examples/custom` directory.
+
+## References
+This project was built and tested used various RFCs and services. The services are listed below:
+* [Keycloak](https://www.keycloak.org/)
+* [Sample JWKS Service](https://jwks-service.appspot.com/)
+* connect2id's [Server JWKSet Gen](https://connect2id.com/products/server/docs/config/jwk-set)
+  ([Source](https://bitbucket.org/connect2id/server-jwkset-gen/src/master/))

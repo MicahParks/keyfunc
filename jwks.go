@@ -25,6 +25,7 @@ type ErrorHandler func(err error)
 type jsonWebKey struct {
 	Curve    string `json:"crv"`
 	Exponent string `json:"e"`
+	K        string `json:"k"`
 	ID       string `json:"kid"`
 	Modulus  string `json:"n"`
 	Type     string `json:"kty"`
@@ -74,31 +75,22 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 		// Determine the key's algorithm and create the appropriate public key.
 		var keyInter interface{}
 		switch keyType := key.Type; keyType {
-		case "EC":
+		case ktyEC:
 			if keyInter, err = key.ECDSA(); err != nil {
 				continue
 			}
-		case "OKP":
-			// TODO: https://datatracker.ietf.org/doc/html/rfc8037#appendix-A.2
-			continue
-		case "oct":
-			// TODO: https://datatracker.ietf.org/doc/html/rfc7517#appendix-A.3
-			continue
-		case "RSA":
+		case ktyOKP:
+			if keyInter, err = key.EdDSA(); err != nil {
+				continue
+			}
+		case ktyOct:
+			if keyInter, err = key.Oct(); err != nil {
+				continue
+			}
+		case ktyRSA:
 			if keyInter, err = key.RSA(); err != nil {
 				continue
 			}
-		// case hs256, hs384, hs512: // TODO
-		// 	return key.HMAC()
-		// default:
-		//
-		// 	// Assume there's a given key for a custom algorithm.
-		// 	key.precomputedMux.RLock()
-		// 	defer key.precomputedMux.RUnlock()
-		// 	if key.inter != nil {
-		// 		return key.inter, nil
-		// 	}
-		// 	return nil, fmt.Errorf("unable to find given key for kid: %w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
 		default:
 			// Ignore unknown key types silently.
 			continue
