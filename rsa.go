@@ -7,12 +7,18 @@ import (
 	"math/big"
 )
 
+const (
+
+	// ktyRSA is the key type (kty) in the JWT header for RSA.
+	ktyRSA = "RSA"
+)
+
 // RSA parses a jsonWebKey and turns it into an RSA public key.
 func (j *jsonWebKey) RSA() (publicKey *rsa.PublicKey, err error) {
 
 	// Confirm everything needed is present.
 	if j.Exponent == "" || j.Modulus == "" {
-		return nil, fmt.Errorf("%w: rsa", ErrMissingAssets)
+		return nil, fmt.Errorf("%w: %s", ErrMissingAssets, ktyRSA)
 	}
 
 	// Decode the exponent from Base64.
@@ -27,7 +33,7 @@ func (j *jsonWebKey) RSA() (publicKey *rsa.PublicKey, err error) {
 	// Decode the modulus from Base64.
 	var modulus []byte
 	if modulus, err = base64.RawURLEncoding.DecodeString(j.Modulus); err != nil {
-		return nil, err // TODO Add error details?
+		return nil, err
 	}
 
 	// Create the RSA public key.

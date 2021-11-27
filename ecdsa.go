@@ -10,6 +10,9 @@ import (
 
 const (
 
+	// ktyEC is the key type (kty) in the JWT header for ECDSA.
+	ktyEC = "EC"
+
 	// p256 represents a 256-bit cryptographic elliptical curve type.
 	p256 = "P-256"
 
@@ -25,7 +28,7 @@ func (j *jsonWebKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 
 	// Confirm everything needed is present.
 	if j.X == "" || j.Y == "" || j.Curve == "" {
-		return nil, fmt.Errorf("%w: ecdsa", ErrMissingAssets)
+		return nil, fmt.Errorf("%w: %s", ErrMissingAssets, ktyEC)
 	}
 
 	// Decode the X coordinate from Base64.
