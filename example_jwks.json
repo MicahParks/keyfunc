@@ -104,6 +104,20 @@
       ],
       "x5t": "5GNr3LeRXHWI4YR8-QTSsF98oTI",
       "x5t#S256": "Dgd0_wZZqvRuf4GEISPNHREX-1ixTMIsrPeGzk0bCxs"
+    },
+    {
+      "kty": "OKP",
+      "d": "TJ0UPkOZDPfneEDSH2ETbLQWjrALD-BPZQR-E7mgPvY",
+      "use": "sig",
+      "crv": "Ed25519",
+      "kid": "Q56A",
+      "x": "iZli54E2SkbrOvAThwrnxn1AMIOaazi_ckl6B-hbDK8"
+    },
+    {
+      "kty": "oct",
+      "use": "sig",
+      "kid": "hmac",
+      "k": "V_8Ob8dVs6JuZx6expyjShoUgFgxoaovGjmGhesL2jA"
     }
   ]
 }

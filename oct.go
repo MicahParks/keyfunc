@@ -1,7 +1,6 @@
 package keyfunc
 
 import (
-	"crypto/ed25519"
 	"encoding/base64"
 	"fmt"
 )
@@ -13,7 +12,7 @@ const (
 )
 
 // Oct parses a jsonWebKey and turns it into a raw byte slice (octet). This includes HMAC keys.
-func (j *jsonWebKey) Oct() (publicKey ed25519.PublicKey, err error) {
+func (j *jsonWebKey) Oct() (publicKey []byte, err error) {
 
 	// Confirm everything needed is present.
 	if j.K == "" {
@@ -21,10 +20,12 @@ func (j *jsonWebKey) Oct() (publicKey ed25519.PublicKey, err error) {
 	}
 
 	// Decode the octet key from Base64.
-	var publicBytes []byte
-	if publicBytes, err = base64.RawURLEncoding.DecodeString(j.K); err != nil {
+	//
+	// According to RFC 7517, this is Base64 URL bytes.
+	// https://datatracker.ietf.org/doc/html/rfc7517#section-1.1
+	if publicKey, err = base64.RawURLEncoding.DecodeString(j.K); err != nil {
 		return nil, err
 	}
 
-	return publicBytes, nil
+	return publicKey, nil
 }

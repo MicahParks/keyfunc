@@ -34,7 +34,8 @@ Additionally, the supported `EC` elliptical curve types are below:
 * `P-384`
 * `P-521`
 
-For `OKP`, EdDSA, only the
+For `OKP`, EdDSA, only the `Ed25519` curve type is supported. (I have not found a standard library package that
+supports `Ed448`.)
 
 This _does_ include HMAC keys. For an example using HMAC keys, please see the `examples/hmac` directory. Do _not_ expose
 HMAC keys in public facing JWKS, as HMAC keys are secret keys that do not use public key cryptography.
