@@ -191,8 +191,7 @@ func (j *JWKS) refresh() (err error) {
 	if _, err = h.Write(jwksBytes); err != nil {
 		return err
 	}
-	checksum := h.Sum64()
-	if checksum != j.fnv { // TODO Add a test for this.
+	if checksum := h.Sum64(); checksum != j.fnv { // TODO Add a test for this.
 		j.fnv = checksum
 	} else {
 		return nil
