@@ -186,13 +186,15 @@ func (j *JWKS) refresh() (err error) {
 		return err
 	}
 
-	// TODO
+	// Checksum the raw JWKS.
 	h := fnv.New64a()
 	if _, err = h.Write(jwksBytes); err != nil {
 		return err
 	}
 	checksum := h.Sum64()
-	if checksum == j.fnv { // TODO Add a test for this.
+
+	// Reprocess the JWKS if the checksum doesn't match.
+	if checksum == j.fnv {
 		return nil
 	}
 	j.fnv = checksum

@@ -83,7 +83,7 @@ func TestJWKS(t *testing.T) {
 	// Create the JWKS file path.
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	// Write the empty JWKS.
+	// Write the JWKS.
 	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
@@ -422,7 +422,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	}
 	defer jwks.EndBackground()
 
-	// Write the empty JWKS.
+	// Write the populated JWKS.
 	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
