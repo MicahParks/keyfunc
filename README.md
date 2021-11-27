@@ -78,7 +78,7 @@ Via HTTP:
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nError:%s\n", err.Error())
+	log.Fatalf("Failed to get the JWKS from the given URL.\nError:%s", err.Error())
 }
 ```
 Via JSON:
@@ -89,7 +89,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.NewJSON(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKS from JSON.\nError:%s\n", err.Error())
+	log.Fatalf("Failed to create JWKS from JSON.\nError:%s", err.Error())
 }
 ```
 Via a given key:

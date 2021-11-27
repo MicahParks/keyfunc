@@ -14,23 +14,22 @@ var (
 	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
 	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKS")
 
-	// ErrMissingAssets indicates there are required assets missing to create a public key.
+	// ErrMissingAssets indicates there are required assets are missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
 )
 
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
 
-// jsonKey represents a raw key inside a JWKS.
-type jsonKey struct {
-	Curve          string `json:"crv"`
-	Exponent       string `json:"e"`
-	ID             string `json:"kid"`
-	Modulus        string `json:"n"`
-	X              string `json:"x"`
-	Y              string `json:"y"`
-	precomputed    interface{}
-	precomputedMux sync.RWMutex
+// jsonWebKey represents a raw key inside a JWKS.
+type jsonWebKey struct {
+	Curve    string `json:"crv"`
+	Exponent string `json:"e"`
+	ID       string `json:"kid"`
+	Modulus  string `json:"n"`
+	Type     string `json:"kty"`
+	X        string `json:"x"`
+	Y        string `json:"y"`
 }
 
 // JWKS represents a JSON Web Key Set (JWK Set).
@@ -41,7 +40,7 @@ type JWKS struct {
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]*jsonKey
+	keys                map[string]interface{}
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
@@ -53,7 +52,7 @@ type JWKS struct {
 
 // rawJWKS represents a JWKS in JSON format.
 type rawJWKS struct {
-	Keys []*jsonKey `json:"keys"`
+	Keys []*jsonWebKey `json:"keys"`
 }
 
 // NewJSON creates a new JWKS from a raw JSON message.
@@ -67,11 +66,44 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
 	// Iterate through the keys in the raw JWKS. Add them to the JWKS.
 	jwks = &JWKS{
-		keys: make(map[string]*jsonKey, len(rawKS.Keys)),
+		keys: make(map[string]interface{}, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
-		key := key
-		jwks.keys[key.ID] = key
+
+		// Determine the key's algorithm and create the appropriate public key.
+		var keyInter interface{}
+		switch keyType := key.Type; keyType {
+		case "EC":
+			if keyInter, err = key.ECDSA(); err != nil {
+				continue
+			}
+		case "OKP":
+			// TODO: https://datatracker.ietf.org/doc/html/rfc8037#appendix-A.2
+			continue
+		case "oct":
+			// TODO: https://datatracker.ietf.org/doc/html/rfc7517#appendix-A.3
+			continue
+		case "RSA":
+			if keyInter, err = key.RSA(); err != nil {
+				continue
+			}
+		// case hs256, hs384, hs512: // TODO
+		// 	return key.HMAC()
+		// default:
+		//
+		// 	// Assume there's a given key for a custom algorithm.
+		// 	key.precomputedMux.RLock()
+		// 	defer key.precomputedMux.RUnlock()
+		// 	if key.inter != nil {
+		// 		return key.inter, nil
+		// 	}
+		// 	return nil, fmt.Errorf("unable to find given key for kid: %w: %s: feel free to add a feature request or contribute to https://github.com/MicahParks/keyfunc", ErrUnsupportedKeyType, keyAlg)
+		default:
+			// Ignore unknown key types silently.
+			continue
+		}
+
+		jwks.keys[key.ID] = keyInter
 	}
 
 	return jwks, nil
@@ -98,10 +130,21 @@ func (j *JWKS) KIDs() (kids []string) {
 	return kids
 }
 
-// getKey gets the jsonKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
-func (j *JWKS) getKey(kid string) (jsonKey *jsonKey, err error) {
+// Keys returns a read-only copy of the mapping of key IDs (`kid`) to cryptographic keys.
+func (j *JWKS) Keys() map[string]interface{} {
+	keys := make(map[string]interface{}, len(j.keys))
+	j.mux.Lock()
+	for kid, cryptoKey := range keys {
+		keys[kid] = cryptoKey
+	}
+	j.mux.Unlock()
+	return keys
+}
 
-	// Get the jsonKey from the JWKS.
+// getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
+func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
+
+	// Get the jsonWebKey from the JWKS.
 	var ok bool
 	j.mux.RLock()
 	jsonKey, ok = j.keys[kid]

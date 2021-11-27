@@ -37,6 +37,7 @@ type pseudoJWKS struct {
 // pseudoJSONKey is a data structure that is used to JSON marshal a JWK that is not fully featured.
 type pseudoJSONKey struct {
 	KID string `json:"kid"`
+	KTY string `json:"kty"`
 	E   string `json:"e"`
 	N   string `json:"n"`
 }
@@ -122,7 +123,6 @@ func TestNewGiven(t *testing.T) {
 
 	// Test the remote key that should have been overwritten.
 	createSignParseValidate(t, remotePrivateKeys, jwks, remoteKID, false)
-
 }
 
 // createSignParseValidate creates, signs, parses, and validates a JWT.
@@ -195,6 +195,7 @@ func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 	// Create a pseudo-JWKS.
 	jwks := pseudoJWKS{Keys: []pseudoJSONKey{{
 		KID: remoteKID,
+		KTY: "RSA", // TODO Make a constant?
 		E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key3.PublicKey.E)).Bytes()),
 		N:   base64.RawURLEncoding.EncodeToString(key3.PublicKey.N.Bytes()),
 	}}}

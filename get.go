@@ -211,9 +211,7 @@ func (j *JWKS) refresh() (err error) {
 			}
 
 			// Write the given key to the JWKS.
-			j.keys[kid] = &jsonKey{
-				precomputed: key.precomputed,
-			}
+			j.keys[kid] = key.inter
 		}
 	}
 

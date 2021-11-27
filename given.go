@@ -7,20 +7,18 @@ import (
 
 // GivenKey represents a cryptographic key that resides in a JWKS. In conjuncture with Options.
 type GivenKey struct {
-	precomputed interface{}
+	inter interface{}
 }
 
 // NewGiven creates a JWKS from a map of given keys.
 func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
 
 	// Initialize the map of kid to cryptographic keys.
-	keys := make(map[string]*jsonKey)
+	keys := make(map[string]interface{})
 
 	// Copy the given keys to the map of cryptographic keys.
 	for kid, given := range givenKeys {
-		keys[kid] = &jsonKey{
-			precomputed: given.precomputed,
-		}
+		keys[kid] = given.inter
 	}
 
 	// Return a JWKS with the map of cryptographic keys.
@@ -36,27 +34,27 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
 // signing method.
 func NewGivenCustom(key interface{}) (givenKey GivenKey) {
 	return GivenKey{
-		precomputed: key,
+		inter: key,
 	}
 }
 
 // NewGivenECDSA creates a new GivenKey given an ECDSA public key.
 func NewGivenECDSA(key *ecdsa.PublicKey) (givenKey GivenKey) {
 	return GivenKey{
-		precomputed: key,
+		inter: key,
 	}
 }
 
 // NewGivenHMAC creates a new GivenKey given an HMAC key in a byte slice.
 func NewGivenHMAC(key []byte) (givenKey GivenKey) {
 	return GivenKey{
-		precomputed: key,
+		inter: key,
 	}
 }
 
 // NewGivenRSA creates a new GivenKey given an RSA public key.
 func NewGivenRSA(key *rsa.PublicKey) (givenKey GivenKey) {
 	return GivenKey{
-		precomputed: key,
+		inter: key,
 	}
 }
