@@ -37,6 +37,7 @@ type JWKS struct {
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
+	fnv                 uint64
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
@@ -130,8 +131,8 @@ func (j *JWKS) KIDs() (kids []string) {
 	return kids
 }
 
-// Keys returns a read-only copy of the mapping of key IDs (`kid`) to cryptographic keys.
-func (j *JWKS) Keys() map[string]interface{} {
+// ReadOnlyKeys returns a read-only copy of the mapping of key IDs (`kid`) to cryptographic keys.
+func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 	keys := make(map[string]interface{}, len(j.keys))
 	j.mux.Lock()
 	for kid, cryptoKey := range keys {
