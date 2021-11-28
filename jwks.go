@@ -38,7 +38,7 @@ type JWKS struct {
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
-	fnv                 uint64
+	raw                 []byte
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
