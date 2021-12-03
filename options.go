@@ -47,7 +47,7 @@ type Options struct {
 	RefreshRateLimit time.Duration
 
 	// RefreshTimeout is the duration for the context timeout used to create the HTTP request for a refresh of the JWKS.
-	// This defaults to one minute. This is only effectual if RefreshInterval is not nil.
+	// This defaults to one minute. This is used for the HTTP request and any background goroutine refreshes.
 	RefreshTimeout time.Duration
 
 	// RefreshUnknownKID indicates that the JWKS refresh request will occur every time a kid that isn't cached is seen.
