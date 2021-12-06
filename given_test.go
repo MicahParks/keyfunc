@@ -2,6 +2,7 @@ package keyfunc_test
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -27,7 +28,7 @@ const (
 	testKID = "testkid"
 )
 
-// TestNewGivenCustom tests that a custom jwt.SigningMethod can be used to create a JWKs and a proper jwt.Keyfunc.
+// TestNewGivenCustom tests that a custom jwt.SigningMethod can be used to create a JWKS and a proper jwt.Keyfunc.
 func TestNewGivenCustom(t *testing.T) {
 
 	// Register the signing method.
@@ -39,7 +40,7 @@ func TestNewGivenCustom(t *testing.T) {
 	givenKeys := make(map[string]keyfunc.GivenKey)
 	key := addCustom(givenKeys, testKID)
 
-	// Use the custom key to create a JWKs.
+	// Use the custom key to create a JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
@@ -51,7 +52,7 @@ func TestNewGivenCustom(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
-// TestNewGivenKeyECDSA tests that a generated ECDSA key can be added to the JWKs and create a proper jwt.Keyfunc.
+// TestNewGivenKeyECDSA tests that a generated ECDSA key can be added to the JWKS and create a proper jwt.Keyfunc.
 func TestNewGivenKeyECDSA(t *testing.T) {
 
 	// Create the map of given keys.
@@ -62,7 +63,7 @@ func TestNewGivenKeyECDSA(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Use the RSA public key to create a JWKs.
+	// Use the RSA public key to create a JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
@@ -73,7 +74,29 @@ func TestNewGivenKeyECDSA(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
-// TestNewGivenKeyHMAC tests that a generated HMAC key can be added to a JWKs and create a proper jwt.Keyfunc.
+// TestNewGivenKeyEdDSA tests that a generated EdDSA key can be added to the JWKS and create a proper jwt.Keyfunc.
+func TestNewGivenKeyEdDSA(t *testing.T) {
+
+	// Create the map of given keys.
+	givenKeys := make(map[string]keyfunc.GivenKey)
+	key, err := addEdDSA(givenKeys, testKID)
+	if err != nil {
+		t.Errorf(err.Error())
+		t.FailNow()
+	}
+
+	// Use the RSA public key to create a JWKS.
+	jwks := keyfunc.NewGiven(givenKeys)
+
+	// Create the JWT with the appropriate key ID.
+	token := jwt.New(jwt.SigningMethodEdDSA)
+	token.Header[kidAttribute] = testKID
+
+	// Sign, parse, and validate the JWT.
+	signParseValidate(t, token, key, jwks)
+}
+
+// TestNewGivenKeyHMAC tests that a generated HMAC key can be added to a JWKS and create a proper jwt.Keyfunc.
 func TestNewGivenKeyHMAC(t *testing.T) {
 
 	// Create the map of given keys.
@@ -84,7 +107,7 @@ func TestNewGivenKeyHMAC(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Use an HMAC secret to create a given JWKs.
+	// Use an HMAC secret to create a given JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create a JWT with the appropriate key ID.
@@ -95,7 +118,7 @@ func TestNewGivenKeyHMAC(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
-// TestNewGivenKeyRSA tests that a generated RSA key can be added to the JWKs and create a proper jwt.Keyfunc.
+// TestNewGivenKeyRSA tests that a generated RSA key can be added to the JWKS and create a proper jwt.Keyfunc.
 func TestNewGivenKeyRSA(t *testing.T) {
 
 	// Create the map of given keys.
@@ -106,7 +129,7 @@ func TestNewGivenKeyRSA(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Use the RSA public key to create a JWKs.
+	// Use the RSA public key to create a JWKS.
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	// Create the JWT with the appropriate key ID.
@@ -134,6 +157,21 @@ func addECDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *ecdsa.Pri
 
 	// Add the new ECDSA public key to the keys map.
 	givenKeys[kid] = keyfunc.NewGivenECDSA(&key.PublicKey)
+
+	return key, nil
+}
+
+// addEdDSA adds a new EdDSA key to the given keys map.
+func addEdDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key ed25519.PrivateKey, err error) {
+
+	// Create the ECDSA key.
+	var pub ed25519.PublicKey
+	if pub, key, err = ed25519.GenerateKey(rand.Reader); err != nil {
+		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
+	}
+
+	// Add the new ECDSA public key to the keys map.
+	givenKeys[kid] = keyfunc.NewGivenEdDSA(pub)
 
 	return key, nil
 }
@@ -167,8 +205,8 @@ func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.Private
 	return key, nil
 }
 
-// signParseValidate signs the JWT, parses it using the given JWKs, then validates it.
-func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *keyfunc.JWKs) {
+// signParseValidate signs the JWT, parses it using the given JWKS, then validates it.
+func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *keyfunc.JWKS) {
 
 	// Sign the token.
 	jwtB64, err := token.SignedString(key)
@@ -177,7 +215,7 @@ func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *ke
 		t.FailNow()
 	}
 
-	// Parse the JWT using the JWKs.
+	// Parse the JWT using the JWKS.
 	var parsed *jwt.Token
 	if parsed, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
 		t.Errorf("Failed to parse the JWT.\nError: %s.", err.Error())

@@ -11,37 +11,38 @@ import (
 
 var (
 
-	// ErrKIDNotFound indicates that the given key ID was not found in the JWKs.
-	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKs")
+	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
+	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKS")
 
-	// ErrMissingAssets indicates there are required assets missing to create a public key.
+	// ErrMissingAssets indicates there are required assets are missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
 )
 
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
 
-// jsonKey represents a raw key inside a JWKs.
-type jsonKey struct {
-	Curve          string `json:"crv"`
-	Exponent       string `json:"e"`
-	ID             string `json:"kid"`
-	Modulus        string `json:"n"`
-	X              string `json:"x"`
-	Y              string `json:"y"`
-	precomputed    interface{}
-	precomputedMux sync.RWMutex
+// jsonWebKey represents a raw key inside a JWKS.
+type jsonWebKey struct {
+	Curve    string `json:"crv"`
+	Exponent string `json:"e"`
+	K        string `json:"k"`
+	ID       string `json:"kid"`
+	Modulus  string `json:"n"`
+	Type     string `json:"kty"`
+	X        string `json:"x"`
+	Y        string `json:"y"`
 }
 
-// JWKs represents a JSON Web Key Set (JWK Set).
-type JWKs struct {
+// JWKS represents a JSON Web Key Set (JWK Set).
+type JWKS struct {
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
+	raw                 []byte
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]*jsonKey
+	keys                map[string]interface{}
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
@@ -51,42 +52,66 @@ type JWKs struct {
 	refreshUnknownKID   bool
 }
 
-// rawJWKs represents a JWKs in JSON format.
-type rawJWKs struct {
-	Keys []*jsonKey `json:"keys"`
+// rawJWKS represents a JWKS in JSON format.
+type rawJWKS struct {
+	Keys []*jsonWebKey `json:"keys"`
 }
 
-// NewJSON creates a new JWKs from a raw JSON message.
-func NewJSON(jwksBytes json.RawMessage) (jwks *JWKs, err error) {
+// NewJSON creates a new JWKS from a raw JSON message.
+func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
-	// Turn the raw JWKs into the correct Go type.
-	var rawKS rawJWKs
+	// Turn the raw JWKS into the correct Go type.
+	var rawKS rawJWKS
 	if err = json.Unmarshal(jwksBytes, &rawKS); err != nil {
 		return nil, err
 	}
 
-	// Iterate through the keys in the raw JWKs. Add them to the JWKs.
-	jwks = &JWKs{
-		keys: make(map[string]*jsonKey, len(rawKS.Keys)),
+	// Iterate through the keys in the raw JWKS. Add them to the JWKS.
+	jwks = &JWKS{
+		keys: make(map[string]interface{}, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
-		key := key
-		jwks.keys[key.ID] = key
+
+		// Determine the key's type and create the appropriate public key.
+		var keyInter interface{}
+		switch keyType := key.Type; keyType {
+		case ktyEC:
+			if keyInter, err = key.ECDSA(); err != nil {
+				continue
+			}
+		case ktyOKP:
+			if keyInter, err = key.EdDSA(); err != nil {
+				continue
+			}
+		case ktyOct:
+			if keyInter, err = key.Oct(); err != nil {
+				continue
+			}
+		case ktyRSA:
+			if keyInter, err = key.RSA(); err != nil {
+				continue
+			}
+		default:
+			// Ignore unknown key types silently.
+			continue
+		}
+
+		jwks.keys[key.ID] = keyInter
 	}
 
 	return jwks, nil
 }
 
-// EndBackground ends the background goroutine to update the JWKs. It can only happen once and is only effective if the
-// JWKs has a background goroutine refreshing the JWKs keys.
-func (j *JWKs) EndBackground() {
+// EndBackground ends the background goroutine to update the JWKS. It can only happen once and is only effective if the
+// JWKS has a background goroutine refreshing the JWKS keys.
+func (j *JWKS) EndBackground() {
 	if j.cancel != nil {
 		j.cancel()
 	}
 }
 
-// KIDs returns the key IDs (`kid`) for all keys in the JWKs.
-func (j *JWKs) KIDs() (kids []string) {
+// KIDs returns the key IDs (`kid`) for all keys in the JWKS.
+func (j *JWKS) KIDs() (kids []string) {
 	j.mux.RLock()
 	defer j.mux.RUnlock()
 	kids = make([]string, len(j.keys))
@@ -98,10 +123,21 @@ func (j *JWKs) KIDs() (kids []string) {
 	return kids
 }
 
-// getKey gets the jsonKey from the given KID from the JWKs. It may refresh the JWKs if configured to.
-func (j *JWKs) getKey(kid string) (jsonKey *jsonKey, err error) {
+// ReadOnlyKeys returns a read-only copy of the mapping of key IDs (`kid`) to cryptographic keys.
+func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
+	keys := make(map[string]interface{})
+	j.mux.Lock()
+	for kid, cryptoKey := range j.keys {
+		keys[kid] = cryptoKey
+	}
+	j.mux.Unlock()
+	return keys
+}
 
-	// Get the jsonKey from the JWKs.
+// getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
+func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
+
+	// Get the jsonWebKey from the JWKS.
 	var ok bool
 	j.mux.RLock()
 	jsonKey, ok = j.keys[kid]
@@ -113,10 +149,10 @@ func (j *JWKs) getKey(kid string) (jsonKey *jsonKey, err error) {
 		// Check to see if configured to refresh on unknown kid.
 		if j.refreshUnknownKID {
 
-			// Create a context for refreshing the JWKs.
+			// Create a context for refreshing the JWKS.
 			ctx, cancel := context.WithCancel(j.ctx)
 
-			// Refresh the JWKs.
+			// Refresh the JWKS.
 			select {
 			case <-j.ctx.Done():
 				return
@@ -127,14 +163,14 @@ func (j *JWKs) getKey(kid string) (jsonKey *jsonKey, err error) {
 				return nil, ErrKIDNotFound
 			}
 
-			// Wait for the JWKs refresh to finish.
+			// Wait for the JWKS refresh to finish.
 			<-ctx.Done()
 
-			// Lock the JWKs for async safe use.
+			// Lock the JWKS for async safe use.
 			j.mux.RLock()
 			defer j.mux.RUnlock()
 
-			// Check if the JWKs refresh contained the requested key.
+			// Check if the JWKS refresh contained the requested key.
 			if jsonKey, ok = j.keys[kid]; ok {
 				return jsonKey, nil
 			}
