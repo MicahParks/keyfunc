@@ -62,7 +62,7 @@ are modified, it may cause undefined behavior.
 ### Preconditions: Acquire the JWKS URL, JSON, or gather cryptographic keys (given keys)
 
 A JWKS URL is not required, one can be created directly from JSON with the
-[`keyfunc.New`](https://pkg.go.dev/github.com/MicahParks/keyfunc#New) function.
+[`keyfunc.NewJSON`](https://pkg.go.dev/github.com/MicahParks/keyfunc#NewJSON) function.
 
 ```go
 // Get the JWKS URL from an environment variable.
