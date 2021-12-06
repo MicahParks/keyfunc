@@ -72,7 +72,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 	}
 	for _, key := range rawKS.Keys {
 
-		// Determine the key's algorithm and create the appropriate public key.
+		// Determine the key's type and create the appropriate public key.
 		var keyInter interface{}
 		switch keyType := key.Type; keyType {
 		case ktyEC:
