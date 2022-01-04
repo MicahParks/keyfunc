@@ -16,6 +16,10 @@ var (
 	defaultRefreshTimeout = time.Minute
 )
 
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Get loads the JWKS at the given URL.
 func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 

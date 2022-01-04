@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"sync"
 	"time"
 )
@@ -36,7 +35,7 @@ type jsonWebKey struct {
 // JWKS represents a JSON Web Key Set (JWK Set).
 type JWKS struct {
 	cancel              context.CancelFunc
-	client              *http.Client
+	client             HttpClient
 	ctx                 context.Context
 	raw                 []byte
 	givenKeys           map[string]GivenKey

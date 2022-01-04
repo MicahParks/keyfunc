@@ -2,7 +2,6 @@ package keyfunc
 
 import (
 	"context"
-	"net/http"
 	"time"
 )
 
@@ -16,7 +15,7 @@ import (
 type Options struct {
 
 	// Client is the HTTP client used to get the JWKS via HTTP.
-	Client *http.Client
+	Client HttpClient
 
 	// Ctx is the context for the keyfunc's background refresh. When the context expires or is canceled, the background
 	// goroutine will end.
