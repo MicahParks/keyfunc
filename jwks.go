@@ -62,7 +62,8 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
 	// Turn the raw JWKS into the correct Go type.
 	var rawKS rawJWKS
-	if err = json.Unmarshal(jwksBytes, &rawKS); err != nil {
+	err = json.Unmarshal(jwksBytes, &rawKS)
+	if err != nil {
 		return nil, err
 	}
 
@@ -76,19 +77,23 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 		var keyInter interface{}
 		switch keyType := key.Type; keyType {
 		case ktyEC:
-			if keyInter, err = key.ECDSA(); err != nil {
+			keyInter, err = key.ECDSA()
+			if err != nil {
 				continue
 			}
 		case ktyOKP:
-			if keyInter, err = key.EdDSA(); err != nil {
+			keyInter, err = key.EdDSA()
+			if err != nil {
 				continue
 			}
 		case ktyOct:
-			if keyInter, err = key.Oct(); err != nil {
+			keyInter, err = key.Oct()
+			if err != nil {
 				continue
 			}
 		case ktyRSA:
-			if keyInter, err = key.RSA(); err != nil {
+			keyInter, err = key.RSA()
+			if err != nil {
 				continue
 			}
 		default:
@@ -138,9 +143,8 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 
 	// Get the jsonWebKey from the JWKS.
-	var ok bool
 	j.mux.RLock()
-	jsonKey, ok = j.keys[kid]
+	jsonKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
 	// Check if the key was present.

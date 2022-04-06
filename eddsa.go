@@ -24,8 +24,8 @@ func (j *jsonWebKey) EdDSA() (publicKey ed25519.PublicKey, err error) {
 	//
 	// According to RFC 8037, this is from Base64 URL bytes.
 	// https://datatracker.ietf.org/doc/html/rfc8037#appendix-A.2
-	var publicBytes []byte
-	if publicBytes, err = base64.RawURLEncoding.DecodeString(j.X); err != nil {
+	publicBytes, err := base64.RawURLEncoding.DecodeString(j.X)
+	if err != nil {
 		return nil, err
 	}
 

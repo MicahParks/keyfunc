@@ -37,7 +37,8 @@ func TestInvalidServer(t *testing.T) {
 
 	// Create the HTTP test server.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		if _, err := w.Write(nil); err != nil {
+		_, err := w.Write(nil)
+		if err != nil {
 			t.Errorf("Failed to write empty response.\nError: %s", err.Error())
 			t.FailNow()
 		}
@@ -58,7 +59,8 @@ func TestInvalidServer(t *testing.T) {
 	}
 
 	// Create the JWKS.
-	if _, err := keyfunc.Get(server.URL, options); err == nil {
+	_, err := keyfunc.Get(server.URL, options)
+	if err == nil {
 		t.Errorf("Creation of *keyfunc.JWKS with invalid server must fail.")
 		t.FailNow()
 	}
@@ -74,7 +76,8 @@ func TestJWKS(t *testing.T) {
 		t.FailNow()
 	}
 	defer func() {
-		if err = os.RemoveAll(tempDir); err != nil {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
 			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
@@ -84,7 +87,8 @@ func TestJWKS(t *testing.T) {
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
 	// Write the JWKS.
-	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
+	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -170,7 +174,8 @@ func TestJWKS(t *testing.T) {
 				//
 				// Don't check for general errors. Unfortunately, an error occurs when a token is expired. All hard
 				// coded tokens are expired.
-				if _, err = jwt.Parse(tc.token, jwks.Keyfunc); err != nil {
+				_, err = jwt.Parse(tc.token, jwks.Keyfunc)
+				if err != nil {
 					if errors.Is(err, jwt.ErrInvalidKeyType) {
 						t.Errorf("Invaild key type selected.\nError: %s", err.Error())
 						t.FailNow()
@@ -221,9 +226,8 @@ func TestJWKS_KIDs(t *testing.T) {
 	}
 
 	// Confirm all expected keys are present.
-	var found bool
 	for _, expectedKID := range expectedKIDs {
-		found = false
+		found := false
 		for _, kid := range actual {
 			if kid == expectedKID {
 				found = true
@@ -246,7 +250,8 @@ func TestRateLimit(t *testing.T) {
 		t.FailNow()
 	}
 	defer func() {
-		if err = os.RemoveAll(tempDir); err != nil {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
 			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
@@ -290,8 +295,8 @@ func TestRateLimit(t *testing.T) {
 	}
 
 	// Create the JWKS.
-	var jwks *keyfunc.JWKS
-	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
+	jwks, err := keyfunc.Get(jwksURL, options)
+	if err != nil {
 		t.Errorf("Failed to create *keyfunc.JWKS.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -384,7 +389,8 @@ func TestUnknownKIDRefresh(t *testing.T) {
 		t.FailNow()
 	}
 	defer func() {
-		if err = os.RemoveAll(tempDir); err != nil {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
 			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
@@ -394,7 +400,8 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	jwksFile := filepath.Join(tempDir, strings.TrimPrefix(jwksFilePath, "/"))
 
 	// Write the empty JWKS.
-	if err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600); err != nil {
+	err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
+	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -419,15 +426,16 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	}
 
 	// Create the JWKS.
-	var jwks *keyfunc.JWKS
-	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
+	jwks, err := keyfunc.Get(jwksURL, options)
+	if err != nil {
 		t.Errorf("Failed to create *keyfunc.JWKS.\nError: %s", err.Error())
 		t.FailNow()
 	}
 	defer jwks.EndBackground()
 
 	// Write the populated JWKS.
-	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
+	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -439,7 +447,8 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	//
 	// Don't check for general errors. Unfortunately, an error occurs when a token is expired. All hard
 	// coded tokens are expired.
-	if _, err = jwt.Parse(token, jwks.Keyfunc); err != nil {
+	_, err = jwt.Parse(token, jwks.Keyfunc)
+	if err != nil {
 		if errors.Is(err, jwt.ErrInvalidKeyType) {
 			t.Errorf("Invaild key type selected.\nError: %s", err.Error())
 			t.FailNow()

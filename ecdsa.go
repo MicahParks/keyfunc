@@ -35,14 +35,14 @@ func (j *jsonWebKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 	//
 	// According to RFC 7518, this is a Base64 URL unsigned integer.
 	// https://tools.ietf.org/html/rfc7518#section-6.3
-	var xCoordinate []byte
-	if xCoordinate, err = base64.RawURLEncoding.DecodeString(j.X); err != nil {
+	xCoordinate, err := base64.RawURLEncoding.DecodeString(j.X)
+	if err != nil {
 		return nil, err
 	}
 
 	// Decode the Y coordinate from Base64.
-	var yCoordinate []byte
-	if yCoordinate, err = base64.RawURLEncoding.DecodeString(j.Y); err != nil {
+	yCoordinate, err := base64.RawURLEncoding.DecodeString(j.Y)
+	if err != nil {
 		return nil, err
 	}
 

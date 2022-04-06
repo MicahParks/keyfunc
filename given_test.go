@@ -151,7 +151,8 @@ func addCustom(givenKeys map[string]keyfunc.GivenKey, kid string) (key string) {
 func addECDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *ecdsa.PrivateKey, err error) {
 
 	// Create the ECDSA key.
-	if key, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader); err != nil {
+	key, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
 
@@ -165,8 +166,8 @@ func addECDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *ecdsa.Pri
 func addEdDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key ed25519.PrivateKey, err error) {
 
 	// Create the ECDSA key.
-	var pub ed25519.PublicKey
-	if pub, key, err = ed25519.GenerateKey(rand.Reader); err != nil {
+	pub, key, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
 
@@ -181,7 +182,8 @@ func addHMAC(givenKeys map[string]keyfunc.GivenKey, kid string) (secret []byte, 
 
 	// Create the HMAC secret.
 	secret = make([]byte, sha256.BlockSize)
-	if _, err = rand.Read(secret); err != nil {
+	_, err = rand.Read(secret)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create HMAC secret: %w", err)
 	}
 
@@ -195,7 +197,8 @@ func addHMAC(givenKeys map[string]keyfunc.GivenKey, kid string) (secret []byte, 
 func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.PrivateKey, err error) {
 
 	// Create the RSA key.
-	if key, err = rsa.GenerateKey(rand.Reader, 2048); err != nil {
+	key, err = rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
 		return nil, fmt.Errorf("failed to create RSA key: %w", err)
 	}
 
@@ -216,8 +219,8 @@ func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *ke
 	}
 
 	// Parse the JWT using the JWKS.
-	var parsed *jwt.Token
-	if parsed, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
+	parsed, err := jwt.Parse(jwtB64, jwks.Keyfunc)
+	if err != nil {
 		t.Errorf("Failed to parse the JWT.\nError: %s.", err.Error())
 		t.FailNow()
 	}

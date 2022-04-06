@@ -34,8 +34,8 @@ func main() {
 	})
 
 	// Parse the token.
-	var token *jwt.Token
-	if token, err = jwt.Parse(jwtB64, jwks.Keyfunc); err != nil {
+	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
+	if err != nil {
 		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
 	}
 

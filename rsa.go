@@ -25,14 +25,14 @@ func (j *jsonWebKey) RSA() (publicKey *rsa.PublicKey, err error) {
 	//
 	// According to RFC 7518, this is a Base64 URL unsigned integer.
 	// https://tools.ietf.org/html/rfc7518#section-6.3
-	var exponent []byte
-	if exponent, err = base64.RawURLEncoding.DecodeString(j.Exponent); err != nil {
+	exponent, err := base64.RawURLEncoding.DecodeString(j.Exponent)
+	if err != nil {
 		return nil, err
 	}
 
 	// Decode the modulus from Base64.
-	var modulus []byte
-	if modulus, err = base64.RawURLEncoding.DecodeString(j.Modulus); err != nil {
+	modulus, err := base64.RawURLEncoding.DecodeString(j.Modulus)
+	if err != nil {
 		return nil, err
 	}
 

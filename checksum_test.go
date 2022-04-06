@@ -24,7 +24,8 @@ func TestChecksum(t *testing.T) {
 		t.FailNow()
 	}
 	defer func() {
-		if err = os.RemoveAll(tempDir); err != nil {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
 			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
@@ -34,7 +35,8 @@ func TestChecksum(t *testing.T) {
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
 	// Write the JWKS.
-	if err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600); err != nil {
+	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -101,7 +103,8 @@ func TestChecksum(t *testing.T) {
 	}
 
 	// Write a different JWKS.
-	if err = ioutil.WriteFile(jwksFile, jwksBytes, 0600); err != nil {
+	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
+	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}

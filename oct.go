@@ -23,7 +23,8 @@ func (j *jsonWebKey) Oct() (publicKey []byte, err error) {
 	//
 	// According to RFC 7517, this is Base64 URL bytes.
 	// https://datatracker.ietf.org/doc/html/rfc7517#section-1.1
-	if publicKey, err = base64.RawURLEncoding.DecodeString(j.K); err != nil {
+	publicKey, err = base64.RawURLEncoding.DecodeString(j.K)
+	if err != nil {
 		return nil, err
 	}
 

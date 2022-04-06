@@ -52,7 +52,8 @@ func TestNewGiven(t *testing.T) {
 		t.FailNow()
 	}
 	defer func() {
-		if err = os.RemoveAll(tempDir); err != nil {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
 			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
 			t.FailNow()
 		}
@@ -69,7 +70,8 @@ func TestNewGiven(t *testing.T) {
 	}
 
 	// Write the empty JWKS.
-	if err = ioutil.WriteFile(jwksFile, jwksBytes, 0600); err != nil {
+	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
+	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -93,8 +95,8 @@ func TestNewGiven(t *testing.T) {
 	}
 
 	// Get the remote JWKS.
-	var jwks *keyfunc.JWKS
-	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
+	jwks, err := keyfunc.Get(jwksURL, options)
+	if err != nil {
 		t.Errorf("Failed to get the JWKS the testing URL.\nError: %s", err.Error())
 		t.FailNow()
 	}
@@ -110,7 +112,8 @@ func TestNewGiven(t *testing.T) {
 
 	// Change the JWKS options to overwrite remote keys.
 	options.GivenKIDOverride = true
-	if jwks, err = keyfunc.Get(jwksURL, options); err != nil {
+	jwks, err = keyfunc.Get(jwksURL, options)
+	if err != nil {
 		t.Errorf("Failed to recreate JWKS.\nError: %s.", err.Error())
 		t.FailNow()
 	}
@@ -140,8 +143,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 	}
 
 	// Parse the JWT.
-	var token *jwt.Token
-	token, err = jwt.Parse(jwtB64, jwks.Keyfunc)
+	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
 		if !shouldValidate && !errors.Is(err, rsa.ErrVerification) {
 			return
@@ -172,22 +174,22 @@ func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 	remotePrivateKeys = make(map[string]*rsa.PrivateKey)
 
 	// Create a key not in the remote JWKS.
-	var key1 *rsa.PrivateKey
-	if key1, err = addRSA(givenKeys, givenKID); err != nil {
+	key1, err := addRSA(givenKeys, givenKID)
+	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf(rsaErrMessage, err)
 	}
 	givenPrivateKeys[givenKID] = key1
 
 	// Create a key to be overwritten by or override the one with the same key ID in the remote JWKS.
-	var key2 *rsa.PrivateKey
-	if key2, err = addRSA(givenKeys, remoteKID); err != nil {
+	key2, err := addRSA(givenKeys, remoteKID)
+	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf(rsaErrMessage, err)
 	}
 	givenPrivateKeys[remoteKID] = key2
 
 	// Create a key that exists in the remote JWKS.
-	var key3 *rsa.PrivateKey
-	if key3, err = rsa.GenerateKey(rand.Reader, 2048); err != nil {
+	key3, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf(rsaErrMessage, err)
 	}
 	remotePrivateKeys[remoteKID] = key3
@@ -201,7 +203,8 @@ func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 	}}}
 
 	// Marshal the JWKS to JSON.
-	if jwksBytes, err = json.Marshal(jwks); err != nil {
+	jwksBytes, err = json.Marshal(jwks)
+	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to marshal the JWKS to JSON: %w", err)
 	}
 

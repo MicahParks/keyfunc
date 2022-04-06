@@ -36,7 +36,8 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	}
 
 	// Get the keys for the JWKS.
-	if err = jwks.refresh(); err != nil {
+	err = jwks.refresh()
+	if err != nil {
 		return nil, err
 	}
 
@@ -120,7 +121,8 @@ func (j *JWKS) backgroundRefresh() {
 						// Refresh the JWKS.
 						refreshMux.Lock()
 						defer refreshMux.Unlock()
-						if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
+						err := j.refresh()
+						if err != nil && j.refreshErrorHandler != nil {
 							j.refreshErrorHandler(err)
 						}
 
@@ -134,7 +136,8 @@ func (j *JWKS) backgroundRefresh() {
 			} else {
 
 				// Refresh the JWKS.
-				if err := j.refresh(); err != nil && j.refreshErrorHandler != nil {
+				err := j.refresh()
+				if err != nil && j.refreshErrorHandler != nil {
 					j.refreshErrorHandler(err)
 				}
 
@@ -167,21 +170,22 @@ func (j *JWKS) refresh() (err error) {
 	defer cancel()
 
 	// Create the HTTP request.
-	var req *http.Request
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, j.jwksURL, bytes.NewReader(nil)); err != nil {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, j.jwksURL, bytes.NewReader(nil))
+	if err != nil {
 		return err
 	}
 
 	// Get the JWKS as JSON from the given URL.
-	var resp *http.Response
-	if resp, err = j.client.Do(req); err != nil {
+	resp, err := j.client.Do(req)
+	if err != nil {
 		return err
 	}
-	defer resp.Body.Close() // Ignore any error.
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
 
 	// Read the raw JWKS from the body of the response.
-	var jwksBytes []byte
-	if jwksBytes, err = ioutil.ReadAll(resp.Body); err != nil {
+	jwksBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return err
 	}
 
@@ -192,8 +196,8 @@ func (j *JWKS) refresh() (err error) {
 	j.raw = jwksBytes
 
 	// Create an updated JWKS.
-	var updated *JWKS
-	if updated, err = NewJSON(jwksBytes); err != nil {
+	updated, err := NewJSON(jwksBytes)
+	if err != nil {
 		return err
 	}
 
