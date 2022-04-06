@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-
 	// Get the JWKS URL from your AWS region and userPoolId.
 	//
 	// See the AWS docs here:

@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	// Declare the custom signing method's key and key ID.
 	const key = ""
 	const exampleKID = "exampleKeyID"

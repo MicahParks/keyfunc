@@ -8,7 +8,6 @@ import (
 )
 
 var (
-
 	// ErrKID indicates that the JWT had an invalid kid.
 	ErrKID = errors.New("the JWT has an invalid kid")
 )

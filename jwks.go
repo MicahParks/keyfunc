@@ -10,7 +10,6 @@ import (
 )
 
 var (
-
 	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
 	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKS")
 

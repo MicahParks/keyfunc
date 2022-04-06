@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-
 	// Get the JWKS URL.
 	//
 	// This is a sample JWKS service. Visit https://jwks-service.appspot.com/ and grab a token to test this example.

@@ -149,7 +149,6 @@ func TestJWKS(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("token: %s", tc.token), func(t *testing.T) {
-
 				// Use the JWKS jwt.Keyfunc to parse the token.
 				//
 				// Don't check for general errors. Unfortunately, an error occurs when a token is expired. All hard

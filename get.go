@@ -10,7 +10,6 @@ import (
 )
 
 var (
-
 	// defaultRefreshTimeout is the default duration for the context used to create the HTTP request for a refresh of
 	// the JWKS.
 	defaultRefreshTimeout = time.Minute
@@ -76,7 +75,6 @@ func (j *JWKS) backgroundRefresh() {
 		case cancel := <-j.refreshRequests:
 			refreshMux.Lock()
 			if j.refreshRateLimit != 0 && lastRefresh.Add(j.refreshRateLimit).After(time.Now()) {
-
 				// Don't make the JWT parsing goroutine wait for the JWKS to refresh.
 				cancel()
 
@@ -168,7 +166,6 @@ func (j *JWKS) refresh() (err error) {
 
 	if j.givenKeys != nil {
 		for kid, key := range j.givenKeys {
-
 			// Only overwrite the key if configured to do so.
 			if !j.givenKIDOverride {
 				if _, ok := j.keys[kid]; ok {

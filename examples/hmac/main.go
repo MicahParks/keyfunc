@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	// Declare the custom signing method's key and key ID.
 	key := []byte("example secret")
 	const exampleKID = "exampleKeyID"

@@ -14,7 +14,6 @@ import (
 // When using a background refresh goroutine, make sure to use RefreshRateLimit if paired with RefreshUnknownKID. Also
 // make sure to end the background refresh goroutine with the JWKS.EndBackground method when it's no longer needed.
 type Options struct {
-
 	// Client is the HTTP client used to get the JWKS via HTTP.
 	Client *http.Client
 

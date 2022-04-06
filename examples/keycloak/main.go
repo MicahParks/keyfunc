@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	// Get the JWKS URL.
 	//
 	// This is a local Keycloak JWKS endpoint for the master realm.
