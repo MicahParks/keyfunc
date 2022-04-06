@@ -16,8 +16,6 @@ var (
 // Keyfunc is a compatibility function that matches the signature of github.com/golang-jwt/jwt/v4's jwt.Keyfunc
 // function.
 func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
-
-	// Get the kid from the token header.
 	kidInter, ok := token.Header["kid"]
 	if !ok {
 		return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKID)
@@ -27,6 +25,5 @@ func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKID)
 	}
 
-	// Get the Go type for the correct cryptographic key.
 	return j.getKey(kid)
 }

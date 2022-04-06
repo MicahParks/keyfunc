@@ -62,12 +62,14 @@ func applyOptions(jwks *JWKS, options Options) {
 	if options.Ctx != nil {
 		jwks.ctx, jwks.cancel = context.WithCancel(options.Ctx)
 	}
+
 	if options.GivenKeys != nil {
 		jwks.givenKeys = make(map[string]GivenKey)
 		for kid, key := range options.GivenKeys {
 			jwks.givenKeys[kid] = key
 		}
 	}
+
 	jwks.client = options.Client
 	jwks.givenKIDOverride = options.GivenKIDOverride
 	jwks.refreshErrorHandler = options.RefreshErrorHandler

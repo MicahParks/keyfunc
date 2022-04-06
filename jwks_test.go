@@ -20,7 +20,6 @@ import (
 )
 
 const (
-
 	// emptyJWKSJSON is a hard-coded empty JWKS in JSON format.
 	emptyJWKSJSON = `{"keys":[]}`
 
@@ -34,8 +33,6 @@ const (
 // TestInvalidServer performs initialization + refresh initialization with a server providing invalid data.
 // The test ensures that background refresh goroutine does not cause any trouble in case of init failure.
 func TestInvalidServer(t *testing.T) {
-
-	// Create the HTTP test server.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write(nil)
 		if err != nil {
@@ -45,20 +42,17 @@ func TestInvalidServer(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create testing options.
 	testingRefreshErrorHandler := func(err error) {
 		t.Errorf("Unhandled JWKS error: %s", err.Error())
 		t.FailNow()
 	}
 
-	// Set the options to refresh KID when unknown.
 	refreshInterval := time.Second
 	options := keyfunc.Options{
 		RefreshInterval:     refreshInterval,
 		RefreshErrorHandler: testingRefreshErrorHandler,
 	}
 
-	// Create the JWKS.
 	_, err := keyfunc.Get(server.URL, options)
 	if err == nil {
 		t.Errorf("Creation of *keyfunc.JWKS with invalid server must fail.")
@@ -68,8 +62,6 @@ func TestInvalidServer(t *testing.T) {
 
 // TestJWKS performs a table test on the JWKS code.
 func TestJWKS(t *testing.T) {
-
-	// Create a temporary directory to serve the JWKS from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
 		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
@@ -83,21 +75,17 @@ func TestJWKS(t *testing.T) {
 		}
 	}()
 
-	// Create the JWKS file path.
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	// Write the JWKS.
 	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
-	// Create the HTTP test server.
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
-	// Create testing options.
 	testingRefreshInterval := time.Second
 	testingRateLimit := time.Millisecond * 500
 	testingRefreshTimeout := time.Second
@@ -105,10 +93,8 @@ func TestJWKS(t *testing.T) {
 		panic(fmt.Sprintf("Unhandled JWKS error: %s", err.Error()))
 	}
 
-	// Set the JWKS URL.
 	jwksURL := server.URL + jwksFilePath
 
-	// Create a table of options to test.
 	options := []keyfunc.Options{
 		{}, // Default options.
 		{
@@ -131,17 +117,13 @@ func TestJWKS(t *testing.T) {
 		},
 	}
 
-	// Iterate through all options.
 	for _, opts := range options {
-
-		// Create the JWKS from the resource at the testing URL.
 		jwks, err := keyfunc.Get(jwksURL, opts)
 		if err != nil {
 			t.Errorf("Failed to get JWKS from testing URL.\nError: %s", err.Error())
 			t.FailNow()
 		}
 
-		// Create the test cases.
 		testCases := []struct {
 			token string
 		}{
@@ -161,12 +143,10 @@ func TestJWKS(t *testing.T) {
 			{"eyJhbGciOiJIUzI1NiIsImtpZCI6ImhtYWMiLCJrdHkiOiJvY3QiLCJ0eXAiOiJKV1QifQ.e30.vZ8H2-9j1pDXLNL2GFKbZOkC2qyA0dr7AiTJpNjgLcY"},                                                                                         // HMAC
 		}
 
-		// Wait for the interval to pass, if required.
 		if opts.RefreshInterval != 0 {
 			time.Sleep(opts.RefreshInterval)
 		}
 
-		// Iterate through the test cases.
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("token: %s", tc.token), func(t *testing.T) {
 
@@ -184,22 +164,18 @@ func TestJWKS(t *testing.T) {
 			})
 		}
 
-		// End the background goroutine.
 		jwks.EndBackground()
 	}
 }
 
 // TestKIDs confirms the JWKS.KIDs returns the key IDs (`kid`) stored in the JWKS.
 func TestJWKS_KIDs(t *testing.T) {
-
-	// Create the JWKS from JSON.
 	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
 	if err != nil {
 		t.Errorf("Failed to create a JWKS from JSON.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
-	// The expected key IDs.
 	expectedKIDs := []string{
 		"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBifH0KWrCz2Kyxc",
 		"ebJxnm9B3QDBljB5XJWEu72qx6BawDaMAhwz4aKPkQ0",
@@ -214,10 +190,8 @@ func TestJWKS_KIDs(t *testing.T) {
 		"hmac",
 	}
 
-	// Get all key IDs in the JWKS.
 	actual := jwks.KIDs()
 
-	// Confirm the length is the same.
 	actualLen := len(actual)
 	expectedLen := len(expectedKIDs)
 	if actualLen != expectedLen {
@@ -225,7 +199,6 @@ func TestJWKS_KIDs(t *testing.T) {
 		t.FailNow()
 	}
 
-	// Confirm all expected keys are present.
 	for _, expectedKID := range expectedKIDs {
 		found := false
 		for _, kid := range actual {
@@ -242,8 +215,6 @@ func TestJWKS_KIDs(t *testing.T) {
 
 // TestRateLimit performs a test to confirm the rate limiter works as expected.
 func TestRateLimit(t *testing.T) {
-
-	// Create a temporary directory to serve the JWKS from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
 		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
@@ -257,19 +228,14 @@ func TestRateLimit(t *testing.T) {
 		}
 	}()
 
-	// Create an integer to keep track of how many times the JWKS has been refreshed.
 	refreshes := uint(0)
 	refreshMux := sync.Mutex{}
 
-	// Create the HTTP test server.
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-
-		// Increment the number of refreshes that have occurred.
 		refreshMux.Lock()
 		refreshes++
 		refreshMux.Unlock()
 
-		// Write the JWKS to the response, regardless of the request.
 		writer.WriteHeader(200)
 		if _, serveErr := writer.Write([]byte(jwksJSON)); serveErr != nil {
 			t.Errorf("Failed to serve JWKS.\nError: %s", err.Error())
@@ -277,10 +243,8 @@ func TestRateLimit(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Set the JWKS URL.
 	jwksURL := server.URL + jwksFilePath
 
-	// Create the testing options.
 	refreshInterval := time.Second
 	refreshRateLimit := time.Millisecond * 500
 	refreshTimeout := time.Second
@@ -294,7 +258,6 @@ func TestRateLimit(t *testing.T) {
 		RefreshUnknownKID: true,
 	}
 
-	// Create the JWKS.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
 		t.Errorf("Failed to create *keyfunc.JWKS.\nError: %s", err.Error())
@@ -381,8 +344,6 @@ func TestRateLimit(t *testing.T) {
 
 // TestUnknownKIDRefresh performs a test to confirm that an Unknown kid with refresh the JWKS.
 func TestUnknownKIDRefresh(t *testing.T) {
-
-	// Create a temporary directory to serve the JWKS from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
 		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
@@ -396,36 +357,29 @@ func TestUnknownKIDRefresh(t *testing.T) {
 		}
 	}()
 
-	// Create the JWKS file path.
 	jwksFile := filepath.Join(tempDir, strings.TrimPrefix(jwksFilePath, "/"))
 
-	// Write the empty JWKS.
 	err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
 	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
-	// Create the HTTP test server.
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
-	// Create testing options.
 	testingRefreshErrorHandler := func(err error) {
 		t.Errorf("Unhandled JWKS error: %s", err.Error())
 		t.FailNow()
 	}
 
-	// Set the JWKS URL.
 	jwksURL := server.URL + jwksFilePath
 
-	// Set the options to refresh KID when unknown.
 	options := keyfunc.Options{
 		RefreshErrorHandler: testingRefreshErrorHandler,
 		RefreshUnknownKID:   true,
 	}
 
-	// Create the JWKS.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
 		t.Errorf("Failed to create *keyfunc.JWKS.\nError: %s", err.Error())
@@ -433,7 +387,6 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	}
 	defer jwks.EndBackground()
 
-	// Write the populated JWKS.
 	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())

@@ -13,16 +13,12 @@ type GivenKey struct {
 
 // NewGiven creates a JWKS from a map of given keys.
 func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
-
-	// Initialize the map of kid to cryptographic keys.
 	keys := make(map[string]interface{})
 
-	// Copy the given keys to the map of cryptographic keys.
 	for kid, given := range givenKeys {
 		keys[kid] = given.inter
 	}
 
-	// Return a JWKS with the map of cryptographic keys.
 	return &JWKS{
 		keys: keys,
 	}

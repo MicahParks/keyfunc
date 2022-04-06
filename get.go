@@ -18,16 +18,12 @@ var (
 
 // Get loads the JWKS at the given URL.
 func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
-
-	// Create the JWKS.
 	jwks = &JWKS{
 		jwksURL: jwksURL,
 	}
 
-	// Apply the options to the JWKS.
 	applyOptions(jwks, options)
 
-	// Apply some defaults if options were not provided.
 	if jwks.client == nil {
 		jwks.client = http.DefaultClient
 	}
@@ -35,22 +31,14 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 		jwks.refreshTimeout = defaultRefreshTimeout
 	}
 
-	// Get the keys for the JWKS.
 	err = jwks.refresh()
 	if err != nil {
 		return nil, err
 	}
 
-	// Check to see if a background refresh of the JWKS should happen.
 	if jwks.refreshInterval != 0 || jwks.refreshUnknownKID {
-
-		// Attach a context used to end the background goroutine.
 		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
-
-		// Create a channel that will accept requests to refresh the JWKS.
 		jwks.refreshRequests = make(chan context.CancelFunc, 1)
-
-		// Start the background goroutine for data refresh.
 		go jwks.backgroundRefresh()
 	}
 
@@ -60,8 +48,6 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 // backgroundRefresh is meant to be a separate goroutine that will update the keys in a JWKS over a given interval of
 // time.
 func (j *JWKS) backgroundRefresh() {
-
-	// Create some rate limiting assets.
 	var lastRefresh time.Time
 	var queueOnce sync.Once
 	var refreshMux sync.Mutex
@@ -74,16 +60,11 @@ func (j *JWKS) backgroundRefresh() {
 
 	// Enter an infinite loop that ends when the background ends.
 	for {
-
-		// If there is a refresh interval, create the channel for it.
 		if j.refreshInterval != 0 {
 			refreshInterval = time.After(j.refreshInterval)
 		}
 
-		// Wait for a refresh to occur or the background to end.
 		select {
-
-		// Send a refresh request the JWKS after the given interval.
 		case <-refreshInterval:
 			select {
 			case <-j.ctx.Done():
@@ -92,23 +73,16 @@ func (j *JWKS) backgroundRefresh() {
 			default: // If the j.refreshRequests channel is full, don't send another request.
 			}
 
-		// Accept refresh requests.
 		case cancel := <-j.refreshRequests:
-
-			// Rate limit, if needed.
 			refreshMux.Lock()
 			if j.refreshRateLimit != 0 && lastRefresh.Add(j.refreshRateLimit).After(time.Now()) {
 
 				// Don't make the JWT parsing goroutine wait for the JWKS to refresh.
 				cancel()
 
-				// Only queue a refresh once.
+				// Launch a goroutine that will get a reservation for a JWKS refresh or fail to and immediately return.
 				queueOnce.Do(func() {
-
-					// Launch a goroutine that will get a reservation for a JWKS refresh or fail to and immediately return.
 					go func() {
-
-						// Wait for the next time to refresh.
 						refreshMux.Lock()
 						wait := time.Until(lastRefresh.Add(j.refreshRateLimit))
 						refreshMux.Unlock()
@@ -118,7 +92,6 @@ func (j *JWKS) backgroundRefresh() {
 						case <-time.After(wait):
 						}
 
-						// Refresh the JWKS.
 						refreshMux.Lock()
 						defer refreshMux.Unlock()
 						err := j.refresh()
@@ -126,22 +99,16 @@ func (j *JWKS) backgroundRefresh() {
 							j.refreshErrorHandler(err)
 						}
 
-						// Reset the last time for the refresh to now.
 						lastRefresh = time.Now()
-
-						// Allow another queue.
 						queueOnce = sync.Once{}
 					}()
 				})
 			} else {
-
-				// Refresh the JWKS.
 				err := j.refresh()
 				if err != nil && j.refreshErrorHandler != nil {
 					j.refreshErrorHandler(err)
 				}
 
-				// Reset the last time for the refresh to now.
 				lastRefresh = time.Now()
 
 				// Allow the JWT parsing goroutine to continue with the refreshed JWKS.
@@ -158,8 +125,6 @@ func (j *JWKS) backgroundRefresh() {
 
 // refresh does an HTTP GET on the JWKS URL to rebuild the JWKS.
 func (j *JWKS) refresh() (err error) {
-
-	// Create a context for the request.
 	var ctx context.Context
 	var cancel context.CancelFunc
 	if j.ctx != nil {
@@ -169,13 +134,11 @@ func (j *JWKS) refresh() (err error) {
 	}
 	defer cancel()
 
-	// Create the HTTP request.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, j.jwksURL, bytes.NewReader(nil))
 	if err != nil {
 		return err
 	}
 
-	// Get the JWKS as JSON from the given URL.
 	resp, err := j.client.Do(req)
 	if err != nil {
 		return err
@@ -183,7 +146,6 @@ func (j *JWKS) refresh() (err error) {
 	//goland:noinspection GoUnhandledErrorResult
 	defer resp.Body.Close()
 
-	// Read the raw JWKS from the body of the response.
 	jwksBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -195,32 +157,25 @@ func (j *JWKS) refresh() (err error) {
 	}
 	j.raw = jwksBytes
 
-	// Create an updated JWKS.
 	updated, err := NewJSON(jwksBytes)
 	if err != nil {
 		return err
 	}
 
-	// Lock the JWKS for async safe usage.
 	j.mux.Lock()
 	defer j.mux.Unlock()
-
-	// Update the keys.
 	j.keys = updated.keys
 
-	// If given keys were provided, add them back into the refreshed JWKS.
-	var ok bool
 	if j.givenKeys != nil {
 		for kid, key := range j.givenKeys {
 
 			// Only overwrite the key if configured to do so.
 			if !j.givenKIDOverride {
-				if _, ok = j.keys[kid]; ok {
+				if _, ok := j.keys[kid]; ok {
 					continue
 				}
 			}
 
-			// Write the given key to the JWKS.
 			j.keys[kid] = key.inter
 		}
 	}

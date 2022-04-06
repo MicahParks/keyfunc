@@ -59,8 +59,6 @@ type rawJWKS struct {
 
 // NewJSON creates a new JWKS from a raw JSON message.
 func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
-
-	// Turn the raw JWKS into the correct Go type.
 	var rawKS rawJWKS
 	err = json.Unmarshal(jwksBytes, &rawKS)
 	if err != nil {
@@ -72,8 +70,6 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 		keys: make(map[string]interface{}, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
-
-		// Determine the key's type and create the appropriate public key.
 		var keyInter interface{}
 		switch keyType := key.Type; keyType {
 		case ktyEC:
@@ -141,19 +137,12 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
-
-	// Get the jsonWebKey from the JWKS.
 	j.mux.RLock()
 	jsonKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
-	// Check if the key was present.
 	if !ok {
-
-		// Check to see if configured to refresh on unknown kid.
 		if j.refreshUnknownKID {
-
-			// Create a context for refreshing the JWKS.
 			ctx, cancel := context.WithCancel(j.ctx)
 
 			// Refresh the JWKS.
@@ -162,7 +151,6 @@ func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 				return
 			case j.refreshRequests <- cancel:
 			default:
-
 				// If the j.refreshRequests channel is full, return the error early.
 				return nil, ErrKIDNotFound
 			}
@@ -170,11 +158,8 @@ func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 			// Wait for the JWKS refresh to finish.
 			<-ctx.Done()
 
-			// Lock the JWKS for async safe use.
 			j.mux.RLock()
 			defer j.mux.RUnlock()
-
-			// Check if the JWKS refresh contained the requested key.
 			if jsonKey, ok = j.keys[kid]; ok {
 				return jsonKey, nil
 			}

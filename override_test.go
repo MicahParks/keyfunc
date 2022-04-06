@@ -21,11 +21,7 @@ import (
 )
 
 const (
-
-	// givenKID is the key ID for the given key with a unique ID.
-	givenKID = "givenKID"
-
-	// remoteKID is the key ID for the remote key and given key that has a conflicting key ID.
+	givenKID  = "givenKID"
 	remoteKID = "remoteKID"
 )
 
@@ -44,8 +40,6 @@ type pseudoJSONKey struct {
 
 // TestNewGiven tests that given keys will be added to a JWKS with a remote resource.
 func TestNewGiven(t *testing.T) {
-
-	// Create a temporary directory to serve the JWKS from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
 		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
@@ -59,42 +53,34 @@ func TestNewGiven(t *testing.T) {
 		}
 	}()
 
-	// Create the JWKS file path.
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	// Create the keys used for this test.
 	givenKeys, givenPrivateKeys, jwksBytes, remotePrivateKeys, err := keysAndJWKS()
 	if err != nil {
 		t.Errorf("Failed to create cryptographic keys for the test.\nError: %s.", err.Error())
 		t.FailNow()
 	}
 
-	// Write the empty JWKS.
 	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
 	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
-	// Create the HTTP test server.
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
-	// Create testing options.
 	testingRefreshErrorHandler := func(err error) {
 		panic(fmt.Sprintf("Unhandled JWKS error.\nError: %s", err.Error()))
 	}
 
-	// Set the JWKS URL.
 	jwksURL := server.URL + jwksFilePath
 
-	// Create the test options.
 	options := keyfunc.Options{
 		GivenKeys:           givenKeys,
 		RefreshErrorHandler: testingRefreshErrorHandler,
 	}
 
-	// Get the remote JWKS.
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
 		t.Errorf("Failed to get the JWKS the testing URL.\nError: %s", err.Error())
@@ -130,19 +116,15 @@ func TestNewGiven(t *testing.T) {
 
 // createSignParseValidate creates, signs, parses, and validates a JWT.
 func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks *keyfunc.JWKS, kid string, shouldValidate bool) {
-
-	// Create the JWT.
 	unsignedToken := jwt.New(jwt.SigningMethodRS256)
 	unsignedToken.Header[kidAttribute] = kid
 
-	// Sign the JWT.
 	jwtB64, err := unsignedToken.SignedString(keys[kid])
 	if err != nil {
 		t.Errorf("Failed to sign the JWT.\nError: %s.", err.Error())
 		t.FailNow()
 	}
 
-	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
 		if !shouldValidate && !errors.Is(err, rsa.ErrVerification) {
@@ -157,7 +139,6 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 		t.FailNow()
 	}
 
-	// Validate the JWT.
 	if !token.Valid {
 		t.Errorf("The JWT is not valid.")
 		t.FailNow()
@@ -166,8 +147,6 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 
 // keysAndJWKS creates a couple of cryptographic keys and the remote JWKS associated with them.
 func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[string]*rsa.PrivateKey, jwksBytes []byte, remotePrivateKeys map[string]*rsa.PrivateKey, err error) {
-
-	// Initialize the function's assets.
 	const rsaErrMessage = "failed to create RSA key: %w"
 	givenKeys = make(map[string]keyfunc.GivenKey)
 	givenPrivateKeys = make(map[string]*rsa.PrivateKey)
@@ -194,7 +173,6 @@ func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 	}
 	remotePrivateKeys[remoteKID] = key3
 
-	// Create a pseudo-JWKS.
 	jwks := pseudoJWKS{Keys: []pseudoJSONKey{{
 		KID: remoteKID,
 		KTY: "RSA",
@@ -202,7 +180,6 @@ func keysAndJWKS() (givenKeys map[string]keyfunc.GivenKey, givenPrivateKeys map[
 		N:   base64.RawURLEncoding.EncodeToString(key3.PublicKey.N.Bytes()),
 	}}}
 
-	// Marshal the JWKS to JSON.
 	jwksBytes, err = json.Marshal(jwks)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to marshal the JWKS to JSON: %w", err)

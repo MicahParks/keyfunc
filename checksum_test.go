@@ -15,9 +15,8 @@ import (
 	"github.com/MicahParks/keyfunc"
 )
 
+// TestChecksum confirms that the JWKS will only perform a refresh if a new JWKS is read from the remote resource.
 func TestChecksum(t *testing.T) {
-
-	// Create a temporary directory to serve the JWKS from.
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
 		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
@@ -31,21 +30,17 @@ func TestChecksum(t *testing.T) {
 		}
 	}()
 
-	// Create the JWKS file path.
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	// Write the JWKS.
 	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
 		t.FailNow()
 	}
 
-	// Create the HTTP test server.
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
-	// Create testing options.
 	testingRefreshErrorHandler := func(err error) {
 		panic(fmt.Sprintf("Unhandled JWKS error: %s", err.Error()))
 	}
@@ -54,7 +49,6 @@ func TestChecksum(t *testing.T) {
 		RefreshUnknownKID:   true,
 	}
 
-	// Set the JWKS URL.
 	jwksURL := server.URL + jwksFilePath
 
 	jwks, err := keyfunc.Get(jwksURL, opts)
@@ -64,7 +58,6 @@ func TestChecksum(t *testing.T) {
 	}
 	defer jwks.EndBackground()
 
-	// Get a map of all interface pointers for the JWKS.
 	cryptoKeyPointers := make(map[string]interface{})
 	for kid, cryptoKey := range jwks.ReadOnlyKeys() {
 		cryptoKeyPointers[kid] = cryptoKey
@@ -95,14 +88,12 @@ func TestChecksum(t *testing.T) {
 		}
 	}
 
-	// Write a new JWKS to the test file.
+	// Write a different JWKS.
 	_, _, jwksBytes, _, err := keysAndJWKS()
 	if err != nil {
 		t.Errorf("Failed to create a test JWKS.\nError: %s", err.Error())
 		t.FailNow()
 	}
-
-	// Write a different JWKS.
 	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
 	if err != nil {
 		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())

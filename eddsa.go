@@ -7,15 +7,12 @@ import (
 )
 
 const (
-
 	// ktyEC is the key type (kty) in the JWT header for EdDSA.
 	ktyOKP = "OKP"
 )
 
 // EdDSA parses a jsonWebKey and turns it into a EdDSA public key.
 func (j *jsonWebKey) EdDSA() (publicKey ed25519.PublicKey, err error) {
-
-	// Confirm everything needed is present.
 	if j.X == "" {
 		return nil, fmt.Errorf("%w: %s", ErrMissingAssets, ktyOKP)
 	}
