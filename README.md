@@ -70,7 +70,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-log.Fatalln("JWKS_URL environment variable must be populated.")
+	log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -81,7 +81,7 @@ Via HTTP:
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
 if err != nil {
-log.Fatalf("Failed to get the JWKS from the given URL.\nError:%s", err.Error())
+	log.Fatalf("Failed to get the JWKS from the given URL.\nError:%s", err.Error())
 }
 ```
 Via JSON:
@@ -92,7 +92,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.NewJSON(jwksJSON)
 if err != nil {
-log.Fatalf("Failed to create JWKS from JSON.\nError:%s", err.Error())
+	log.Fatalf("Failed to create JWKS from JSON.\nError:%s", err.Error())
 }
 ```
 Via a given key:
@@ -103,7 +103,7 @@ uniqueKeyID := "myKeyID"
 
 // Create the JWKS from the HMAC key.
 jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-uniqueKeyID: keyfunc.NewGivenHMAC(key),
+	uniqueKeyID: keyfunc.NewGivenHMAC(key),
 })
 ```
 
@@ -118,7 +118,7 @@ mentioned at the bottom of this `README.md`.
 // Parse the JWT.
 token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 if err != nil {
-return nil, fmt.Errorf("failed to parse token: %w", err)
+	return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
