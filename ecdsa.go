@@ -3,7 +3,6 @@ package keyfunc
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"encoding/base64"
 	"fmt"
 	"math/big"
 )
@@ -32,11 +31,11 @@ func (j *jsonWebKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 	//
 	// According to RFC 7518, this is a Base64 URL unsigned integer.
 	// https://tools.ietf.org/html/rfc7518#section-6.3
-	xCoordinate, err := base64.RawURLEncoding.DecodeString(j.X)
+	xCoordinate, err := base64urlTrailingPadding(j.X)
 	if err != nil {
 		return nil, err
 	}
-	yCoordinate, err := base64.RawURLEncoding.DecodeString(j.Y)
+	yCoordinate, err := base64urlTrailingPadding(j.Y)
 	if err != nil {
 		return nil, err
 	}

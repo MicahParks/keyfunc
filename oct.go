@@ -1,7 +1,6 @@
 package keyfunc
 
 import (
-	"encoding/base64"
 	"fmt"
 )
 
@@ -20,7 +19,7 @@ func (j *jsonWebKey) Oct() (publicKey []byte, err error) {
 	//
 	// According to RFC 7517, this is Base64 URL bytes.
 	// https://datatracker.ietf.org/doc/html/rfc7517#section-1.1
-	publicKey, err = base64.RawURLEncoding.DecodeString(j.K)
+	publicKey, err = base64urlTrailingPadding(j.K)
 	if err != nil {
 		return nil, err
 	}

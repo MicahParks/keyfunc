@@ -2,7 +2,6 @@ package keyfunc
 
 import (
 	"crypto/ed25519"
-	"encoding/base64"
 	"fmt"
 )
 
@@ -21,7 +20,7 @@ func (j *jsonWebKey) EdDSA() (publicKey ed25519.PublicKey, err error) {
 	//
 	// According to RFC 8037, this is from Base64 URL bytes.
 	// https://datatracker.ietf.org/doc/html/rfc8037#appendix-A.2
-	publicBytes, err := base64.RawURLEncoding.DecodeString(j.X)
+	publicBytes, err := base64urlTrailingPadding(j.X)
 	if err != nil {
 		return nil, err
 	}
