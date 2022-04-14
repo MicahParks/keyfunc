@@ -2,7 +2,6 @@ package keyfunc
 
 import (
 	"crypto/rsa"
-	"encoding/base64"
 	"fmt"
 	"math/big"
 )
@@ -22,11 +21,11 @@ func (j *jsonWebKey) RSA() (publicKey *rsa.PublicKey, err error) {
 	//
 	// According to RFC 7518, this is a Base64 URL unsigned integer.
 	// https://tools.ietf.org/html/rfc7518#section-6.3
-	exponent, err := base64.RawURLEncoding.DecodeString(j.Exponent)
+	exponent, err := base64urlTrailingPadding(j.Exponent)
 	if err != nil {
 		return nil, err
 	}
-	modulus, err := base64.RawURLEncoding.DecodeString(j.Modulus)
+	modulus, err := base64urlTrailingPadding(j.Modulus)
 	if err != nil {
 		return nil, err
 	}

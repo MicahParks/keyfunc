@@ -127,13 +127,13 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 
 	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
-		if !shouldValidate && !errors.Is(err, rsa.ErrVerification) {
+		if !shouldValidate && errors.Is(err, rsa.ErrVerification) {
 			return
 		}
 		t.Errorf("Failed to parse the JWT.\nError: %s", err.Error())
 		t.FailNow()
-
 	}
+
 	if !shouldValidate {
 		t.Errorf("The token should not have parsed properly.")
 		t.FailNow()
