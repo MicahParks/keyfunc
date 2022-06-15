@@ -108,9 +108,8 @@ jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
 ```
 
 Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#Get)
-function via variadic arguments. See
-[`keyfunc.Options`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#Options) and the additional features
-mentioned at the bottom of this `README.md`.
+function. See [`keyfunc.Options`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#Options) and the additional
+features mentioned at the bottom of this `README.md`.
 
 ### Step 2: Use the [`JWKS.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#JWKS.Keyfunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) when parsing tokens
 
@@ -134,10 +133,10 @@ would accomplish the same purpose. There are some hard-coded JWTs which are expi
 coded JWTs cannot check for parsing and validation errors, just errors within the `jwt.Keyfunc` itself.
 
 ## Additional features
-
-* A background refresh of the JWKS keys can be performed. This is possible by passing
-  [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
-  [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
+These features can be configured by populating fields in the
+[`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) argument to the
+[`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
+* A background refresh of the JWKS keys can be performed.
 	* A custom background refresh interval can be specified. For an example, please see the `examples/interval`
 	  directory.
 	* A custom background refresh request context timeout can be specified. Defaults to one minute. For an example,
@@ -149,9 +148,7 @@ coded JWTs cannot check for parsing and validation errors, just errors within th
 	* JWTs with a previously unseen `kid` can prompt an automatic refresh of the remote JWKS resource. This should be
 	  paired with `RefreshRateLimit` to prevent abuse. For an example, please see the `examples/recommended_options`
 	  directory.
-* A custom HTTP client can be used. This is possible by passing
-  [`keyfunc.Options`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Options) via a variadic argument to the
-  [`keyfunc.Get`](https://pkg.go.dev/github.com/MicahParks/keyfunc#Get) function.
+* A custom HTTP client can be used.
 * A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
   the `examples/given` directory.
 * Custom cryptographic algorithms can be used. Make sure to
