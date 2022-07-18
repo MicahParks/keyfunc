@@ -26,6 +26,9 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	if jwks.client == nil {
 		jwks.client = http.DefaultClient
 	}
+	if jwks.requestFactory == nil {
+		jwks.requestFactory = defaultRequestFactory
+	}
 	if jwks.refreshTimeout == 0 {
 		jwks.refreshTimeout = defaultRefreshTimeout
 	}
@@ -121,6 +124,10 @@ func (j *JWKS) backgroundRefresh() {
 	}
 }
 
+func defaultRequestFactory(ctx context.Context, url string) (*http.Request, error) {
+	return http.NewRequestWithContext(ctx, http.MethodGet, url, bytes.NewReader(nil))
+}
+
 // refresh does an HTTP GET on the JWKS URL to rebuild the JWKS.
 func (j *JWKS) refresh() (err error) {
 	var ctx context.Context
@@ -132,7 +139,7 @@ func (j *JWKS) refresh() (err error) {
 	}
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, j.jwksURL, bytes.NewReader(nil))
+	req, err := j.requestFactory(ctx, j.jwksURL)
 	if err != nil {
 		return err
 	}

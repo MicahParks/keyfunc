@@ -49,6 +49,7 @@ type JWKS struct {
 	refreshRequests     chan context.CancelFunc
 	refreshTimeout      time.Duration
 	refreshUnknownKID   bool
+	requestFactory      func(ctx context.Context, url string) (*http.Request, error)
 }
 
 // rawJWKS represents a JWKS in JSON format.
