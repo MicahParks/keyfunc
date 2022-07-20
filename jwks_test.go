@@ -387,7 +387,7 @@ func TestRawJWKS(t *testing.T) {
 	copy(raw, emptySlice)
 
 	nextRaw := jwks.RawJWKS()
-	if bytes.Compare(raw, nextRaw) == 0 {
+	if bytes.Compare(nextRaw, emptySlice) == 0 {
 		t.Error("Raw JWKS is not a copy.")
 		t.FailNow()
 	}
