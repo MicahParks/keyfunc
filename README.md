@@ -151,6 +151,7 @@ These features can be configured by populating fields in the
 * A custom HTTP client can be used.
 * A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
   the `examples/given` directory.
+* A copy of the latest raw JWKS `[]byte` can be returned.
 * Custom cryptographic algorithms can be used. Make sure to
   use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
   parsing JWTs. For an example, see the `examples/custom` directory.
