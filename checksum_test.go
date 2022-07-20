@@ -39,7 +39,7 @@ func TestChecksum(t *testing.T) {
 	defer server.Close()
 
 	testingRefreshErrorHandler := func(err error) {
-		panic(fmt.Sprintf("Unhandled JWKS error: %s", err.Error()))
+		panic(fmt.Sprintf(logFmt, "Unhandled JWKS error.", err))
 	}
 	opts := keyfunc.Options{
 		RefreshErrorHandler: testingRefreshErrorHandler,
