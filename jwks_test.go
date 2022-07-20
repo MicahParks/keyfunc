@@ -1,6 +1,7 @@
 package keyfunc_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -339,6 +340,57 @@ func TestRateLimit(t *testing.T) {
 		t.FailNow()
 	}
 	refreshMux.Unlock()
+}
+
+// TestRawJWKS confirms a copy of the raw JWKS is returned from the method.
+func TestRawJWKS(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "*")
+	if err != nil {
+		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
+		t.FailNow()
+	}
+	defer func() {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
+			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
+			t.FailNow()
+		}
+	}()
+
+	jwksFile := filepath.Join(tempDir, jwksFilePath)
+
+	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	if err != nil {
+		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
+		t.FailNow()
+	}
+
+	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
+	defer server.Close()
+
+	jwksURL := server.URL + jwksFilePath
+
+	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
+	if err != nil {
+		t.Errorf("Failed to get JWKS from testing URL.\nError: %s", err.Error())
+		t.FailNow()
+	}
+
+	raw := jwks.RawJWKS()
+	if bytes.Compare(raw, []byte(jwksJSON)) != 0 {
+		t.Error("Raw JWKS does not match remote JWKS resource.")
+		t.FailNow()
+	}
+
+	// Overwrite the slice returned, if it's a copy, it should ruin the original.
+	emptySlice := make([]byte, len(raw))
+	copy(raw, emptySlice)
+
+	nextRaw := jwks.RawJWKS()
+	if bytes.Compare(raw, nextRaw) == 0 {
+		t.Error("Raw JWKS is not a copy.")
+		t.FailNow()
+	}
 }
 
 // TestUnknownKIDRefresh performs a test to confirm that an Unknown kid with refresh the JWKS.
