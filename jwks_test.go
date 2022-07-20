@@ -328,6 +328,51 @@ func TestRateLimit(t *testing.T) {
 	refreshMux.Unlock()
 }
 
+// TestRawJWKS confirms a copy of the raw JWKS is returned from the method.
+func TestRawJWKS(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "*")
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
+	}
+	defer func() {
+		err = os.RemoveAll(tempDir)
+		if err != nil {
+			t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
+		}
+	}()
+
+	jwksFile := filepath.Join(tempDir, jwksFilePath)
+
+	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
+	}
+
+	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
+	defer server.Close()
+
+	jwksURL := server.URL + jwksFilePath
+
+	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
+	}
+
+	raw := jwks.RawJWKS()
+	if bytes.Compare(raw, []byte(jwksJSON)) != 0 {
+		t.Fatalf("Raw JWKS does not match remote JWKS resource.")
+	}
+
+	// Overwrite the slice returned, if it's a copy, it should ruin the original.
+	emptySlice := make([]byte, len(raw))
+	copy(raw, emptySlice)
+
+	nextRaw := jwks.RawJWKS()
+	if bytes.Compare(nextRaw, emptySlice) == 0 {
+		t.Fatalf("Raw JWKS is not a copy.")
+	}
+}
+
 // TestRequestFactory confirms the behavior of request factories.
 func TestRequestFactory(t *testing.T) {
 	var fullJWKSHandler http.Handler

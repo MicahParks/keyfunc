@@ -124,6 +124,15 @@ func (j *JWKS) KIDs() (kids []string) {
 	return kids
 }
 
+// RawJWKS returns a copy of the raw JWKS received from the given JWKS URL.
+func (j *JWKS) RawJWKS() []byte {
+	j.mux.RLock()
+	defer j.mux.RUnlock()
+	raw := make([]byte, len(j.raw))
+	copy(raw, j.raw)
+	return raw
+}
+
 // ReadOnlyKeys returns a read-only copy of the mapping of key IDs (`kid`) to cryptographic keys.
 func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 	keys := make(map[string]interface{})
