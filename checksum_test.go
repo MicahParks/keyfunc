@@ -19,14 +19,12 @@ import (
 func TestChecksum(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
 		}
 	}()
 
@@ -34,15 +32,14 @@ func TestChecksum(t *testing.T) {
 
 	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
 
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
 	testingRefreshErrorHandler := func(err error) {
-		panic(fmt.Sprintf("Unhandled JWKS error: %s", err.Error()))
+		panic(fmt.Sprintf(logFmt, "Unhandled JWKS error.", err))
 	}
 	opts := keyfunc.Options{
 		RefreshErrorHandler: testingRefreshErrorHandler,
@@ -53,8 +50,7 @@ func TestChecksum(t *testing.T) {
 
 	jwks, err := keyfunc.Get(jwksURL, opts)
 	if err != nil {
-		t.Errorf("Failed to get JWKS from testing URL.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
 	}
 	defer jwks.EndBackground()
 
@@ -68,8 +64,7 @@ func TestChecksum(t *testing.T) {
 	token.Header["kid"] = "unknown"
 	signed, err := token.SignedString([]byte("test"))
 	if err != nil {
-		t.Errorf("Failed to sign test JWT.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to sign test JWT.", err)
 	}
 
 	// Force the JWKS to refresh.
@@ -78,26 +73,22 @@ func TestChecksum(t *testing.T) {
 	// Confirm the keys in the JWKS have not been refreshed.
 	newKeys := jwks.ReadOnlyKeys()
 	if len(newKeys) != len(cryptoKeyPointers) {
-		t.Errorf("The number of keys should not be different.")
-		t.FailNow()
+		t.Fatalf("The number of keys should not be different.")
 	}
 	for kid, cryptoKey := range newKeys {
 		if !reflect.DeepEqual(cryptoKeyPointers[kid], cryptoKey) {
-			t.Errorf("The JWKS should not have refreshed without a checksum change.")
-			t.FailNow()
+			t.Fatalf("The JWKS should not have refreshed without a checksum change.")
 		}
 	}
 
 	// Write a different JWKS.
 	_, _, jwksBytes, _, err := keysAndJWKS()
 	if err != nil {
-		t.Errorf("Failed to create a test JWKS.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a test JWKS.", err)
 	}
 	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
 	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
 
 	// Force the JWKS to refresh.
@@ -113,7 +104,6 @@ func TestChecksum(t *testing.T) {
 		}
 	}
 	if !different {
-		t.Errorf("A different JWKS checksum should have triggered a JWKS refresh.")
-		t.FailNow()
+		t.Fatalf("A different JWKS checksum should have triggered a JWKS refresh.")
 	}
 }

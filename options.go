@@ -55,7 +55,8 @@ type Options struct {
 	// sure to call the JWKS.EndBackground method to end this goroutine when it's no longer needed.
 	RefreshUnknownKID bool
 
-	// RequestFactory allows use of a custom HTTP request function
+	// RequestFactory creates HTTP requests for the remote JWKS resource located at the given url. For example, an
+	// HTTP header could be added to indicate a User-Agent.
 	RequestFactory func(ctx context.Context, url string) (*http.Request, error)
 }
 

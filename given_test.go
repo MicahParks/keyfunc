@@ -50,8 +50,7 @@ func TestNewGivenKeyECDSA(t *testing.T) {
 	givenKeys := make(map[string]keyfunc.GivenKey)
 	key, err := addECDSA(givenKeys, testKID)
 	if err != nil {
-		t.Errorf(err.Error())
-		t.FailNow()
+		t.Fatalf(err.Error())
 	}
 
 	jwks := keyfunc.NewGiven(givenKeys)
@@ -67,8 +66,7 @@ func TestNewGivenKeyEdDSA(t *testing.T) {
 	givenKeys := make(map[string]keyfunc.GivenKey)
 	key, err := addEdDSA(givenKeys, testKID)
 	if err != nil {
-		t.Errorf(err.Error())
-		t.FailNow()
+		t.Fatalf(err.Error())
 	}
 
 	jwks := keyfunc.NewGiven(givenKeys)
@@ -84,8 +82,7 @@ func TestNewGivenKeyHMAC(t *testing.T) {
 	givenKeys := make(map[string]keyfunc.GivenKey)
 	key, err := addHMAC(givenKeys, testKID)
 	if err != nil {
-		t.Errorf(err.Error())
-		t.FailNow()
+		t.Fatalf(err.Error())
 	}
 
 	jwks := keyfunc.NewGiven(givenKeys)
@@ -101,8 +98,7 @@ func TestNewGivenKeyRSA(t *testing.T) {
 	givenKeys := make(map[string]keyfunc.GivenKey)
 	key, err := addRSA(givenKeys, testKID)
 	if err != nil {
-		t.Errorf(err.Error())
-		t.FailNow()
+		t.Fatalf(err.Error())
 	}
 
 	jwks := keyfunc.NewGiven(givenKeys)
@@ -173,18 +169,15 @@ func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.Private
 func signParseValidate(t *testing.T, token *jwt.Token, key interface{}, jwks *keyfunc.JWKS) {
 	jwtB64, err := token.SignedString(key)
 	if err != nil {
-		t.Errorf("Failed to sign the JWT.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to sign the JWT.", err)
 	}
 
 	parsed, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
-		t.Errorf("Failed to parse the JWT.\nError: %s.", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to parse the JWT.", err)
 	}
 
 	if !parsed.Valid {
-		t.Errorf("The JWT was not valid.")
-		t.FailNow()
+		t.Fatalf("The JWT was not valid.")
 	}
 }
