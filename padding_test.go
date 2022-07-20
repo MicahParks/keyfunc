@@ -16,13 +16,11 @@ const (
 func TestNonRFCPadding(t *testing.T) {
 	jwks, err := keyfunc.NewJSON([]byte(jwksWithPadding))
 	if err != nil {
-		t.Errorf("Failed to parse the JWKS with padding.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to parse the JWKS with padding.", err)
 	}
 
 	// Confirm all the keys in the JWKS were parsed.
 	if len(jwks.KIDs()) != 1 {
-		t.Errorf("Not all keys with padding were parsed.\n  Expected: %d\n  Actual: %d", 1, len(jwks.KIDs()))
-		t.FailNow()
+		t.Fatalf("Not all keys with padding were parsed.\n  Expected: %d\n  Actual: %d", 1, len(jwks.KIDs()))
 	}
 }
