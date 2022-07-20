@@ -1,6 +1,7 @@
 package keyfunc_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -164,6 +165,33 @@ func TestJWKS(t *testing.T) {
 		}
 
 		jwks.EndBackground()
+	}
+
+	// Test RequestFactory failure
+	optsFail := keyfunc.Options{
+		RequestFactory: func(ctx context.Context, url string) (*http.Request, error) {
+			badURL := fmt.Sprintf("%s/does/not/exist", url)
+			return http.NewRequestWithContext(ctx, http.MethodGet, badURL, bytes.NewReader(nil))
+		},
+	}
+
+	_, err = keyfunc.Get(jwksURL, optsFail)
+	if err == nil {
+		t.Errorf("Creation of *keyfunc.JWKS reading from bad URL must fail.")
+		t.FailNow()
+	}
+
+	// Test RequestFactory success
+	optsSuccess := keyfunc.Options{
+		RequestFactory: func(ctx context.Context, url string) (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, http.MethodGet, url, bytes.NewReader(nil))
+		},
+	}
+
+	_, err = keyfunc.Get(jwksURL, optsSuccess)
+	if err != nil {
+		t.Errorf("Creation of *keyfunc.JWKS reading from good URL must succeed.")
+		t.FailNow()
 	}
 }
 
