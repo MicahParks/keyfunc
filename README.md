@@ -81,7 +81,7 @@ Via HTTP:
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nError:%s", err.Error())
+	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err)
 }
 ```
 Via JSON:
@@ -92,7 +92,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.NewJSON(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKS from JSON.\nError:%s", err.Error())
+	log.Fatalf("Failed to create JWKS from JSON.\nError: %s", err)
 }
 ```
 Via a given key:
@@ -149,6 +149,8 @@ These features can be configured by populating fields in the
 	  paired with `RefreshRateLimit` to prevent abuse. For an example, please see the `examples/recommended_options`
 	  directory.
 * A custom HTTP client can be used.
+* A custom HTTP request factory can be provided to create HTTP requests for the remote JWKS resource. For example, an
+  HTTP header can be added to indicate a User-Agent.
 * A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
   the `examples/given` directory.
 * A copy of the latest raw JWKS `[]byte` can be returned.

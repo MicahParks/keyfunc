@@ -42,14 +42,12 @@ type pseudoJSONKey struct {
 func TestNewGiven(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
 		}
 	}()
 
@@ -57,21 +55,19 @@ func TestNewGiven(t *testing.T) {
 
 	givenKeys, givenPrivateKeys, jwksBytes, remotePrivateKeys, err := keysAndJWKS()
 	if err != nil {
-		t.Errorf("Failed to create cryptographic keys for the test.\nError: %s.", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create cryptographic keys for the test.", err)
 	}
 
 	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
 	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
 
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
 	testingRefreshErrorHandler := func(err error) {
-		panic(fmt.Sprintf("Unhandled JWKS error.\nError: %s", err.Error()))
+		panic(fmt.Sprintf(logFmt, "Unhandled JWKS error.", err))
 	}
 
 	jwksURL := server.URL + jwksFilePath
@@ -83,8 +79,7 @@ func TestNewGiven(t *testing.T) {
 
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		t.Errorf("Failed to get the JWKS the testing URL.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to get the JWKS the testing URL.", err)
 	}
 
 	// Test the given key with a unique key ID.
@@ -100,8 +95,7 @@ func TestNewGiven(t *testing.T) {
 	options.GivenKIDOverride = true
 	jwks, err = keyfunc.Get(jwksURL, options)
 	if err != nil {
-		t.Errorf("Failed to recreate JWKS.\nError: %s.", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to recreate JWKS.", err)
 	}
 
 	// Test the given key with a unique key ID.
@@ -121,8 +115,7 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 
 	jwtB64, err := unsignedToken.SignedString(keys[kid])
 	if err != nil {
-		t.Errorf("Failed to sign the JWT.\nError: %s.", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to sign the JWT.", err)
 	}
 
 	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
@@ -130,18 +123,15 @@ func createSignParseValidate(t *testing.T, keys map[string]*rsa.PrivateKey, jwks
 		if !shouldValidate && errors.Is(err, rsa.ErrVerification) {
 			return
 		}
-		t.Errorf("Failed to parse the JWT.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to parse the JWT.", err)
 	}
 
 	if !shouldValidate {
-		t.Errorf("The token should not have parsed properly.")
-		t.FailNow()
+		t.Fatalf("The token should not have parsed properly.")
 	}
 
 	if !token.Valid {
-		t.Errorf("The JWT is not valid.")
-		t.FailNow()
+		t.Fatalf("The JWT is not valid.")
 	}
 }
 

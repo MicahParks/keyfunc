@@ -24,6 +24,9 @@ const (
 	// emptyJWKSJSON is a hard-coded empty JWKS in JSON format.
 	emptyJWKSJSON = `{"keys":[]}`
 
+	// logFmt is an error log formatting string.
+	logFmt = "%s\nError: %s"
+
 	// jwksFilePath is the full path of th JWKS file on the test HTTP server.
 	jwksFilePath = "/example_jwks.json"
 
@@ -37,15 +40,13 @@ func TestInvalidServer(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write(nil)
 		if err != nil {
-			t.Errorf("Failed to write empty response.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to write empty response.", err)
 		}
 	}))
 	defer server.Close()
 
 	testingRefreshErrorHandler := func(err error) {
-		t.Errorf("Unhandled JWKS error: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Unhandled JWKS error.", err)
 	}
 
 	refreshInterval := time.Second
@@ -56,8 +57,7 @@ func TestInvalidServer(t *testing.T) {
 
 	_, err := keyfunc.Get(server.URL, options)
 	if err == nil {
-		t.Errorf("Creation of *keyfunc.JWKS with invalid server must fail.")
-		t.FailNow()
+		t.Fatalf("Creation of *keyfunc.JWKS with invalid server must fail.")
 	}
 }
 
@@ -65,14 +65,12 @@ func TestInvalidServer(t *testing.T) {
 func TestJWKS(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
 		}
 	}()
 
@@ -80,8 +78,7 @@ func TestJWKS(t *testing.T) {
 
 	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
 
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
@@ -91,7 +88,7 @@ func TestJWKS(t *testing.T) {
 	testingRateLimit := time.Millisecond * 500
 	testingRefreshTimeout := time.Second
 	testingRefreshErrorHandler := func(err error) {
-		panic(fmt.Sprintf("Unhandled JWKS error: %s", err.Error()))
+		panic(fmt.Sprintf(logFmt, "Unhandled JWKS error.", err))
 	}
 
 	jwksURL := server.URL + jwksFilePath
@@ -121,8 +118,7 @@ func TestJWKS(t *testing.T) {
 	for _, opts := range options {
 		jwks, err := keyfunc.Get(jwksURL, opts)
 		if err != nil {
-			t.Errorf("Failed to get JWKS from testing URL.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
 		}
 
 		testCases := []struct {
@@ -157,8 +153,7 @@ func TestJWKS(t *testing.T) {
 				_, err = jwt.Parse(tc.token, jwks.Keyfunc)
 				if err != nil {
 					if errors.Is(err, jwt.ErrInvalidKeyType) {
-						t.Errorf("Invaild key type selected.\nError: %s", err.Error())
-						t.FailNow()
+						t.Fatalf(logFmt, "Invaild key type selected.", err)
 					}
 				}
 			})
@@ -172,8 +167,7 @@ func TestJWKS(t *testing.T) {
 func TestJWKS_KIDs(t *testing.T) {
 	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
 	if err != nil {
-		t.Errorf("Failed to create a JWKS from JSON.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a JWKS from JSON.", err)
 	}
 
 	expectedKIDs := []string{
@@ -195,8 +189,7 @@ func TestJWKS_KIDs(t *testing.T) {
 	actualLen := len(actual)
 	expectedLen := len(expectedKIDs)
 	if actualLen != expectedLen {
-		t.Errorf("The number of key IDs was not as expected.\n  Expected length: %d\n  Actual length: %d\n  Actual key IDs: %v", expectedLen, actualLen, actual)
-		t.FailNow()
+		t.Fatalf("The number of key IDs was not as expected.\n  Expected length: %d\n  Actual length: %d\n  Actual key IDs: %v", expectedLen, actualLen, actual)
 	}
 
 	for _, expectedKID := range expectedKIDs {
@@ -217,14 +210,12 @@ func TestJWKS_KIDs(t *testing.T) {
 func TestRateLimit(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
 		}
 	}()
 
@@ -238,7 +229,7 @@ func TestRateLimit(t *testing.T) {
 
 		writer.WriteHeader(200)
 		if _, serveErr := writer.Write([]byte(jwksJSON)); serveErr != nil {
-			t.Errorf("Failed to serve JWKS.\nError: %s", err.Error())
+			t.Errorf(logFmt, "Failed to serve JWKS.", err)
 		}
 	}))
 	defer server.Close()
@@ -250,7 +241,7 @@ func TestRateLimit(t *testing.T) {
 	refreshTimeout := time.Second
 	options := keyfunc.Options{
 		RefreshErrorHandler: func(err error) {
-			t.Errorf("The package itself had an error.\nError: %s", err.Error())
+			t.Errorf(logFmt, "The package itself had an error.", err)
 		},
 		RefreshInterval:   refreshInterval,
 		RefreshRateLimit:  refreshRateLimit,
@@ -260,8 +251,7 @@ func TestRateLimit(t *testing.T) {
 
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		t.Errorf("Failed to create *keyfunc.JWKS.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create *keyfunc.JWKS.", err)
 	}
 	defer jwks.EndBackground()
 
@@ -284,7 +274,7 @@ func TestRateLimit(t *testing.T) {
 		defer waitGroup.Done()
 		if _, parseErr := jwt.Parse(token1, jwks.Keyfunc); parseErr != nil {
 			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-				t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
+				t.Errorf(logFmt, "Invaild key type selected.", parseErr)
 			}
 		}
 	}()
@@ -292,7 +282,7 @@ func TestRateLimit(t *testing.T) {
 		defer waitGroup.Done()
 		if _, parseErr := jwt.Parse(token2, jwks.Keyfunc); parseErr != nil {
 			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-				t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
+				t.Errorf(logFmt, "Invaild key type selected.", parseErr)
 			}
 		}
 	}()
@@ -300,14 +290,13 @@ func TestRateLimit(t *testing.T) {
 		defer waitGroup.Done()
 		if _, parseErr := jwt.Parse(token3, jwks.Keyfunc); parseErr != nil {
 			if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-				t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
+				t.Errorf(logFmt, "Invaild key type selected.", parseErr)
 			}
 		}
 	}()
 	if _, parseErr := jwt.Parse(token4, jwks.Keyfunc); parseErr != nil {
 		if errors.Is(parseErr, jwt.ErrInvalidKeyType) {
-			t.Errorf("Invaild key type selected.\nError: %s", parseErr.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Invaild key type selected.", parseErr)
 		}
 	}
 	waitGroup.Wait()
@@ -316,8 +305,7 @@ func TestRateLimit(t *testing.T) {
 	refreshMux.Lock()
 	expected := uint(2)
 	if refreshes != expected {
-		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
-		t.FailNow()
+		t.Fatalf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
 	}
 	refreshMux.Unlock()
 
@@ -326,8 +314,7 @@ func TestRateLimit(t *testing.T) {
 	refreshMux.Lock()
 	expected = uint(3)
 	if refreshes != expected {
-		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
-		t.FailNow()
+		t.Fatalf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
 	}
 	refreshMux.Unlock()
 
@@ -336,60 +323,119 @@ func TestRateLimit(t *testing.T) {
 	refreshMux.Lock()
 	expected = uint(4)
 	if refreshes != expected {
-		t.Errorf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
-		t.FailNow()
+		t.Fatalf("An incorrect number of refreshes occurred.\n  Expected: %d\n  Got: %d\n", expected, refreshes)
 	}
 	refreshMux.Unlock()
 }
 
-// TestRawJWKS confirms a copy of the raw JWKS is returned from the method.
-func TestRawJWKS(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
-	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
-	}
-	defer func() {
-		err = os.RemoveAll(tempDir)
+// TestRequestFactory confirms the behavior of request factories.
+func TestRequestFactory(t *testing.T) {
+	var fullJWKSHandler http.Handler
+	{
+		tempDir, err := ioutil.TempDir("", "*")
 		if err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 		}
-	}()
+		defer func() {
+			err = os.RemoveAll(tempDir)
+			if err != nil {
+				t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
+			}
+		}()
 
-	jwksFile := filepath.Join(tempDir, jwksFilePath)
+		jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
-	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+		if err != nil {
+			t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
+		}
+
+		fullJWKSHandler = http.FileServer(http.Dir(tempDir))
+	}
+	var emptyJWKSHandler http.Handler
+	{
+		tempDir, err := ioutil.TempDir("", "*")
+		if err != nil {
+			t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
+		}
+		defer func() {
+			err = os.RemoveAll(tempDir)
+			if err != nil {
+				t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
+			}
+		}()
+
+		jwksFile := filepath.Join(tempDir, jwksFilePath)
+
+		err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
+		if err != nil {
+			t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
+		}
+
+		emptyJWKSHandler = http.FileServer(http.Dir(tempDir))
 	}
 
-	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
+	const (
+		fullJWKSUserAgent = "full-jwks-please"
+		userAgentHeader   = "User-Agent"
+	)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Header.Get(userAgentHeader) {
+		case fullJWKSUserAgent:
+			fullJWKSHandler.ServeHTTP(w, r)
+		default:
+			emptyJWKSHandler.ServeHTTP(w, r)
+		}
+	}))
 	defer server.Close()
 
 	jwksURL := server.URL + jwksFilePath
 
-	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
+	optsFail := keyfunc.Options{
+		RequestFactory: func(ctx context.Context, url string) (*http.Request, error) {
+			badURL := fmt.Sprintf("%s/does/not/exist", url)
+			return http.NewRequestWithContext(ctx, http.MethodGet, badURL, bytes.NewReader(nil))
+		},
+	}
+
+	_, err := keyfunc.Get(jwksURL, optsFail)
+	if err == nil {
+		t.Fatalf("Creation of *keyfunc.JWKS reading from bad URL must fail.")
+	}
+
+	optsSuccess := keyfunc.Options{
+		RequestFactory: func(ctx context.Context, url string) (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, http.MethodGet, url, bytes.NewReader(nil))
+		},
+	}
+
+	jwks, err := keyfunc.Get(jwksURL, optsSuccess)
 	if err != nil {
-		t.Errorf("Failed to get JWKS from testing URL.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
 	}
 
-	raw := jwks.RawJWKS()
-	if bytes.Compare(raw, []byte(jwksJSON)) != 0 {
-		t.Error("Raw JWKS does not match remote JWKS resource.")
-		t.FailNow()
+	if len(jwks.ReadOnlyKeys()) != 0 {
+		t.Fatalf("JWKS should be empty due to lack of custom HTTP header.")
 	}
 
-	// Overwrite the slice returned, if it's a copy, it should ruin the original.
-	emptySlice := make([]byte, len(raw))
-	copy(raw, emptySlice)
+	optsCustomHeader := keyfunc.Options{
+		RequestFactory: func(ctx context.Context, url string) (*http.Request, error) {
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, bytes.NewReader(nil))
+			if err != nil {
+				return nil, fmt.Errorf("failed to create request: %w", err)
+			}
+			req.Header.Set(userAgentHeader, fullJWKSUserAgent)
+			return req, nil
+		},
+	}
 
-	nextRaw := jwks.RawJWKS()
-	if bytes.Compare(nextRaw, emptySlice) == 0 {
-		t.Error("Raw JWKS is not a copy.")
-		t.FailNow()
+	jwks, err = keyfunc.Get(jwksURL, optsCustomHeader)
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
+	}
+
+	if len(jwks.ReadOnlyKeys()) == 0 {
+		t.Fatalf("JWKS should not be empty due to custom HTTP header.")
 	}
 }
 
@@ -397,14 +443,12 @@ func TestRawJWKS(t *testing.T) {
 func TestUnknownKIDRefresh(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "*")
 	if err != nil {
-		t.Errorf("Failed to create a temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
 	defer func() {
 		err = os.RemoveAll(tempDir)
 		if err != nil {
-			t.Errorf("Failed to remove temporary directory.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Failed to remove temporary directory.", err)
 		}
 	}()
 
@@ -412,16 +456,14 @@ func TestUnknownKIDRefresh(t *testing.T) {
 
 	err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
 	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
 
 	server := httptest.NewServer(http.FileServer(http.Dir(tempDir)))
 	defer server.Close()
 
 	testingRefreshErrorHandler := func(err error) {
-		t.Errorf("Unhandled JWKS error: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Unhandled JWKS error.", err)
 	}
 
 	jwksURL := server.URL + jwksFilePath
@@ -433,15 +475,13 @@ func TestUnknownKIDRefresh(t *testing.T) {
 
 	jwks, err := keyfunc.Get(jwksURL, options)
 	if err != nil {
-		t.Errorf("Failed to create *keyfunc.JWKS.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to create *keyfunc.JWKS.", err)
 	}
 	defer jwks.EndBackground()
 
 	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
-		t.Errorf("Failed to write JWKS file to temporary directory.\nError: %s", err.Error())
-		t.FailNow()
+		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
 
 	// Use any JWT signed by a key in the non-empty JWKS.
@@ -454,8 +494,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	_, err = jwt.Parse(token, jwks.Keyfunc)
 	if err != nil {
 		if errors.Is(err, jwt.ErrInvalidKeyType) {
-			t.Errorf("Invaild key type selected.\nError: %s", err.Error())
-			t.FailNow()
+			t.Fatalf(logFmt, "Invaild key type selected.", err)
 		}
 	}
 }
