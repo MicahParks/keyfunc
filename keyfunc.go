@@ -9,9 +9,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// logFmt is an error log formatting string.
-const logFmt = "%s\nError: %s"
-
 var (
 	// ErrKID indicates that the JWT had an invalid kid.
 	ErrKID = errors.New("the JWT has an invalid kid")
