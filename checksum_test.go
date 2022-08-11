@@ -2,7 +2,6 @@ package keyfunc_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,7 +16,7 @@ import (
 
 // TestChecksum confirms that the JWKS will only perform a refresh if a new JWKS is read from the remote resource.
 func TestChecksum(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
+	tempDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
@@ -30,7 +29,7 @@ func TestChecksum(t *testing.T) {
 
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	err = os.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
@@ -86,7 +85,7 @@ func TestChecksum(t *testing.T) {
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a test JWKS.", err)
 	}
-	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
+	err = os.WriteFile(jwksFile, jwksBytes, 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
