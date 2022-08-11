@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +39,7 @@ type pseudoJSONKey struct {
 
 // TestNewGiven tests that given keys will be added to a JWKS with a remote resource.
 func TestNewGiven(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
+	tempDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
@@ -58,7 +57,7 @@ func TestNewGiven(t *testing.T) {
 		t.Fatalf(logFmt, "Failed to create cryptographic keys for the test.", err)
 	}
 
-	err = ioutil.WriteFile(jwksFile, jwksBytes, 0600)
+	err = os.WriteFile(jwksFile, jwksBytes, 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
