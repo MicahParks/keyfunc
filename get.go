@@ -3,7 +3,7 @@ package keyfunc
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -151,7 +151,7 @@ func (j *JWKS) refresh() (err error) {
 	//goland:noinspection GoUnhandledErrorResult
 	defer resp.Body.Close()
 
-	jwksBytes, err := ioutil.ReadAll(resp.Body)
+	jwksBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
