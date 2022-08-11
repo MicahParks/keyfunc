@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -63,7 +62,7 @@ func TestInvalidServer(t *testing.T) {
 
 // TestJWKS performs a table test on the JWKS code.
 func TestJWKS(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
+	tempDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
@@ -76,7 +75,7 @@ func TestJWKS(t *testing.T) {
 
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	err = os.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
@@ -208,7 +207,7 @@ func TestJWKS_KIDs(t *testing.T) {
 
 // TestRateLimit performs a test to confirm the rate limiter works as expected.
 func TestRateLimit(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
+	tempDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
@@ -330,7 +329,7 @@ func TestRateLimit(t *testing.T) {
 
 // TestRawJWKS confirms a copy of the raw JWKS is returned from the method.
 func TestRawJWKS(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
+	tempDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
@@ -343,7 +342,7 @@ func TestRawJWKS(t *testing.T) {
 
 	jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	err = os.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
@@ -377,7 +376,7 @@ func TestRawJWKS(t *testing.T) {
 func TestRequestFactory(t *testing.T) {
 	var fullJWKSHandler http.Handler
 	{
-		tempDir, err := ioutil.TempDir("", "*")
+		tempDir, err := os.MkdirTemp("", "*")
 		if err != nil {
 			t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 		}
@@ -390,7 +389,7 @@ func TestRequestFactory(t *testing.T) {
 
 		jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-		err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+		err = os.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 		if err != nil {
 			t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 		}
@@ -399,7 +398,7 @@ func TestRequestFactory(t *testing.T) {
 	}
 	var emptyJWKSHandler http.Handler
 	{
-		tempDir, err := ioutil.TempDir("", "*")
+		tempDir, err := os.MkdirTemp("", "*")
 		if err != nil {
 			t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 		}
@@ -412,7 +411,7 @@ func TestRequestFactory(t *testing.T) {
 
 		jwksFile := filepath.Join(tempDir, jwksFilePath)
 
-		err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
+		err = os.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
 		if err != nil {
 			t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 		}
@@ -486,7 +485,7 @@ func TestRequestFactory(t *testing.T) {
 
 // TestUnknownKIDRefresh performs a test to confirm that an Unknown kid with refresh the JWKS.
 func TestUnknownKIDRefresh(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "*")
+	tempDir, err := os.MkdirTemp("", "*")
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to create a temporary directory.", err)
 	}
@@ -499,7 +498,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 
 	jwksFile := filepath.Join(tempDir, strings.TrimPrefix(jwksFilePath, "/"))
 
-	err = ioutil.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
+	err = os.WriteFile(jwksFile, []byte(emptyJWKSJSON), 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
@@ -524,7 +523,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	}
 	defer jwks.EndBackground()
 
-	err = ioutil.WriteFile(jwksFile, []byte(jwksJSON), 0600)
+	err = os.WriteFile(jwksFile, []byte(jwksJSON), 0600)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to write JWKS file to temporary directory.", err)
 	}
