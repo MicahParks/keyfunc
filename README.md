@@ -3,8 +3,8 @@
 # keyfunc
 
 The purpose of this package is to provide a
-[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) for the
-[github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWK Set or JWKS) for
+[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Keyfunc) for the
+[github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWK Set or JWKS) for
 parsing and verifying JSON Web Tokens (JWTs).
 
 There is legacy support for `github.com/dgrijalva/jwt-go` and its popular forks. It's in a separate project to keep this
@@ -14,10 +14,10 @@ see: [github.com/MicahParks/compatibility-keyfunc](https://github.com/MicahParks
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKS via an HTTPS endpoint. This package has the
 ability to consume that JWKS and produce a
-[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc). It is important that a JWKS endpoint is using
+[`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Keyfunc). It is important that a JWKS endpoint is using
 HTTPS to ensure the keys are from the correct trusted source.
 
-This repository only depends on: [github.com/golang-jwt/jwt/v4](https://github.com/golang-jwt/jwt)
+This repository only depends on: [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt)
 
 `jwt.Keyfunc` signatures are imported from these, implemented, then exported as methods.
 
@@ -57,7 +57,7 @@ import "github.com/MicahParks/keyfunc"
 
 The [`JWKS.ReadOnlyKeys`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.ReadOnlyKeys) method returns a read-only
 copy of a `map[string]interface{}`. The key to this map is the key ID, `kid`, and the value is the cryptographic key.
-This is a useful map for use of keys within a JWKS outside of `github.com/golang-jwt/jwt/v4`.
+This is a useful map for use of keys within a JWKS outside of `github.com/golang-jwt/jwt/v5`.
 
 The map itself is a copy. So it can be modified safely. However, the values are of type `interface{}`. If these values
 are modified, it may cause undefined behavior.
@@ -115,11 +115,11 @@ jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
 })
 ```
 
-Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#Get)
-function. See [`keyfunc.Options`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#Options) and the additional
+Additional options can be passed to the [`keyfunc.Get`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5/keyfunc#Get)
+function. See [`keyfunc.Options`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5/keyfunc#Options) and the additional
 features mentioned at the bottom of this `README.md`.
 
-### Step 2: Use the [`JWKS.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4/keyfunc#JWKS.Keyfunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#Keyfunc) when parsing tokens
+### Step 2: Use the [`JWKS.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5/keyfunc#JWKS.Keyfunc) method as the [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Keyfunc) when parsing tokens
 
 ```go
 // Parse the JWT.
@@ -178,7 +178,7 @@ These features can be configured by populating fields in the
   the `examples/given` directory.
 * A copy of the latest raw JWKS `[]byte` can be returned.
 * Custom cryptographic algorithms can be used. Make sure to
-  use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
+  use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#RegisterSigningMethod) before
   parsing JWTs. For an example, see the `examples/custom` directory.
 * The remote JWKS resource can be refreshed manually using the `.Refresh` method. This can bypass the rate limit, if the
   option is set.
