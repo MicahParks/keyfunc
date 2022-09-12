@@ -168,7 +168,7 @@ However, this package will remove trailing padding on base64url encoded keys to 
 JWKS.
 
 ## References
-This project was built and tested used various RFCs and services. The services are listed below:
+This project was built and tested using various RFCs and services. The services are listed below:
 * [Keycloak](https://www.keycloak.org/)
 * [Sample JWKS Service](https://jwks-service.appspot.com/)
 * connect2id's [Server JWKSet Gen](https://connect2id.com/products/server/docs/config/jwk-set)
