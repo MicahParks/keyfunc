@@ -3,6 +3,8 @@ package keyfunc
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -28,6 +30,13 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	}
 	if jwks.requestFactory == nil {
 		jwks.requestFactory = defaultRequestFactory
+	}
+	if jwks.responseExtractor == nil {
+		jwks.responseExtractor = func(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+			//goland:noinspection GoUnhandledErrorResult
+			defer resp.Body.Close()
+			return io.ReadAll(resp.Body)
+		}
 	}
 	if jwks.refreshTimeout == 0 {
 		jwks.refreshTimeout = defaultRefreshTimeout
@@ -141,19 +150,17 @@ func (j *JWKS) refresh() (err error) {
 
 	req, err := j.requestFactory(ctx, j.jwksURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create request via factory function: %w", err)
 	}
 
 	resp, err := j.client.Do(req)
 	if err != nil {
 		return err
 	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer resp.Body.Close()
 
-	jwksBytes, err := io.ReadAll(resp.Body)
+	jwksBytes, err := j.responseExtractor(ctx, resp)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to extract response via extractor function: %w", err)
 	}
 
 	// Only reprocess if the JWKS has changed.

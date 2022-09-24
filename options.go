@@ -2,9 +2,16 @@ package keyfunc
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
+
+// ErrInvalidHTTPStatusCode indicates that the HTTP status code is invalid.
+var ErrInvalidHTTPStatusCode = errors.New("invalid HTTP status code")
 
 // Options represents the configuration options for a JWKS.
 //
@@ -58,6 +65,20 @@ type Options struct {
 	// RequestFactory creates HTTP requests for the remote JWKS resource located at the given url. For example, an
 	// HTTP header could be added to indicate a User-Agent.
 	RequestFactory func(ctx context.Context, url string) (*http.Request, error)
+
+	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the raw JSON is
+	// expected in the response body and the response's status code is not checked.
+	// See this relevant GitHub issue: https://github.com/MicahParks/keyfunc/issues/48
+	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
+}
+
+// ResponseExtractorStatusOK is meant to be used as the ResponseExtractor field for Options. It confirms that response
+// status code is 200 OK and returns the raw JSON from the response body.
+func ResponseExtractorStatusOK(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: %d", ErrInvalidHTTPStatusCode, resp.StatusCode)
+	}
+	return io.ReadAll(resp.Body)
 }
 
 // applyOptions applies the given options to the given JWKS.
@@ -81,4 +102,5 @@ func applyOptions(jwks *JWKS, options Options) {
 	jwks.refreshTimeout = options.RefreshTimeout
 	jwks.refreshUnknownKID = options.RefreshUnknownKID
 	jwks.requestFactory = options.RequestFactory
+	jwks.responseExtractor = options.ResponseExtractor
 }
