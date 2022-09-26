@@ -50,6 +50,7 @@ type JWKS struct {
 	refreshTimeout      time.Duration
 	refreshUnknownKID   bool
 	requestFactory      func(ctx context.Context, url string) (*http.Request, error)
+	responseExtractor   func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
 }
 
 // rawJWKS represents a JWKS in JSON format.

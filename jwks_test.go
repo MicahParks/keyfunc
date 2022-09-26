@@ -358,7 +358,7 @@ func TestRawJWKS(t *testing.T) {
 	}
 
 	raw := jwks.RawJWKS()
-	if bytes.Compare(raw, []byte(jwksJSON)) != 0 {
+	if !bytes.Equal(raw, []byte(jwksJSON)) {
 		t.Fatalf("Raw JWKS does not match remote JWKS resource.")
 	}
 
@@ -367,7 +367,7 @@ func TestRawJWKS(t *testing.T) {
 	copy(raw, emptySlice)
 
 	nextRaw := jwks.RawJWKS()
-	if bytes.Compare(nextRaw, emptySlice) == 0 {
+	if bytes.Equal(nextRaw, emptySlice) {
 		t.Fatalf("Raw JWKS is not a copy.")
 	}
 }
