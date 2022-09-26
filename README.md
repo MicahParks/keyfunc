@@ -153,7 +153,8 @@ These features can be configured by populating fields in the
   HTTP header can be added to indicate a User-Agent.
 * A custom HTTP response extractor can be provided to get the raw JWKS JSON from the `*http.Response`. For example, the
   HTTP response code could be checked. Implementations are responsible for closing the response body. By default, the
-  response body is read and closed, the status code is ignored.
+  response body is read and closed, the status code is ignored. The default behavior is likely to be changed soon.
+  See https://github.com/MicahParks/keyfunc/issues/48.
 * A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
   the `examples/given` directory.
 * A copy of the latest raw JWKS `[]byte` can be returned.

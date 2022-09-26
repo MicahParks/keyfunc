@@ -33,6 +33,9 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	}
 	if jwks.responseExtractor == nil {
 		jwks.responseExtractor = func(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+			// This behavior is likely going to change in favor of checking the response code.
+			// See https://github.com/MicahParks/keyfunc/issues/48
+
 			//goland:noinspection GoUnhandledErrorResult
 			defer resp.Body.Close()
 			return io.ReadAll(resp.Body)

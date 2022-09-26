@@ -68,7 +68,9 @@ type Options struct {
 
 	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the raw JSON is
 	// expected in the response body and the response's status code is not checked.
-	// See this relevant GitHub issue: https://github.com/MicahParks/keyfunc/issues/48
+	//
+	// The default behavior is likely to change soon. See this relevant GitHub issue:
+	// https://github.com/MicahParks/keyfunc/issues/48
 	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
 }
 
