@@ -22,7 +22,6 @@ func main() {
 		RefreshErrorHandler: func(err error) {
 			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
 		},
-		ResponseExtractor: keyfunc.ResponseExtractorStatusOK,
 	}
 
 	// Create the JWKS from the resource at the given URL.

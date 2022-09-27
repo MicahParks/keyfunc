@@ -66,20 +66,27 @@ type Options struct {
 	// HTTP header could be added to indicate a User-Agent.
 	RequestFactory func(ctx context.Context, url string) (*http.Request, error)
 
-	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the raw JSON is
-	// expected in the response body and the response's status code is not checked.
-	//
-	// The default behavior is likely to change soon. See this relevant GitHub issue:
-	// https://github.com/MicahParks/keyfunc/issues/48
+	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the
+	// ResponseExtractorStatusOK function is used. The default behavior changed in v1.4.0.
 	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
 }
 
 // ResponseExtractorStatusOK is meant to be used as the ResponseExtractor field for Options. It confirms that response
 // status code is 200 OK and returns the raw JSON from the response body.
 func ResponseExtractorStatusOK(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("%w: %d", ErrInvalidHTTPStatusCode, resp.StatusCode)
 	}
+	return io.ReadAll(resp.Body)
+}
+
+// ResponseExtractorStatusAny is meant to be used as the ResponseExtractor field for Options. It returns the raw JSON
+// from the response body regardless of the response status code.
+func ResponseExtractorStatusAny(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
 }
 

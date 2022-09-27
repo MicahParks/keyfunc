@@ -45,7 +45,6 @@ func main() {
 		RefreshRateLimit:  time.Minute * 5,
 		RefreshTimeout:    time.Second * 10,
 		RefreshUnknownKID: true,
-		ResponseExtractor: keyfunc.ResponseExtractorStatusOK,
 	}
 
 	// Create the JWKS from the resource at the given URL.
