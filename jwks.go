@@ -125,6 +125,13 @@ func (j *JWKS) KIDs() (kids []string) {
 	return kids
 }
 
+// Len returns the number of keys in the JWKS.
+func (j *JWKS) Len() int {
+	j.mux.RLock()
+	defer j.mux.RUnlock()
+	return len(j.keys)
+}
+
 // RawJWKS returns a copy of the raw JWKS received from the given JWKS URL.
 func (j *JWKS) RawJWKS() []byte {
 	j.mux.RLock()

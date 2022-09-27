@@ -205,6 +205,34 @@ func TestJWKS_KIDs(t *testing.T) {
 	}
 }
 
+// TestJWKS_Len confirms the JWKS.Len returns the number of keys in the JWKS.
+func TestJWKS_Len(t *testing.T) {
+	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to create a JWKS from JSON.", err)
+	}
+
+	expectedKIDs := []string{
+		"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBifH0KWrCz2Kyxc",
+		"ebJxnm9B3QDBljB5XJWEu72qx6BawDaMAhwz4aKPkQ0",
+		"TVAAet63O3xy_KK6_bxVIu7Ra3_z1wlB543Fbwi5VaU",
+		"arlUxX4hh56rNO-XdIPhDT7bqBMqcBwNQuP_TnZJNGs",
+		"tW6ae7TomE6_2jooM-sf9N_6lWg7HNtaQXrDsElBzM4",
+		"Lx1FmayP2YBtxaqS1SKJRJGiXRKnw2ov5WmYIMG-BLE",
+		"gnmAfvmlsi3kKH3VlM1AJ85P2hekQ8ON_XvJqs3xPD8",
+		"CGt0ZWS4Lc5faiKSdi0tU0fjCAdvGROQRGU9iR7tV0A",
+		"C65q0EKQyhpd1m4fr7SKO2He_nAxgCtAdws64d2BLt8",
+		"Q56A",
+		"hmac",
+	}
+
+	actualLen := jwks.Len()
+	expectedLen := len(expectedKIDs)
+	if actualLen != expectedLen {
+		t.Fatalf("The number of key IDs was not as expected.\n  Expected length: %d\n  Actual length: %d\n", expectedLen, actualLen)
+	}
+}
+
 // TestRateLimit performs a test to confirm the rate limiter works as expected.
 func TestRateLimit(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "*")
