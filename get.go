@@ -181,7 +181,7 @@ func (j *JWKS) refresh() (err error) {
 				}
 			}
 
-			j.keys[kid] = key.inter
+			j.keys[kid] = parsedKey{public: key.inter}
 		}
 	}
 

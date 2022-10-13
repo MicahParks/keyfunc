@@ -15,6 +15,9 @@ var (
 
 	// ErrMissingAssets indicates there are required assets are missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
+
+	// ErrJWKUse indicated that the given key was found in the JWKS, but was explicitly not authorized for signature verification.
+	ErrJWKUse = errors.New("the given key ID is not authorized for signature verification")
 )
 
 // ErrorHandler is a function signature that consumes an error.
@@ -28,8 +31,15 @@ type jsonWebKey struct {
 	ID       string `json:"kid"`
 	Modulus  string `json:"n"`
 	Type     string `json:"kty"`
+	Use      string `json:"use"`
 	X        string `json:"x"`
 	Y        string `json:"y"`
+}
+
+// parsedKey represents a parsed JWK with assoicated metadata
+type parsedKey struct {
+	use    string
+	public interface{}
 }
 
 // JWKS represents a JSON Web Key Set (JWK Set).
@@ -41,7 +51,7 @@ type JWKS struct {
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]interface{}
+	keys                map[string]parsedKey
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
@@ -68,7 +78,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
 	// Iterate through the keys in the raw JWKS. Add them to the JWKS.
 	jwks = &JWKS{
-		keys: make(map[string]interface{}, len(rawKS.Keys)),
+		keys: make(map[string]parsedKey, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
 		var keyInter interface{}
@@ -98,7 +108,10 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 			continue
 		}
 
-		jwks.keys[key.ID] = keyInter
+		jwks.keys[key.ID] = parsedKey{
+			use:    key.Use,
+			public: keyInter,
+		}
 	}
 
 	return jwks, nil
@@ -154,8 +167,10 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
+	const useEncryption = "enc"
+
 	j.mux.RLock()
-	jsonKey, ok := j.keys[kid]
+	parsedKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
 	if !ok {
@@ -177,13 +192,22 @@ func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 
 			j.mux.RLock()
 			defer j.mux.RUnlock()
-			if jsonKey, ok = j.keys[kid]; ok {
-				return jsonKey, nil
+			if parsedKey, ok = j.keys[kid]; ok {
+
+				if parsedKey.use == useEncryption {
+					return nil, ErrJWKUse
+				}
+
+				return parsedKey.public, nil
 			}
 		}
 
 		return nil, ErrKIDNotFound
 	}
 
-	return jsonKey, nil
+	if parsedKey.use == useEncryption {
+		return nil, ErrJWKUse
+	}
+
+	return parsedKey.public, nil
 }
