@@ -13,10 +13,10 @@ type GivenKey struct {
 
 // NewGiven creates a JWKS from a map of given keys.
 func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
-	keys := make(map[string]interface{})
+	keys := make(map[string]parsedKey)
 
 	for kid, given := range givenKeys {
-		keys[kid] = given.inter
+		keys[kid] = parsedKey{public: given.inter}
 	}
 
 	return &JWKS{
