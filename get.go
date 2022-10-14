@@ -35,6 +35,9 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	if jwks.refreshTimeout == 0 {
 		jwks.refreshTimeout = defaultRefreshTimeout
 	}
+	if len(jwks.allowedJWKUses) == 0 {
+		jwks.allowedJWKUses = []JWKUse{UseSignature, UseOmitted}
+	}
 
 	err = jwks.refresh()
 	if err != nil {
