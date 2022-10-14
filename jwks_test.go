@@ -3,6 +3,9 @@ package keyfunc_test
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -168,9 +171,26 @@ func TestJWKS(t *testing.T) {
 
 // TestJWKS_Use tests that JWKs with a use value "enc" are not returned from keyfunc()
 func TestJWKS_Use(t *testing.T) {
-	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
+	path := "/jwks.json"
+
+	handler := http.NewServeMux()
+	handler.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(jwksJSON))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	jwksURL := server.URL + path
+	opts := keyfunc.Options{
+		AllowedJWKUses: []keyfunc.JWKUse{keyfunc.UseOmitted, keyfunc.UseSignature},
+	}
+	jwks, err := keyfunc.Get(jwksURL, opts)
 	if err != nil {
-		t.Fatalf(logFmt, "Failed to create a JWKS from JSON.", err)
+		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
 	}
 
 	// We have the kid ("WW91IGdldCBhIGdvbGQgc3RhciDwn4yfCg"), but the JWK use is marked as "enc"
@@ -589,6 +609,26 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	if err != nil {
 		if errors.Is(err, jwt.ErrInvalidKeyType) {
 			t.Fatalf(logFmt, "Invaild key type selected.", err)
+		}
+	}
+}
+
+// TestReadOnlyKeys verifies that the keys are of an expected type
+func TestReadOnlyKeys(t *testing.T) {
+	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to create a JWKS from JSON.", err)
+	}
+
+	for _, key := range jwks.ReadOnlyKeys() {
+		switch key.(type) {
+		case *rsa.PublicKey:
+		case *ecdsa.PublicKey:
+		case ed25519.PublicKey:
+		case []uint8:
+			continue
+		default:
+			t.Errorf("invalid type %T in readonly keys", key)
 		}
 	}
 }
