@@ -16,21 +16,12 @@ var (
 	// ErrMissingAssets indicates there are required assets are missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
 
-	// ErrJWKUse indicates that the given key was found in the JWKS, but that the use was not allowed.
-	ErrJWKUse = errors.New("the given key ID was found but the key use is not allowed")
+	// ErrJWKUse indicated that the given key was found in the JWKS, but was explicitly not authorized for signature verification.
+	ErrJWKUse = errors.New("the given key ID is not authorized for signature verification")
 )
 
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
-
-// JWKUse specifies a `use` for a JWK
-type JWKUse string
-
-const (
-	UseEncryption JWKUse = "enc"
-	UseOmitted    JWKUse = ""
-	UseSignature  JWKUse = "sig"
-)
 
 // jsonWebKey represents a raw key inside a JWKS.
 type jsonWebKey struct {
@@ -47,13 +38,12 @@ type jsonWebKey struct {
 
 // parsedKey represents a parsed JWK with assoicated metadata
 type parsedKey struct {
-	use    JWKUse
+	use    string
 	public interface{}
 }
 
 // JWKS represents a JSON Web Key Set (JWK Set).
 type JWKS struct {
-	allowedJWKUses      []JWKUse
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
@@ -119,7 +109,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 		}
 
 		jwks.keys[key.ID] = parsedKey{
-			use:    JWKUse(key.Use),
+			use:    key.Use,
 			public: keyInter,
 		}
 	}
@@ -169,7 +159,7 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 	keys := make(map[string]interface{})
 	j.mux.Lock()
 	for kid, cryptoKey := range j.keys {
-		keys[kid] = cryptoKey.public
+		keys[kid] = cryptoKey
 	}
 	j.mux.Unlock()
 	return keys
@@ -177,50 +167,46 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
+	const useEncryption = "enc"
+
 	j.mux.RLock()
 	parsedKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
 	if !ok {
-		if !j.refreshUnknownKID {
-			return nil, ErrKIDNotFound
-		}
+		if j.refreshUnknownKID {
+			ctx, cancel := context.WithCancel(j.ctx)
 
-		ctx, cancel := context.WithCancel(j.ctx)
+			// Refresh the JWKS.
+			select {
+			case <-j.ctx.Done():
+				return
+			case j.refreshRequests <- cancel:
+			default:
+				// If the j.refreshRequests channel is full, return the error early.
+				return nil, ErrKIDNotFound
+			}
 
-		// Refresh the JWKS.
-		select {
-		case <-j.ctx.Done():
-			return
-		case j.refreshRequests <- cancel:
-		default:
-			// If the j.refreshRequests channel is full, return the error early.
-			return nil, ErrKIDNotFound
-		}
+			// Wait for the JWKS refresh to finish.
+			<-ctx.Done()
 
-		// Wait for the JWKS refresh to finish.
-		<-ctx.Done()
+			j.mux.RLock()
+			defer j.mux.RUnlock()
+			if parsedKey, ok = j.keys[kid]; ok {
 
-		j.mux.RLock()
-		defer j.mux.RUnlock()
-		if parsedKey, ok = j.keys[kid]; !ok {
-			return nil, ErrKIDNotFound
-		}
-	}
+				if parsedKey.use == useEncryption {
+					return nil, ErrJWKUse
+				}
 
-	// allowedJWKUses might be empty if the jwks was from keyfunc.NewJSON()
-	if len(j.allowedJWKUses) > 0 {
-		found := false
-		for _, use := range j.allowedJWKUses {
-			if parsedKey.use == use {
-				found = true
-				break
+				return parsedKey.public, nil
 			}
 		}
 
-		if !found {
-			return nil, ErrJWKUse
-		}
+		return nil, ErrKIDNotFound
+	}
+
+	if parsedKey.use == useEncryption {
+		return nil, ErrJWKUse
 	}
 
 	return parsedKey.public, nil
