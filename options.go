@@ -21,6 +21,11 @@ var ErrInvalidHTTPStatusCode = errors.New("invalid HTTP status code")
 // When using a background refresh goroutine, make sure to use RefreshRateLimit if paired with RefreshUnknownKID. Also
 // make sure to end the background refresh goroutine with the JWKS.EndBackground method when it's no longer needed.
 type Options struct {
+
+	// AllowedJWKUses can be used to limit which JWK `use` values will be returned by keyfunc().
+	// By default, the only allowed key use values are `"sig"` or the use value omitted
+	AllowedJWKUses []JWKUse
+
 	// Client is the HTTP client used to get the JWKS via HTTP.
 	Client *http.Client
 
@@ -103,6 +108,7 @@ func applyOptions(jwks *JWKS, options Options) {
 		}
 	}
 
+	jwks.allowedJWKUses = options.AllowedJWKUses
 	jwks.client = options.Client
 	jwks.givenKIDOverride = options.GivenKIDOverride
 	jwks.refreshErrorHandler = options.RefreshErrorHandler

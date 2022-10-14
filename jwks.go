@@ -15,10 +15,22 @@ var (
 
 	// ErrMissingAssets indicates there are required assets are missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
+
+	// ErrJWKUse indicates that the given key was found in the JWKS, but that the use was not allowed.
+	ErrJWKUse = errors.New("the given key ID was found but the key use is not allowed")
 )
 
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
+
+// JWKUse specifies a `use` for a JWK
+type JWKUse string
+
+const (
+	UseEncryption JWKUse = "enc"
+	UseOmitted    JWKUse = ""
+	UseSignature  JWKUse = "sig"
+)
 
 // jsonWebKey represents a raw key inside a JWKS.
 type jsonWebKey struct {
@@ -28,12 +40,20 @@ type jsonWebKey struct {
 	ID       string `json:"kid"`
 	Modulus  string `json:"n"`
 	Type     string `json:"kty"`
+	Use      string `json:"use"`
 	X        string `json:"x"`
 	Y        string `json:"y"`
 }
 
+// parsedKey represents a parsed JWK with assoicated metadata
+type parsedKey struct {
+	use    JWKUse
+	public interface{}
+}
+
 // JWKS represents a JSON Web Key Set (JWK Set).
 type JWKS struct {
+	allowedJWKUses      []JWKUse
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
@@ -41,7 +61,7 @@ type JWKS struct {
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]interface{}
+	keys                map[string]parsedKey
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
@@ -68,7 +88,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
 	// Iterate through the keys in the raw JWKS. Add them to the JWKS.
 	jwks = &JWKS{
-		keys: make(map[string]interface{}, len(rawKS.Keys)),
+		keys: make(map[string]parsedKey, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
 		var keyInter interface{}
@@ -98,7 +118,10 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 			continue
 		}
 
-		jwks.keys[key.ID] = keyInter
+		jwks.keys[key.ID] = parsedKey{
+			use:    JWKUse(key.Use),
+			public: keyInter,
+		}
 	}
 
 	return jwks, nil
@@ -146,7 +169,7 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 	keys := make(map[string]interface{})
 	j.mux.Lock()
 	for kid, cryptoKey := range j.keys {
-		keys[kid] = cryptoKey
+		keys[kid] = cryptoKey.public
 	}
 	j.mux.Unlock()
 	return keys
@@ -155,35 +178,50 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 	j.mux.RLock()
-	jsonKey, ok := j.keys[kid]
+	parsedKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
 	if !ok {
-		if j.refreshUnknownKID {
-			ctx, cancel := context.WithCancel(j.ctx)
+		if !j.refreshUnknownKID {
+			return nil, ErrKIDNotFound
+		}
 
-			// Refresh the JWKS.
-			select {
-			case <-j.ctx.Done():
-				return
-			case j.refreshRequests <- cancel:
-			default:
-				// If the j.refreshRequests channel is full, return the error early.
-				return nil, ErrKIDNotFound
-			}
+		ctx, cancel := context.WithCancel(j.ctx)
 
-			// Wait for the JWKS refresh to finish.
-			<-ctx.Done()
+		// Refresh the JWKS.
+		select {
+		case <-j.ctx.Done():
+			return
+		case j.refreshRequests <- cancel:
+		default:
+			// If the j.refreshRequests channel is full, return the error early.
+			return nil, ErrKIDNotFound
+		}
 
-			j.mux.RLock()
-			defer j.mux.RUnlock()
-			if jsonKey, ok = j.keys[kid]; ok {
-				return jsonKey, nil
+		// Wait for the JWKS refresh to finish.
+		<-ctx.Done()
+
+		j.mux.RLock()
+		defer j.mux.RUnlock()
+		if parsedKey, ok = j.keys[kid]; !ok {
+			return nil, ErrKIDNotFound
+		}
+	}
+
+	// allowedJWKUses might be empty if the jwks was from keyfunc.NewJSON()
+	if len(j.allowedJWKUses) > 0 {
+		found := false
+		for _, use := range j.allowedJWKUses {
+			if parsedKey.use == use {
+				found = true
+				break
 			}
 		}
 
-		return nil, ErrKIDNotFound
+		if !found {
+			return nil, ErrJWKUse
+		}
 	}
 
-	return jsonKey, nil
+	return parsedKey.public, nil
 }
