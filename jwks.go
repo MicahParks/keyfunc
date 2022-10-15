@@ -4,35 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
 )
 
 var (
+	// ErrJWKUseWhitelist indicates that the given JWK was found, but its "use" parameter's value was not whitelisted.
+	ErrJWKUseWhitelist = errors.New(`the given JWK was found, but its "use" parameter's value was not whitelisted`)
+
 	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
 	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKS")
 
 	// ErrMissingAssets indicates there are required assets are missing to create a public key.
 	ErrMissingAssets = errors.New("required assets are missing to create a public key")
-
-	// ErrJWKUse indicates that the given key was found in the JWKS, but that the use was not allowed.
-	ErrJWKUse = errors.New("the given key ID was found but the key use is not allowed")
 )
 
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
 
-// JWKUse specifies a `use` for a JWK
-type JWKUse string
-
 const (
+	// UseEncryption is a JWK "use" parameter value indicating the JSON Web Key is to be used for encryption.
 	UseEncryption JWKUse = "enc"
-	UseOmitted    JWKUse = ""
-	UseSignature  JWKUse = "sig"
+	// UseOmitted is a JWK "use" parameter value that was not specified or was empty.
+	UseOmitted JWKUse = ""
+	// UseSignature is a JWK "use" parameter value indicating the JSON Web Key is to be used for signatures.
+	UseSignature JWKUse = "sig"
 )
 
-// jsonWebKey represents a raw key inside a JWKS.
+// JWKUse is a set of values for the "use" parameter of a JWK.
+// See https://tools.ietf.org/html/rfc7517#section-4.2.
+type JWKUse string
+
+// jsonWebKey represents a JSON Web Key inside a JWKS.
 type jsonWebKey struct {
 	Curve    string `json:"crv"`
 	Exponent string `json:"e"`
@@ -45,15 +50,15 @@ type jsonWebKey struct {
 	Y        string `json:"y"`
 }
 
-// parsedKey represents a parsed JWK with assoicated metadata
-type parsedKey struct {
+// parsedJWK represents a JSON Web Key parsed with fields as the correct Go types.
+type parsedJWK struct {
 	use    JWKUse
 	public interface{}
 }
 
 // JWKS represents a JSON Web Key Set (JWK Set).
 type JWKS struct {
-	allowedJWKUses      []JWKUse
+	jwkUseWhitelist     map[JWKUse]struct{}
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
@@ -61,7 +66,7 @@ type JWKS struct {
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]parsedKey
+	keys                map[string]parsedJWK
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
@@ -88,7 +93,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
 	// Iterate through the keys in the raw JWKS. Add them to the JWKS.
 	jwks = &JWKS{
-		keys: make(map[string]parsedKey, len(rawKS.Keys)),
+		keys: make(map[string]parsedJWK, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
 		var keyInter interface{}
@@ -118,7 +123,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 			continue
 		}
 
-		jwks.keys[key.ID] = parsedKey{
+		jwks.keys[key.ID] = parsedJWK{
 			use:    JWKUse(key.Use),
 			public: keyInter,
 		}
@@ -178,7 +183,7 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 	j.mux.RLock()
-	parsedKey, ok := j.keys[kid]
+	pubKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
 	if !ok {
@@ -203,25 +208,18 @@ func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 
 		j.mux.RLock()
 		defer j.mux.RUnlock()
-		if parsedKey, ok = j.keys[kid]; !ok {
+		if pubKey, ok = j.keys[kid]; !ok {
 			return nil, ErrKIDNotFound
 		}
 	}
 
-	// allowedJWKUses might be empty if the jwks was from keyfunc.NewJSON()
-	if len(j.allowedJWKUses) > 0 {
-		found := false
-		for _, use := range j.allowedJWKUses {
-			if parsedKey.use == use {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return nil, ErrJWKUse
+	// jwkUseWhitelist might be empty if the jwks was from keyfunc.NewJSON() or if JWKUseNoWhitelist option was true.
+	if len(j.jwkUseWhitelist) > 0 {
+		_, ok = j.jwkUseWhitelist[pubKey.use]
+		if !ok {
+			return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not whitelisted`, ErrJWKUseWhitelist, pubKey.use)
 		}
 	}
 
-	return parsedKey.public, nil
+	return pubKey.public, nil
 }

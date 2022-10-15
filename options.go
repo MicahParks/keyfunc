@@ -21,11 +21,6 @@ var ErrInvalidHTTPStatusCode = errors.New("invalid HTTP status code")
 // When using a background refresh goroutine, make sure to use RefreshRateLimit if paired with RefreshUnknownKID. Also
 // make sure to end the background refresh goroutine with the JWKS.EndBackground method when it's no longer needed.
 type Options struct {
-
-	// AllowedJWKUses can be used to limit which JWK `use` values will be returned by keyfunc().
-	// By default, the only allowed key use values are `"sig"` or the use value omitted
-	AllowedJWKUses []JWKUse
-
 	// Client is the HTTP client used to get the JWKS via HTTP.
 	Client *http.Client
 
@@ -42,6 +37,16 @@ type Options struct {
 	// GivenKIDOverride will make a GivenKey override any keys with the same ID (`kid`) in the remote JWKS. The is only
 	// effectual if GivenKeys is provided.
 	GivenKIDOverride bool
+
+	// JWKUseWhitelist is a whitelist of JWK `use` parameter values that will restrict what keys can be returned for
+	// jwt.Keyfunc. The assumption is that jwt.Keyfunc is only used for JWT signature verification.
+	// The default behavior is to only return a JWK if its `use` parameter has the value `"sig"`, an empty string, or if
+	// the parameter was omitted entirely.
+	JWKUseWhitelist []JWKUse
+
+	// JWKUseNoWhitelist overrides the JWKUseWhitelist field and its default behavior. If set to true, all JWKs will be
+	// returned regardless of their `use` parameter value.
+	JWKUseNoWhitelist bool
 
 	// RefreshErrorHandler is a function that consumes errors that happen during a JWKS refresh. This is only effectual
 	// if a background refresh goroutine is active.
@@ -108,7 +113,13 @@ func applyOptions(jwks *JWKS, options Options) {
 		}
 	}
 
-	jwks.allowedJWKUses = options.AllowedJWKUses
+	if !options.JWKUseNoWhitelist {
+		jwks.jwkUseWhitelist = make(map[JWKUse]struct{})
+		for _, use := range options.JWKUseWhitelist {
+			jwks.jwkUseWhitelist[use] = struct{}{}
+		}
+	}
+
 	jwks.client = options.Client
 	jwks.givenKIDOverride = options.GivenKIDOverride
 	jwks.refreshErrorHandler = options.RefreshErrorHandler
