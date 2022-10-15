@@ -161,6 +161,9 @@ These features can be configured by populating fields in the
   whitelist can be disabled with the `JWKUseNoWhitelist` option.
 	* By default, only JSON Web Keys with a `"use"` parameter value of `"sig"`, an empty string `""`, or a completely
 	  omitted `"use"` parameter will be returned. The default behavior changed in `v1.5.0`.
+	* This `"use"` whitelisting behavior is only available with `keyfunc.Get`. It is not available with
+	  `keyfunc.NewJSON` or `keyfunc.NewGiven`. Please open a GitHub issue if you would like this feature added to the
+	  other creation methods.
 * A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
   the `examples/given` directory.
 * A copy of the latest raw JWKS `[]byte` can be returned.
