@@ -35,8 +35,11 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	if jwks.refreshTimeout == 0 {
 		jwks.refreshTimeout = defaultRefreshTimeout
 	}
-	if len(jwks.allowedJWKUses) == 0 {
-		jwks.allowedJWKUses = []JWKUse{UseSignature, UseOmitted}
+	if !options.JWKUseNoWhitelist && len(jwks.jwkUseWhitelist) == 0 {
+		jwks.jwkUseWhitelist = map[JWKUse]struct{}{
+			UseOmitted:   {},
+			UseSignature: {},
+		}
 	}
 
 	err = jwks.refresh()
@@ -184,7 +187,7 @@ func (j *JWKS) refresh() (err error) {
 				}
 			}
 
-			j.keys[kid] = parsedKey{public: key.inter}
+			j.keys[kid] = parsedJWK{public: key.inter}
 		}
 	}
 

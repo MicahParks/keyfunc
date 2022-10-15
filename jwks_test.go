@@ -32,6 +32,9 @@ const (
 
 	// jwksFilePath is the full path of th JWKS file on the test HTTP server.
 	jwksFilePath = "/example_jwks.json"
+
+	// tokenUseEnc is a token encrypted with a key whose "use" parameter is "enc".
+	tokenUseEnc = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImtpZFdpdGhCYWRVc2UiLCJ0eXAiOiJKV1QifQ.eyJmb28iOiJiYXIifQ.NKUjRgfqNZNCckL2yyiZc0ot_-BxtwYiknrILmsSnNapkOB32gMfRPTyc_j-UsIqw19FrDSBNk31blxSW40X3ubXp56hpwbcqE0nj9EvDyZoUWmtMl6pXIGPnTK5y-rNgS8i1IeeejNAQDYe8LOtCw_jE8CpOW5MBZzxdwjntPHGCWu4FCgrBu1ugth20B7WnuCHETa0xQ2NvXIX0W54JDbk_hdWTqjP4Bo7BvcGB6-5xZ1AaiiXjnOOuBrIMwTrZ-wtdTOjmSaWrcH94A8wDk263fSkhRLjM77d5IljIILT4a6nRHVSsgBfhblYevtX6NWBgllvQ_Hr_uuaT_b15A"
 )
 
 var (
@@ -169,36 +172,54 @@ func TestJWKS(t *testing.T) {
 	}
 }
 
-// TestJWKS_Use tests that JWKs with a use value "enc" are not returned from keyfunc()
+// TestJWKS_Use tests that JWKs with a use value "enc" are not returned from jwt.Keyfunc.
 func TestJWKS_Use(t *testing.T) {
-	path := "/jwks.json"
-
-	handler := http.NewServeMux()
-	handler.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(jwksJSON))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-	})
-
-	server := httptest.NewServer(handler)
+	}))
 	defer server.Close()
 
-	jwksURL := server.URL + path
+	jwksURL := server.URL
 	opts := keyfunc.Options{
-		AllowedJWKUses: []keyfunc.JWKUse{keyfunc.UseOmitted, keyfunc.UseSignature},
+		JWKUseWhitelist: []keyfunc.JWKUse{keyfunc.UseOmitted, keyfunc.UseSignature},
 	}
 	jwks, err := keyfunc.Get(jwksURL, opts)
 	if err != nil {
 		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
 	}
 
-	// We have the kid ("WW91IGdldCBhIGdvbGQgc3RhciDwn4yfCg"), but the JWK use is marked as "enc"
-	token := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldXOTFJR2RsZENCaElHZHZiR1FnYzNSaGNpRHduNHlmQ2cifQ.eyJleHAiOjE2MTU0MDY5NjIsImlhdCI6MTYxNTQwNjkwMiwianRpIjoiNWIyZGY5N2EtNDQyOS00ZTA0LWFkMzgtOWZmNjVlZDU2MTZjIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhZDEyOGRmMS0xMTQwLTRlNGMtYjA5Ny1hY2RjZTcwNWJkOWIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ0b2tlbmRlbG1lIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwiY2xpZW50SG9zdCI6IjE3Mi4yMC4wLjEiLCJjbGllbnRJZCI6InRva2VuZGVsbWUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UtYWNjb3VudC10b2tlbmRlbG1lIiwiY2xpZW50QWRkcmVzcyI6IjE3Mi4yMC4wLjEifQ.tvRomWtEUyeXkDLoiBt-sGJdoelyNpa1ohvI-YRrHezEkEhtGKdQinhsOoeWJpwofUqX5GthZxY4gVUFumxsZODEQ_vYsb482RnnQavsZlD6P51UVGNO4Pp9ujU-YO2tXk5qZY3ArqvMnc5OH-e-vExvC7GGGEMxVdL9yfunsiTP2KmVZoYk-WUlFGQYlzEN9Wg1ZR0OBbpXZp69xYeA_I6GrtAgs80tmAam1qihisePjjsbWVDVJ1wphlQIn_fMsAVWw64uLPlZIy3STdaRbjFdAocekzzJUd8X1qhM9MMPFivwFzIPqH_nsyBmX5aLeNsDB9W-FsngdPN7XHv7Aw"
+	_, err = jwt.Parse(tokenUseEnc, jwks.Keyfunc)
+	if !errors.Is(err, keyfunc.ErrJWKUseWhitelist) {
+		t.Fatal(`Failed to return correct error for JWK with "use" parameter value of "enc".`)
+	}
+}
 
-	_, err = jwt.Parse(token, jwks.Keyfunc)
-	if !errors.Is(err, keyfunc.ErrJWKUse) {
-		t.Fatal("the kid should been found, but not authorized for signature verification")
+// TestJWKS_UseNoWhitelistOverride tests that JWKUseNoWhitelist option overrides the JWKUseWhitelist option.
+func TestJWKS_UseNoWhitelistOverride(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(jwksJSON))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}))
+	defer server.Close()
+
+	jwksURL := server.URL
+	opts := keyfunc.Options{
+		JWKUseWhitelist:   []keyfunc.JWKUse{keyfunc.UseOmitted, keyfunc.UseSignature},
+		JWKUseNoWhitelist: true,
+	}
+	jwks, err := keyfunc.Get(jwksURL, opts)
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
+	}
+
+	_, err = jwt.Parse(tokenUseEnc, jwks.Keyfunc)
+	if err != nil {
+		t.Fatalf(logFmt, "The JWKUseNoWhitelist option should override the JWKUseWhitelist option.", err)
 	}
 }
 
@@ -221,7 +242,7 @@ func TestJWKS_KIDs(t *testing.T) {
 		"C65q0EKQyhpd1m4fr7SKO2He_nAxgCtAdws64d2BLt8",
 		"Q56A",
 		"hmac",
-		"WW91IGdldCBhIGdvbGQgc3RhciDwn4yfCg",
+		"kidWithBadUse",
 	}
 
 	actual := jwks.KIDs()
@@ -613,7 +634,7 @@ func TestUnknownKIDRefresh(t *testing.T) {
 	}
 }
 
-// TestReadOnlyKeys verifies that the keys are of an expected type
+// TestReadOnlyKeys verifies that the .ReadOnlyKeys() method returns a map with the correct types.
 func TestReadOnlyKeys(t *testing.T) {
 	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
 	if err != nil {
@@ -623,12 +644,15 @@ func TestReadOnlyKeys(t *testing.T) {
 	for _, key := range jwks.ReadOnlyKeys() {
 		switch key.(type) {
 		case *rsa.PublicKey:
+			// Do nothing.
 		case *ecdsa.PublicKey:
+			// Do nothing.
 		case ed25519.PublicKey:
-		case []uint8:
-			continue
+			// Do nothing.
+		case []byte:
+			// Do nothing.
 		default:
-			t.Errorf("invalid type %T in readonly keys", key)
+			t.Errorf("Invalid type %T in .ReadOnlyKeys() method.", key)
 		}
 	}
 }
