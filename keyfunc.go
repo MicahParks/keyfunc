@@ -27,6 +27,8 @@ func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 
 	alg, ok := token.Header["alg"].(string)
 	if !ok {
+		// For test coverage purposes, this should be impossible to reach because the JWT package rejects a token
+		// without an alg parameter in the header before calling jwt.Keyfunc.
 		return nil, fmt.Errorf(`%w: the JWT header did not contain the "alg" parameter, which is required by RFC 7515 section 4.1.1`, ErrJWKAlgMismatch)
 	}
 

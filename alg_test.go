@@ -1,0 +1,25 @@
+package keyfunc_test
+
+import (
+	"encoding/json"
+	"errors"
+	"testing"
+
+	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/MicahParks/keyfunc"
+)
+
+func TestAlgMismatch(t *testing.T) {
+	const jwtB64 = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6IkM2NXEwRUtReWhwZDFtNGZyN1NLTzJIZV9uQXhnQ3RBZHdzNjRkMkJMdDgifQ.eyJleHAiOjE2MTU0MDcwMjYsImlhdCI6MTYxNTQwNjk2NiwianRpIjoiMzg1NjE4ODItOTA5MS00ODY3LTkzYmYtMmE3YmU4NTc3YmZiIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL2F1dGgvcmVhbG1zL21hc3RlciIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJhZDEyOGRmMS0xMTQwLTRlNGMtYjA5Ny1hY2RjZTcwNWJkOWIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ0b2tlbmRlbG1lIiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwiY2xpZW50SG9zdCI6IjE3Mi4yMC4wLjEiLCJjbGllbnRJZCI6InRva2VuZGVsbWUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UtYWNjb3VudC10b2tlbmRlbG1lIiwiY2xpZW50QWRkcmVzcyI6IjE3Mi4yMC4wLjEifQ.Cmgz3aC_b_kpOmGM-_nRisgQul0d9Jg7BpMLe5F_fdryRhwhW5fQBZtz6FipQ0Tc4jggI6L3Dx1jS2kn823aWCR0x-OAFCawIXnwgAKuM1m2NL7Y6LKC07nytdB_qU4GknAl3jEG-tZIJBHQwYP-K6QKmAT9CdF1ZPbc9u8RgRCPN8UziYcOpvStiG829BO7cTzCt7tp5dJhem8_CnRWBKzelP1fs_z4fAQtW2sgyhX9SUYb5WON-4zrn4i01FlYUwZV-AC83zP6BuHIiy3XpAuTiTp2BjZ-1nzCLWBRpIm_lOObFeo-3AQqWPxzLVAmTFQMKReUF9T8ehL2Osr1XQ"
+
+	jwks, err := keyfunc.NewJSON(json.RawMessage(jwksJSON))
+	if err != nil {
+		t.Fatalf("Failed to create JWKS from JSON: %v", err)
+	}
+
+	_, err = jwt.Parse(jwtB64, jwks.Keyfunc)
+	if !errors.Is(err, keyfunc.ErrJWKAlgMismatch) {
+		t.Fatalf("Expected ErrJWKAlgMismatch, got %v", err)
+	}
+}
