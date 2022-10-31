@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 var (
@@ -190,7 +188,7 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 }
 
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
-func (j *JWKS) getKey(kid string, token *jwt.Token) (jsonKey interface{}, err error) {
+func (j *JWKS) getKey(alg, kid string) (jsonKey interface{}, err error) {
 	j.mux.RLock()
 	pubKey, ok := j.keys[kid]
 	j.mux.RUnlock()
@@ -230,11 +228,8 @@ func (j *JWKS) getKey(kid string, token *jwt.Token) (jsonKey interface{}, err er
 		}
 	}
 
-	tokenAlg, ok := token.Header["alg"].(string)
-	if ok {
-		if pubKey.algorithm != "" && pubKey.algorithm != tokenAlg {
-			return nil, fmt.Errorf(`%w: JWK "alg" parameter value %q does not match token "alg" parameter value %q`, ErrJWKAlgMismatch, pubKey.algorithm, tokenAlg)
-		}
+	if pubKey.algorithm != "" && pubKey.algorithm != alg {
+		return nil, fmt.Errorf(`%w: JWK "alg" parameter value %q does not match token "alg" parameter value %q`, ErrJWKAlgMismatch, pubKey.algorithm, alg)
 	}
 
 	return pubKey.public, nil

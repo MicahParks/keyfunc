@@ -25,7 +25,12 @@ func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKID)
 	}
 
-	return j.getKey(kid, token)
+	alg, ok := token.Header["alg"].(string)
+	if !ok {
+		return nil, fmt.Errorf(`%w: the JWT header did not contain the "alg" parameter, which is required by RFC 7515 section 4.1.1`, ErrJWKAlgMismatch)
+	}
+
+	return j.getKey(kid, alg)
 }
 
 // base64urlTrailingPadding removes trailing padding before decoding a string from base64url. Some non-RFC compliant
