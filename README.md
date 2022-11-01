@@ -180,6 +180,11 @@ base64url the same as RFC 7515 Section 2:
 However, this package will remove trailing padding on base64url encoded keys to account for improper implementations of
 JWKS.
 
+This package will check the `alg` in each JWK. If present, it will confirm the same `alg` is in a given JWT's header
+before returning the key for signature verification. If the `alg`s do not match, `keyfunc.ErrJWKAlgMismatch` will
+prevent the key being used for signature verification. If the `alg` is not present in the JWK, this check will not
+occur.
+
 ## References
 This project was built and tested using various RFCs and services. The services are listed below:
 * [Keycloak](https://www.keycloak.org/)
