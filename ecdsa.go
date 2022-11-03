@@ -48,6 +48,8 @@ func (j *jsonWebKey) ECDSA() (publicKey *ecdsa.PublicKey, err error) {
 		publicKey.Curve = elliptic.P384()
 	case p521:
 		publicKey.Curve = elliptic.P521()
+	default:
+		return nil, fmt.Errorf("unknown curve: %s", j.Curve)
 	}
 
 	// Turn the X coordinate into *big.Int.
