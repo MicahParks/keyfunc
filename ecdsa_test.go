@@ -1,10 +1,13 @@
-package keyfunc
+package keyfunc_test
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/MicahParks/keyfunc"
 )
 
 func TestBadCurve(t *testing.T) {
@@ -13,18 +16,15 @@ func TestBadCurve(t *testing.T) {
 		someJWT = `eyJhbGciOiJFUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ.e30.Q1EeyWUv6XEA0gMLwTFoNhx7Hq1MbVwjI2k9FZPSa-myKW1wYn1X6rHtRyuV-2MEzvimCskFD-afL7UzvdWBQg`
 	)
 
-	jwks, err := NewJSON(json.RawMessage(badJWKS))
+	jwks, err := keyfunc.NewJSON(json.RawMessage(badJWKS))
 	if err != nil {
 		t.Fatalf("Failed to create JWKS from JSON: %v", err)
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			t.Fatalf("panic")
-		}
-	}()
+	// The number of parsed keys should be 0.
 
-	if _, err = jwt.Parse(someJWT, jwks.Keyfunc); err == nil {
-		t.Fatal("No error for bad curve")
+	_, err = jwt.Parse(someJWT, jwks.Keyfunc)
+	if !errors.Is(err, keyfunc.ErrKIDNotFound) {
+		t.Fatalf("Expected ErrKIDNotFound, got %v", err)
 	}
 }
