@@ -8,7 +8,8 @@ import (
 
 // GivenKey represents a cryptographic key that resides in a JWKS. In conjuncture with Options.
 type GivenKey struct {
-	inter interface{}
+	inter     interface{}
+	algorithm string
 }
 
 // NewGiven creates a JWKS from a map of given keys.
@@ -16,7 +17,7 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
 	keys := make(map[string]parsedJWK)
 
 	for kid, given := range givenKeys {
-		keys[kid] = parsedJWK{public: given.inter}
+		keys[kid] = parsedJWK{public: given.inter, algorithm: given.algorithm}
 	}
 
 	return &JWKS{
@@ -25,13 +26,25 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
 }
 
 // NewGivenCustom creates a new GivenKey given an untyped variable. The key argument is expected to be a supported
-// by the jwt package used.
+// by the jwt package used.  To specify a required algorithm use NewGivenCustomAlg.
 //
 // See the https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod function for registering an unsupported
 // signing method.
 func NewGivenCustom(key interface{}) (givenKey GivenKey) {
 	return GivenKey{
 		inter: key,
+	}
+}
+
+// NewGivenCustomAlg creates a new GivenKey given an untyped variable and an algorithm. The key argument is expected to
+// be a type supported by the jwt package used.  The alg argument will be validated against the alg header of tokens.
+//
+// See the https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod function for registering an unsupported
+// signing method.
+func NewGivenCustomAlg(key interface{}, alg string) (givenKey GivenKey) {
+	return GivenKey{
+		inter:     key,
+		algorithm: alg,
 	}
 }
 

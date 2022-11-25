@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -43,6 +44,57 @@ func TestNewGivenCustom(t *testing.T) {
 	token.Header[kidAttribute] = testKID
 
 	signParseValidate(t, token, key, jwks)
+}
+
+// TestNewGivenCustomAlg tests that a custom jwt.SigningMethod can be used to create a JWKS and a proper jwt.Keyfunc.
+func TestNewGivenCustomAlg(t *testing.T) {
+	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+		return method.EmptyCustom{}
+	})
+
+	const key = "test-key"
+	givenKeys := make(map[string]keyfunc.GivenKey)
+	givenKeys[testKID] = keyfunc.NewGivenCustomAlg(key, method.CustomAlg)
+
+	jwks := keyfunc.NewGiven(givenKeys)
+
+	token := jwt.New(method.EmptyCustom{})
+	token.Header[algAttribute] = method.CustomAlg
+	token.Header[kidAttribute] = testKID
+
+	signParseValidate(t, token, key, jwks)
+}
+
+// TestNewGivenCustomAlg_NegativeCase tests that a custom jwt.SigningMethod can be used to create
+// a JWKS and a proper jwt.Keyfunc and that a token with a non-matching algorithm will be rejected.
+func TestNewGivenCustomAlg_NegativeCase(t *testing.T) {
+	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+		return method.EmptyCustom{}
+	})
+
+	const key = jwt.UnsafeAllowNoneSignatureType // So golang-jwt isn't the one blocking this test
+	givenKeys := make(map[string]keyfunc.GivenKey)
+	givenKeys[testKID] = keyfunc.NewGivenCustomAlg(key, method.CustomAlg)
+
+	jwks := keyfunc.NewGiven(givenKeys)
+
+	token := jwt.New(method.EmptyCustom{})
+	token.Header[algAttribute] = jwt.SigningMethodNone.Alg()
+	token.Header[kidAttribute] = testKID
+
+	jwtB64, err := token.SignedString(key)
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to sign the JWT.", err)
+	}
+
+	parsed, err := jwt.NewParser().Parse(jwtB64, jwks.Keyfunc)
+	if !errors.Is(err, keyfunc.ErrJWKAlgMismatch) {
+		t.Fatalf("Failed to return ErrJWKAlgMismatch")
+	}
+
+	if parsed.Valid {
+		t.Fatalf("The JWT was valid.")
+	}
 }
 
 // TestNewGivenKeyECDSA tests that a generated ECDSA key can be added to the JWKS and create a proper jwt.Keyfunc.
