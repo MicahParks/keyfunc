@@ -15,7 +15,7 @@ func main() {
 	const exampleKID = "exampleKeyID"
 
 	// Register the custom signing method.
-	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+	jwt.RegisterSigningMethod(method.CustomAlgHeader, func() jwt.SigningMethod {
 		return method.EmptyCustom{}
 	})
 
@@ -29,7 +29,9 @@ func main() {
 
 	// Create the JWKS from the given signing method's key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-		exampleKID: keyfunc.NewGivenCustom(key),
+		exampleKID: keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+			Algorithm: method.CustomAlgHeader,
+		}),
 	})
 
 	// Parse the token.

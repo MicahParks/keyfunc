@@ -160,16 +160,6 @@ func (j *JWKS) KIDs() (kids []string) {
 	return kids
 }
 
-// KeyAlg returns the algorithm (`alg`) for the key identified by Key ID (`kid`).
-func (j *JWKS) KeyAlg(kid string) string {
-	j.mux.RLock()
-	defer j.mux.RUnlock()
-	if pubKey, ok := j.keys[kid]; ok {
-		return pubKey.algorithm
-	}
-	return ""
-}
-
 // Len returns the number of keys in the JWKS.
 func (j *JWKS) Len() int {
 	j.mux.RLock()

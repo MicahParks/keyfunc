@@ -23,7 +23,9 @@ func main() {
 
 	// Create the JWKS from the HMAC key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-		exampleKID: keyfunc.NewGivenHMAC(key),
+		exampleKID: keyfunc.NewGivenHMACCustomWithOptions(key, keyfunc.GivenKeyOptions{
+			Algorithm: jwt.SigningMethodHS512.Alg(),
+		}),
 	})
 
 	// Parse the token.

@@ -296,38 +296,6 @@ func TestJWKS_Len(t *testing.T) {
 	}
 }
 
-// TestJWKS_KeyAlg confirms the JWKS.Len returns the algorithm for keys by kid.
-func TestJWKS_KeyAlg(t *testing.T) {
-	jwks, err := keyfunc.NewJSON([]byte(jwksJSON))
-	if err != nil {
-		t.Fatalf(logFmt, "Failed to create a JWKS from JSON.", err)
-	}
-
-	expectedAlgs := map[string]string{
-		"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBifH0KWrCz2Kyxc": "PS256",
-		"ebJxnm9B3QDBljB5XJWEu72qx6BawDaMAhwz4aKPkQ0": "ES512",
-		"TVAAet63O3xy_KK6_bxVIu7Ra3_z1wlB543Fbwi5VaU": "ES384",
-		"arlUxX4hh56rNO-XdIPhDT7bqBMqcBwNQuP_TnZJNGs": "RS512",
-		"tW6ae7TomE6_2jooM-sf9N_6lWg7HNtaQXrDsElBzM4": "PS512",
-		"Lx1FmayP2YBtxaqS1SKJRJGiXRKnw2ov5WmYIMG-BLE": "PS384",
-		"gnmAfvmlsi3kKH3VlM1AJ85P2hekQ8ON_XvJqs3xPD8": "RS384",
-		"CGt0ZWS4Lc5faiKSdi0tU0fjCAdvGROQRGU9iR7tV0A": "ES256",
-		"C65q0EKQyhpd1m4fr7SKO2He_nAxgCtAdws64d2BLt8": "RS256",
-		"Q56A":                               "",
-		"hmac":                               "",
-		"WW91IGdldCBhIGdvbGQgc3RhciDwn4yfCg": "",
-	}
-
-	for kid, expectedAlg := range expectedAlgs {
-		t.Run(kid, func(t *testing.T) {
-			actualAlg := jwks.KeyAlg(kid)
-			if actualAlg != expectedAlg {
-				t.Errorf("Unexpected alg for key %v.\n  Expected: %v\n  Actual: %v\n", kid, expectedAlg, actualAlg)
-			}
-		})
-	}
-}
-
 // TestRateLimit performs a test to confirm the rate limiter works as expected.
 func TestRateLimit(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "*")

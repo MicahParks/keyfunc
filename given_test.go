@@ -30,7 +30,7 @@ const (
 
 // TestNewGivenCustom tests that a custom jwt.SigningMethod can be used to create a JWKS and a proper jwt.Keyfunc.
 func TestNewGivenCustom(t *testing.T) {
-	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+	jwt.RegisterSigningMethod(method.CustomAlgHeader, func() jwt.SigningMethod {
 		return method.EmptyCustom{}
 	})
 
@@ -40,7 +40,7 @@ func TestNewGivenCustom(t *testing.T) {
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	token := jwt.New(method.EmptyCustom{})
-	token.Header[algAttribute] = method.CustomAlg
+	token.Header[algAttribute] = method.CustomAlgHeader
 	token.Header[kidAttribute] = testKID
 
 	signParseValidate(t, token, key, jwks)
@@ -48,18 +48,20 @@ func TestNewGivenCustom(t *testing.T) {
 
 // TestNewGivenCustomAlg tests that a custom jwt.SigningMethod can be used to create a JWKS and a proper jwt.Keyfunc.
 func TestNewGivenCustomAlg(t *testing.T) {
-	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+	jwt.RegisterSigningMethod(method.CustomAlgHeader, func() jwt.SigningMethod {
 		return method.EmptyCustom{}
 	})
 
 	const key = "test-key"
 	givenKeys := make(map[string]keyfunc.GivenKey)
-	givenKeys[testKID] = keyfunc.NewGivenCustomAlg(key, method.CustomAlg)
+	givenKeys[testKID] = keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+		Algorithm: method.CustomAlgHeader,
+	})
 
 	jwks := keyfunc.NewGiven(givenKeys)
 
 	token := jwt.New(method.EmptyCustom{})
-	token.Header[algAttribute] = method.CustomAlg
+	token.Header[algAttribute] = method.CustomAlgHeader
 	token.Header[kidAttribute] = testKID
 
 	signParseValidate(t, token, key, jwks)
@@ -68,13 +70,15 @@ func TestNewGivenCustomAlg(t *testing.T) {
 // TestNewGivenCustomAlg_NegativeCase tests that a custom jwt.SigningMethod can be used to create
 // a JWKS and a proper jwt.Keyfunc and that a token with a non-matching algorithm will be rejected.
 func TestNewGivenCustomAlg_NegativeCase(t *testing.T) {
-	jwt.RegisterSigningMethod(method.CustomAlg, func() jwt.SigningMethod {
+	jwt.RegisterSigningMethod(method.CustomAlgHeader, func() jwt.SigningMethod {
 		return method.EmptyCustom{}
 	})
 
-	const key = jwt.UnsafeAllowNoneSignatureType // So golang-jwt isn't the one blocking this test
+	const key = jwt.UnsafeAllowNoneSignatureType // Allow the "none" JWT "alg" header value for golang-jwt.
 	givenKeys := make(map[string]keyfunc.GivenKey)
-	givenKeys[testKID] = keyfunc.NewGivenCustomAlg(key, method.CustomAlg)
+	givenKeys[testKID] = keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+		Algorithm: method.CustomAlgHeader,
+	})
 
 	jwks := keyfunc.NewGiven(givenKeys)
 
@@ -89,7 +93,7 @@ func TestNewGivenCustomAlg_NegativeCase(t *testing.T) {
 
 	parsed, err := jwt.NewParser().Parse(jwtB64, jwks.Keyfunc)
 	if !errors.Is(err, keyfunc.ErrJWKAlgMismatch) {
-		t.Fatalf("Failed to return ErrJWKAlgMismatch")
+		t.Fatalf("Failed to return ErrJWKAlgMismatch: %v.", err)
 	}
 
 	if parsed.Valid {
@@ -164,7 +168,9 @@ func TestNewGivenKeyRSA(t *testing.T) {
 // addCustom adds a new key wto the given keys map. The new key is using a test jwt.SigningMethod.
 func addCustom(givenKeys map[string]keyfunc.GivenKey, kid string) (key string) {
 	key = ""
-	givenKeys[kid] = keyfunc.NewGivenCustom(key)
+	givenKeys[kid] = keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+		Algorithm: method.CustomAlgHeader,
+	})
 	return key
 }
 
@@ -175,7 +181,9 @@ func addECDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *ecdsa.Pri
 		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenECDSA(&key.PublicKey)
+	givenKeys[kid] = keyfunc.NewGivenECDSACustomWithOptions(&key.PublicKey, keyfunc.GivenKeyOptions{
+		Algorithm: jwt.SigningMethodES256.Alg(),
+	})
 
 	return key, nil
 }
@@ -187,7 +195,9 @@ func addEdDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key ed25519.Pr
 		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenEdDSA(pub)
+	givenKeys[kid] = keyfunc.NewGivenEdDSACustomWithOptions(pub, keyfunc.GivenKeyOptions{
+		Algorithm: jwt.SigningMethodEdDSA.Alg(),
+	})
 
 	return key, nil
 }
@@ -200,7 +210,9 @@ func addHMAC(givenKeys map[string]keyfunc.GivenKey, kid string) (secret []byte, 
 		return nil, fmt.Errorf("failed to create HMAC secret: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenHMAC(secret)
+	givenKeys[kid] = keyfunc.NewGivenHMACCustomWithOptions(secret, keyfunc.GivenKeyOptions{
+		Algorithm: jwt.SigningMethodHS256.Alg(),
+	})
 
 	return secret, nil
 }
@@ -212,7 +224,9 @@ func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.Private
 		return nil, fmt.Errorf("failed to create RSA key: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenRSA(&key.PublicKey)
+	givenKeys[kid] = keyfunc.NewGivenRSACustomWithOptions(&key.PublicKey, keyfunc.GivenKeyOptions{
+		Algorithm: jwt.SigningMethodRS256.Alg(),
+	})
 
 	return key, nil
 }
