@@ -23,7 +23,9 @@ func main() {
 	hmacSecret := []byte("example secret")
 	const givenKID = "givenKID"
 	givenKeys := map[string]keyfunc.GivenKey{
-		givenKID: keyfunc.NewGivenHMAC(hmacSecret),
+		givenKID: keyfunc.NewGivenHMACCustomWithOptions(hmacSecret, keyfunc.GivenKeyOptions{
+			Algorithm: jwt.SigningMethodHS256.Alg(),
+		}),
 	}
 
 	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKS when a JWT signed by an unknown KID
