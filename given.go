@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"encoding/json"
 )
 
 // GivenKey represents a cryptographic key that resides in a JWKS. In conjuncture with Options.
@@ -12,6 +13,7 @@ type GivenKey struct {
 	inter     interface{}
 }
 
+// GivenKeyOptions represents the configuration options for a GivenKey.
 type GivenKeyOptions struct {
 	// Algorithm is the given key's signing algorithm. Its value will be compared to unverified tokens' "alg" header.
 	//
@@ -146,4 +148,19 @@ func NewGivenRSACustomWithOptions(key *rsa.PublicKey, options GivenKeyOptions) (
 		algorithm: options.Algorithm,
 		inter:     key,
 	}
+}
+
+// NewGivenKeysFromJSON parses a raw JSON message into a map of key IDs (`kid`) to GivenKeys.
+// The returned map is suitable for suitable for passing to `NewGiven()` or as `Options.GivenKeys` to `Get()`
+func NewGivenKeysFromJSON(jwksBytes json.RawMessage) (map[string]GivenKey, error) {
+	// Parse by making a temporary JWKS instance. No need to lock its map since it doesn't escape this function.
+	j, err := NewJSON(jwksBytes)
+	if err != nil {
+		return nil, err
+	}
+	keys := make(map[string]GivenKey, len(j.keys))
+	for kid, cryptoKey := range j.keys {
+		keys[kid] = NewGivenCustomWithOptions(cryptoKey.public, GivenKeyOptions{Algorithm: cryptoKey.algorithm})
+	}
+	return keys, nil
 }
