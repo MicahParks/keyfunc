@@ -150,8 +150,8 @@ func NewGivenRSACustomWithOptions(key *rsa.PublicKey, options GivenKeyOptions) (
 	}
 }
 
-// NewGivenKeysFromJSON parses a raw JSON message into a map of key IDs (`kid`) to GivenKeys.
-// The returned map is suitable for suitable for passing to `NewGiven()` or as `Options.GivenKeys` to `Get()`
+// NewGivenKeysFromJSON parses a raw JSON message into a map of key IDs (`kid`) to GivenKeys. The returned map is
+// suitable for passing to `NewGiven()` or as `Options.GivenKeys` to `Get()`
 func NewGivenKeysFromJSON(jwksBytes json.RawMessage) (map[string]GivenKey, error) {
 	// Parse by making a temporary JWKS instance. No need to lock its map since it doesn't escape this function.
 	j, err := NewJSON(jwksBytes)
@@ -160,7 +160,10 @@ func NewGivenKeysFromJSON(jwksBytes json.RawMessage) (map[string]GivenKey, error
 	}
 	keys := make(map[string]GivenKey, len(j.keys))
 	for kid, cryptoKey := range j.keys {
-		keys[kid] = NewGivenCustomWithOptions(cryptoKey.public, GivenKeyOptions{Algorithm: cryptoKey.algorithm})
+		keys[kid] = GivenKey{
+			algorithm: cryptoKey.algorithm,
+			inter:     cryptoKey.public,
+		}
 	}
 	return keys, nil
 }
