@@ -165,6 +165,44 @@ func TestNewGivenKeyRSA(t *testing.T) {
 	signParseValidate(t, token, key, jwks)
 }
 
+// TestNewGivenKeysFromJSON tests that parsing GivenKeys from JSON can be used to create a JWKS and a proper jwt.Keyfunc.
+func TestNewGivenKeysFromJSON(t *testing.T) {
+	// Construct a JWKS JSON containing a JWK for which we know the private key and thus can sign a token.
+	key := []byte("test-hmac-secret")
+	const testJSON = `{
+		"keys": [
+			{
+				"kid": "testkid",
+				"kty": "oct",
+				"alg": "HS256",
+				"use": "sig",
+				"k": "dGVzdC1obWFjLXNlY3JldA"
+			}
+		]
+	}`
+
+	givenKeys, err := keyfunc.NewGivenKeysFromJSON([]byte(testJSON))
+	if err != nil {
+		t.Fatalf(logFmt, "Failed to parse given keys from JSON.", err)
+	}
+
+	jwks := keyfunc.NewGiven(givenKeys)
+
+	token := jwt.New(jwt.SigningMethodHS256)
+	token.Header[kidAttribute] = testKID
+
+	signParseValidate(t, token, key, jwks)
+}
+
+// TestNewGivenKeysFromJSON_BadParse makes sure bad JSON returns an error.
+func TestNewGivenKeysFromJSON_BadParse(t *testing.T) {
+	const testJSON = "{not the best syntax"
+	_, err := keyfunc.NewGivenKeysFromJSON([]byte(testJSON))
+	if err == nil {
+		t.Fatalf("Expected a JSON parse error")
+	}
+}
+
 // addCustom adds a new key wto the given keys map. The new key is using a test jwt.SigningMethod.
 func addCustom(givenKeys map[string]keyfunc.GivenKey, kid string) (key string) {
 	key = ""
