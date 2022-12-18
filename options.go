@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // ErrInvalidHTTPStatusCode indicates that the HTTP status code is invalid.
@@ -79,6 +81,16 @@ type Options struct {
 	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the
 	// ResponseExtractorStatusOK function is used. The default behavior changed in v1.4.0.
 	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
+}
+
+// MultipleOptions is used to configure the behavior when multiple JWKS are used by MultipleJWKS.
+type MultipleOptions struct {
+	// KeySelector is a function that selects the key to use for a given token. It will be used in the implementation
+	// for jwt.Keyfunc. If implementing this custom selector extract the key ID and algorithm from the token's header.
+	// Use the key ID to select a token and confirm the key's algorithm before returning it.
+	//
+	// This value defaults to KeySelectorFirst.
+	KeySelector func(multiJWKS *MultipleJWKS, token *jwt.Token) (key interface{}, err error)
 }
 
 // ResponseExtractorStatusOK is meant to be used as the ResponseExtractor field for Options. It confirms that response
