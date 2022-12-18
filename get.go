@@ -71,23 +71,31 @@ func (j *JWKS) Refresh(ctx context.Context, options RefreshOptions) error {
 		return ErrRefreshImpossible
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	// Check if the background goroutine was launched.
+	if j.refreshInterval != 0 || j.refreshUnknownKID {
+		ctx, cancel := context.WithCancel(ctx)
 
-	req := refreshRequest{
-		cancel:          cancel,
-		ignoreRateLimit: options.IgnoreRateLimit,
-	}
+		req := refreshRequest{
+			cancel:          cancel,
+			ignoreRateLimit: options.IgnoreRateLimit,
+		}
 
-	select {
-	case <-ctx.Done():
-		return fmt.Errorf("failed to send request refresh to background goroutine: %w", j.ctx.Err())
-	case j.refreshRequests <- req:
-	}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("failed to send request refresh to background goroutine: %w", j.ctx.Err())
+		case j.refreshRequests <- req:
+		}
 
-	<-ctx.Done()
+		<-ctx.Done()
 
-	if !errors.Is(ctx.Err(), context.Canceled) {
-		return fmt.Errorf("unexpected keyfunc background refresh context error: %w", ctx.Err())
+		if !errors.Is(ctx.Err(), context.Canceled) {
+			return fmt.Errorf("unexpected keyfunc background refresh context error: %w", ctx.Err())
+		}
+	} else {
+		err := j.refresh()
+		if err != nil {
+			return fmt.Errorf("failed to refresh JWKS: %w", err)
+		}
 	}
 
 	return nil
