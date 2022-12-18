@@ -81,6 +81,7 @@ type Options struct {
 	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
 }
 
+// RefreshOptions are used to specify manual refresh behavior.
 type RefreshOptions struct {
 	IgnoreRateLimit bool
 }
