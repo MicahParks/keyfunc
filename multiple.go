@@ -31,7 +31,8 @@ func GetMultiple(multiple map[string]Options, options MultipleOptions) (multiJWK
 	}
 
 	multiJWKS = &MultipleJWKS{
-		sets: make(map[string]*JWKS, len(multiple)),
+		sets:        make(map[string]*JWKS, len(multiple)),
+		keySelector: options.KeySelector,
 	}
 
 	for u, opts := range multiple {
