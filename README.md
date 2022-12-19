@@ -170,6 +170,7 @@ These features can be configured by populating fields in the
 * Custom cryptographic algorithms can be used. Make sure to
   use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
   parsing JWTs. For an example, see the `examples/custom` directory.
+* There is support for creating one `jwt.Keyfunc` from multiple JWK Sets through the use of the `keyfunc.GetMultiple`.
 
 ## Notes
 Trailing padding is required to be removed from base64url encoded keys inside a JWKS. This is because RFC 7517 defines
