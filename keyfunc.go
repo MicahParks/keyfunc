@@ -20,7 +20,6 @@ func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return j.getKey(alg, kid)
 }
 
