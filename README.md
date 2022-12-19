@@ -170,6 +170,8 @@ These features can be configured by populating fields in the
 * Custom cryptographic algorithms can be used. Make sure to
   use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
   parsing JWTs. For an example, see the `examples/custom` directory.
+* The remote JWKS resource can be refreshed manually using the `.Refresh` method. This can bypass the rate limit, if the
+  option is set.
 
 ## Notes
 Trailing padding is required to be removed from base64url encoded keys inside a JWKS. This is because RFC 7517 defines
