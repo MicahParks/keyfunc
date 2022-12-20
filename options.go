@@ -81,6 +81,16 @@ type Options struct {
 	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
 }
 
+// RefreshOptions are used to specify manual refresh behavior.
+type RefreshOptions struct {
+	IgnoreRateLimit bool
+}
+
+type refreshRequest struct {
+	cancel          context.CancelFunc
+	ignoreRateLimit bool
+}
+
 // ResponseExtractorStatusOK is meant to be used as the ResponseExtractor field for Options. It confirms that response
 // status code is 200 OK and returns the raw JSON from the response body.
 func ResponseExtractorStatusOK(ctx context.Context, resp *http.Response) (json.RawMessage, error) {

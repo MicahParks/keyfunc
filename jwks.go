@@ -77,7 +77,7 @@ type JWKS struct {
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
 	refreshRateLimit    time.Duration
-	refreshRequests     chan context.CancelFunc
+	refreshRequests     chan refreshRequest
 	refreshTimeout      time.Duration
 	refreshUnknownKID   bool
 	requestFactory      func(ctx context.Context, url string) (*http.Request, error)
@@ -199,12 +199,15 @@ func (j *JWKS) getKey(alg, kid string) (jsonKey interface{}, err error) {
 		}
 
 		ctx, cancel := context.WithCancel(j.ctx)
+		req := refreshRequest{
+			cancel: cancel,
+		}
 
 		// Refresh the JWKS.
 		select {
 		case <-j.ctx.Done():
 			return
-		case j.refreshRequests <- cancel:
+		case j.refreshRequests <- req:
 		default:
 			// If the j.refreshRequests channel is full, return the error early.
 			return nil, ErrKIDNotFound
