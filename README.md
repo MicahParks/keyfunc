@@ -170,6 +170,8 @@ These features can be configured by populating fields in the
 * Custom cryptographic algorithms can be used. Make sure to
   use [`jwt.RegisterSigningMethod`](https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod) before
   parsing JWTs. For an example, see the `examples/custom` directory.
+* The remote JWKS resource can be refreshed manually using the `.Refresh` method. This can bypass the rate limit, if the
+  option is set.
 * There is support for creating one `jwt.Keyfunc` from multiple JWK Sets through the use of the `keyfunc.GetMultiple`.
 
 ## Notes
