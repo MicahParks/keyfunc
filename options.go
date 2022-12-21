@@ -72,6 +72,9 @@ type Options struct {
 	// This is done through a background goroutine. Without specifying a RefreshInterval a malicious client could
 	// self-sign X JWTs, send them to this service, then cause potentially high network usage proportional to X. Make
 	// sure to call the JWKS.EndBackground method to end this goroutine when it's no longer needed.
+	//
+	// It is recommended this option is not used when in MultipleJWKS. This is because KID collisions SHOULD be uncommon
+	// meaning nearly any JWT SHOULD trigger a refresh for the number of JWKS in the MultipleJWKS minus one.
 	RefreshUnknownKID bool
 
 	// RequestFactory creates HTTP requests for the remote JWKS resource located at the given url. For example, an
