@@ -172,6 +172,7 @@ These features can be configured by populating fields in the
   parsing JWTs. For an example, see the `examples/custom` directory.
 * The remote JWKS resource can be refreshed manually using the `.Refresh` method. This can bypass the rate limit, if the
   option is set.
+* There is support for creating one `jwt.Keyfunc` from multiple JWK Sets through the use of the `keyfunc.GetMultiple`.
 
 ## Notes
 Trailing padding is required to be removed from base64url encoded keys inside a JWKS. This is because RFC 7517 defines
