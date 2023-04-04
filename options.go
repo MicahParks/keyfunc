@@ -17,7 +17,7 @@ var ErrInvalidHTTPStatusCode = errors.New("invalid HTTP status code")
 
 // Options represents the configuration options for a JWKS.
 //
-// If RefreshInterval and or RefreshUnknownKID is not nil, then a background goroutine will be launched to refresh the
+// If either RefreshInterval is non-zero or RefreshUnknownKID is true, then a background goroutine will be launched to refresh the
 // remote JWKS under the specified circumstances.
 //
 // When using a background refresh goroutine, make sure to use RefreshRateLimit if paired with RefreshUnknownKID. Also
@@ -54,7 +54,7 @@ type Options struct {
 	// if a background refresh goroutine is active.
 	RefreshErrorHandler ErrorHandler
 
-	// RefreshInterval is the duration to refresh the JWKS in the background via a new HTTP request. If this is not nil,
+	// RefreshInterval is the duration to refresh the JWKS in the background via a new HTTP request. If this is not zero,
 	// then a background goroutine will be used to refresh the JWKS once per the given interval. Make sure to call the
 	// JWKS.EndBackground method to end this goroutine when it's no longer needed.
 	RefreshInterval time.Duration
