@@ -3,7 +3,7 @@ package keyfunc_test
 import (
 	"testing"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 const (

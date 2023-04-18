@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 func TestResponseExtractorStatusOK(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 const (

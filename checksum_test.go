@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 // TestChecksum confirms that the JWKS will only perform a refresh if a new JWKS is read from the remote resource.
