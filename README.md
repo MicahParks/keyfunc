@@ -7,9 +7,13 @@ The purpose of this package is to provide a
 [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWK Set or JWKS) for
 parsing and verifying JSON Web Tokens (JWTs).
 
+The last version to support `github.com/golang-jwt/jwt/v4`
+is [`v1.9.0`](https://github.com/MicahParks/keyfunc/releases/tag/v1.9.0).
+
 There is legacy support for `github.com/dgrijalva/jwt-go` and its popular forks. It's in a separate project to keep this
 project minimal. If your use case supports a legacy fork, please
-see: [github.com/MicahParks/compatibility-keyfunc](https://github.com/MicahParks/compatibility-keyfunc).
+see: [github.com/MicahParks/compatibility-keyfunc](https://github.com/MicahParks/compatibility-keyfunc). If an updated
+to `keyfunc` is needed for `github.com/golang-jwt/jwt/v4` users, it will be placed into this separate project.
 
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKS via an HTTPS endpoint. This package has the
@@ -73,7 +77,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-	log.Fatalln("JWKS_URL environment variable must be populated.")
+log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -85,7 +89,7 @@ Via HTTP:
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{}) // See recommended options in the examples directory.
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err)
+log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err)
 }
 ```
 
@@ -98,7 +102,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.NewJSON(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKS from JSON.\nError: %s", err)
+log.Fatalf("Failed to create JWKS from JSON.\nError: %s", err)
 }
 ```
 
@@ -111,7 +115,7 @@ uniqueKeyID := "myKeyID"
 
 // Create the JWKS from the HMAC key.
 jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-	uniqueKeyID: keyfunc.NewGivenHMAC(key),
+uniqueKeyID: keyfunc.NewGivenHMAC(key),
 })
 ```
 
@@ -125,7 +129,7 @@ features mentioned at the bottom of this `README.md`.
 // Parse the JWT.
 token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 if err != nil {
-	return nil, fmt.Errorf("failed to parse token: %w", err)
+return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
