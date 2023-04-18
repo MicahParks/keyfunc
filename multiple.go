@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // ErrMultipleJWKSSize is returned when the number of JWKS given are not enough to make a MultipleJWKS.

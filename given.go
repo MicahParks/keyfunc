@@ -45,7 +45,7 @@ func NewGiven(givenKeys map[string]GivenKey) (jwks *JWKS) {
 // NewGivenCustom creates a new GivenKey given an untyped variable. The key argument is expected to be a supported
 // by the jwt package used.
 //
-// See the https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod function for registering an unsupported
+// See the https://pkg.go.dev/github.com/golang-jwt/jwt/v5#RegisterSigningMethod function for registering an unsupported
 // signing method.
 //
 // Deprecated: This function does not allow the user to specify the JWT's signing algorithm. Use
@@ -61,7 +61,7 @@ func NewGivenCustom(key interface{}) (givenKey GivenKey) {
 //
 // Consider the options carefully as each field may have a security implication.
 //
-// See the https://pkg.go.dev/github.com/golang-jwt/jwt/v4#RegisterSigningMethod function for registering an unsupported
+// See the https://pkg.go.dev/github.com/golang-jwt/jwt/v5#RegisterSigningMethod function for registering an unsupported
 // signing method.
 func NewGivenCustomWithOptions(key interface{}, options GivenKeyOptions) (givenKey GivenKey) {
 	return GivenKey{

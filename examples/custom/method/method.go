@@ -7,13 +7,13 @@ const CustomAlgHeader = "customalg"
 type EmptyCustom struct{}
 
 // Verify helps implement the jwt.SigningMethod interface. It does not verify.
-func (e EmptyCustom) Verify(_, _ string, _ interface{}) error {
+func (e EmptyCustom) Verify(_ string, _ []byte, _ interface{}) error {
 	return nil
 }
 
 // Sign helps implement the jwt.SigningMethod interface. It does not sign anything.
-func (e EmptyCustom) Sign(_ string, _ interface{}) (string, error) {
-	return CustomAlgHeader, nil
+func (e EmptyCustom) Sign(_ string, _ interface{}) ([]byte, error) {
+	return []byte{}, nil
 }
 
 // Alg helps implement the jwt.SigningMethod. It returns the `alg` JSON attribute for JWTs signed with this method.
