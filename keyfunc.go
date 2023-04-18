@@ -23,6 +23,7 @@ func (j *JWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 	return j.getKey(alg, kid)
 }
 
+// Keyfunc matches the signature of github.com/golang-jwt/jwt/v5's jwt.Keyfunc function.
 func (m *MultipleJWKS) Keyfunc(token *jwt.Token) (interface{}, error) {
 	return m.keySelector(m, token)
 }

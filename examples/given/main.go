@@ -23,7 +23,7 @@ func main() {
 	hmacSecret := []byte("example secret")
 	const givenKID = "givenKID"
 	givenKeys := map[string]keyfunc.GivenKey{
-		givenKID: keyfunc.NewGivenHMACCustomWithOptions(hmacSecret, keyfunc.GivenKeyOptions{
+		givenKID: keyfunc.NewGivenHMAC(hmacSecret, keyfunc.GivenKeyOptions{
 			Algorithm: jwt.SigningMethodHS256.Alg(),
 		}),
 	}

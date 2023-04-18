@@ -29,7 +29,7 @@ func main() {
 
 	// Create the JWKS from the given signing method's key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-		exampleKID: keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+		exampleKID: keyfunc.NewGivenCustom(key, keyfunc.GivenKeyOptions{
 			Algorithm: method.CustomAlgHeader,
 		}),
 	})
