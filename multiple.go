@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // ErrMultipleJWKSSize is returned when the number of JWKS given are not enough to make a MultipleJWKS.
@@ -46,6 +46,8 @@ func GetMultiple(multiple map[string]Options, options MultipleOptions) (multiJWK
 	return multiJWKS, nil
 }
 
+// JWKSets returns a copy of the map of JWK Sets. The map itself is a copy, but the JWKS are not and should be treated
+// as read-only.
 func (m *MultipleJWKS) JWKSets() map[string]*JWKS {
 	sets := make(map[string]*JWKS, len(m.sets))
 	for u, jwks := range m.sets {
@@ -54,6 +56,7 @@ func (m *MultipleJWKS) JWKSets() map[string]*JWKS {
 	return sets
 }
 
+// KeySelectorFirst returns the first key found in the multiple JWK Sets.
 func KeySelectorFirst(multiJWKS *MultipleJWKS, token *jwt.Token) (key interface{}, err error) {
 	kid, alg, err := kidAlg(token)
 	if err != nil {

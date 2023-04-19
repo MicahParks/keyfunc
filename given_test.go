@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc"
-	"github.com/MicahParks/keyfunc/examples/custom/method"
+	"github.com/MicahParks/keyfunc/v2"
+	"github.com/MicahParks/keyfunc/v2/examples/custom/method"
 )
 
 const (
@@ -54,7 +54,7 @@ func TestNewGivenCustomAlg(t *testing.T) {
 
 	const key = "test-key"
 	givenKeys := make(map[string]keyfunc.GivenKey)
-	givenKeys[testKID] = keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+	givenKeys[testKID] = keyfunc.NewGivenCustom(key, keyfunc.GivenKeyOptions{
 		Algorithm: method.CustomAlgHeader,
 	})
 
@@ -76,7 +76,7 @@ func TestNewGivenCustomAlg_NegativeCase(t *testing.T) {
 
 	const key = jwt.UnsafeAllowNoneSignatureType // Allow the "none" JWT "alg" header value for golang-jwt.
 	givenKeys := make(map[string]keyfunc.GivenKey)
-	givenKeys[testKID] = keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+	givenKeys[testKID] = keyfunc.NewGivenCustom(key, keyfunc.GivenKeyOptions{
 		Algorithm: method.CustomAlgHeader,
 	})
 
@@ -206,7 +206,7 @@ func TestNewGivenKeysFromJSON_BadParse(t *testing.T) {
 // addCustom adds a new key wto the given keys map. The new key is using a test jwt.SigningMethod.
 func addCustom(givenKeys map[string]keyfunc.GivenKey, kid string) (key string) {
 	key = ""
-	givenKeys[kid] = keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+	givenKeys[kid] = keyfunc.NewGivenCustom(key, keyfunc.GivenKeyOptions{
 		Algorithm: method.CustomAlgHeader,
 	})
 	return key
@@ -219,7 +219,7 @@ func addECDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *ecdsa.Pri
 		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenECDSACustomWithOptions(&key.PublicKey, keyfunc.GivenKeyOptions{
+	givenKeys[kid] = keyfunc.NewGivenECDSA(&key.PublicKey, keyfunc.GivenKeyOptions{
 		Algorithm: jwt.SigningMethodES256.Alg(),
 	})
 
@@ -233,7 +233,7 @@ func addEdDSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key ed25519.Pr
 		return nil, fmt.Errorf("failed to create ECDSA key: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenEdDSACustomWithOptions(pub, keyfunc.GivenKeyOptions{
+	givenKeys[kid] = keyfunc.NewGivenEdDSA(pub, keyfunc.GivenKeyOptions{
 		Algorithm: jwt.SigningMethodEdDSA.Alg(),
 	})
 
@@ -248,7 +248,7 @@ func addHMAC(givenKeys map[string]keyfunc.GivenKey, kid string) (secret []byte, 
 		return nil, fmt.Errorf("failed to create HMAC secret: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenHMACCustomWithOptions(secret, keyfunc.GivenKeyOptions{
+	givenKeys[kid] = keyfunc.NewGivenHMAC(secret, keyfunc.GivenKeyOptions{
 		Algorithm: jwt.SigningMethodHS256.Alg(),
 	})
 
@@ -262,7 +262,7 @@ func addRSA(givenKeys map[string]keyfunc.GivenKey, kid string) (key *rsa.Private
 		return nil, fmt.Errorf("failed to create RSA key: %w", err)
 	}
 
-	givenKeys[kid] = keyfunc.NewGivenRSACustomWithOptions(&key.PublicKey, keyfunc.GivenKeyOptions{
+	givenKeys[kid] = keyfunc.NewGivenRSA(&key.PublicKey, keyfunc.GivenKeyOptions{
 		Algorithm: jwt.SigningMethodRS256.Alg(),
 	})
 

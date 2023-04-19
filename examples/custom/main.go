@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc"
-	"github.com/MicahParks/keyfunc/examples/custom/method"
+	"github.com/MicahParks/keyfunc/v2"
+	"github.com/MicahParks/keyfunc/v2/examples/custom/method"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 
 	// Create the JWKS from the given signing method's key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-		exampleKID: keyfunc.NewGivenCustomWithOptions(key, keyfunc.GivenKeyOptions{
+		exampleKID: keyfunc.NewGivenCustom(key, keyfunc.GivenKeyOptions{
 			Algorithm: method.CustomAlgHeader,
 		}),
 	})

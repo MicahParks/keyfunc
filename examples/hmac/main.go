@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 
 	// Create the JWKS from the HMAC key.
 	jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-		exampleKID: keyfunc.NewGivenHMACCustomWithOptions(key, keyfunc.GivenKeyOptions{
+		exampleKID: keyfunc.NewGivenHMAC(key, keyfunc.GivenKeyOptions{
 			Algorithm: jwt.SigningMethodHS512.Alg(),
 		}),
 	})

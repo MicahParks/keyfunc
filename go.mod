@@ -1,7 +1,5 @@
-module github.com/MicahParks/keyfunc
+module github.com/MicahParks/keyfunc/v2
 
-go 1.16
+go 1.18
 
-require github.com/golang-jwt/jwt/v4 v4.4.2
-
-retract v1.3.0 // Contains a bug in ResponseExtractorStatusOK where the *http.Response body is not closed. https://github.com/MicahParks/keyfunc/issues/51
+require github.com/golang-jwt/jwt/v5 v5.0.0

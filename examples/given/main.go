@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc"
+	"github.com/MicahParks/keyfunc/v2"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 	hmacSecret := []byte("example secret")
 	const givenKID = "givenKID"
 	givenKeys := map[string]keyfunc.GivenKey{
-		givenKID: keyfunc.NewGivenHMACCustomWithOptions(hmacSecret, keyfunc.GivenKeyOptions{
+		givenKID: keyfunc.NewGivenHMAC(hmacSecret, keyfunc.GivenKeyOptions{
 			Algorithm: jwt.SigningMethodHS256.Alg(),
 		}),
 	}
