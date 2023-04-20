@@ -137,7 +137,7 @@ func TestJWKS_RefreshCancelCtx(t *testing.T) {
 
 			// Wait for the first refresh to occur to ensure the
 			// JWKS gets refreshed at least once.
-			<-time.After(1100 * time.Millisecond)
+			time.Sleep(1100 * time.Millisecond)
 
 			if tc.cancelOptionsCtx {
 				cancel()
@@ -146,14 +146,14 @@ func TestJWKS_RefreshCancelCtx(t *testing.T) {
 			// Wait for another refresh cycle to occur to ensure the
 			// JWKS either did or did not get refreshed depending on
 			// whether the passed Options.Ctx has been canceled.
-			<-time.After(1100 * time.Millisecond)
+			time.Sleep(1101 * time.Millisecond)
 
 			jwks.EndBackground()
 
 			// Wait for another refresh cycle to occur to verify that
 			// the JWKS did not get refreshed after EndBackground()
 			// has been called.
-			<-time.After(1100 * time.Millisecond)
+			time.Sleep(1100 * time.Millisecond)
 
 			count := atomic.LoadUint64(&counter)
 			if count != uint64(tc.expectedRefreshes) {
