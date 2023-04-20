@@ -135,18 +135,25 @@ func TestJWKS_RefreshCancelCtx(t *testing.T) {
 				t.Fatalf(logFmt, "Failed to get JWKS from testing URL.", err)
 			}
 
-			// Sleep to ensure the JWKS gets refreshed at least once.
-			time.Sleep(1100 * time.Millisecond)
+			// Wait for the first refresh to occur to ensure the
+			// JWKS gets refreshed at least once.
+			<-time.After(1100 * time.Millisecond)
+
 			if tc.cancelOptionsCtx {
 				cancel()
 			}
-			// Sleep to be able to verify if the JWKS got refreshed
-			// after the context got canceled.
-			time.Sleep(1100 * time.Millisecond)
+
+			// Wait for another refresh cycle to occur to ensure the
+			// JWKS either did or did not get refreshed depending on
+			// whether the passed Options.Ctx has been canceled.
+			<-time.After(1100 * time.Millisecond)
+
 			jwks.EndBackground()
-			// Sleep to ensure the JWKS does not get refreshed after
-			// the EndBackground function got called.
-			time.Sleep(1100 * time.Millisecond)
+
+			// Wait for another refresh cycle to occur to verify that
+			// the JWKS did not get refreshed after EndBackground()
+			// has been called.
+			<-time.After(1100 * time.Millisecond)
 
 			count := atomic.LoadUint64(&counter)
 			if count != uint64(tc.expectedRefreshes) {
