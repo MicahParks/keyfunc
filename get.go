@@ -53,7 +53,10 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	}
 
 	if jwks.refreshInterval != 0 || jwks.refreshUnknownKID {
-		jwks.ctx, jwks.cancel = context.WithCancel(context.Background())
+		if jwks.ctx == nil {
+			jwks.ctx = context.Background()
+		}
+		jwks.ctx, jwks.cancel = context.WithCancel(jwks.ctx)
 		jwks.refreshRequests = make(chan refreshRequest, 1)
 		go jwks.backgroundRefresh()
 	}
