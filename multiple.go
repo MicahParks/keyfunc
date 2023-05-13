@@ -22,8 +22,8 @@ type MultipleJWKS struct {
 // map then many refresh requests would take place each time a JWT is processed, this should be rate limited by
 // RefreshRateLimit.
 func GetMultiple(multiple map[string]Options, options MultipleOptions) (multiJWKS *MultipleJWKS, err error) {
-	if multiple == nil || len(multiple) < 2 {
-		return nil, fmt.Errorf("multiple JWKS must have two or more remote JWK Set resources: %w", ErrMultipleJWKSSize)
+	if len(multiple) < 1 {
+		return nil, fmt.Errorf("multiple JWKS must have one or more remote JWK Set resources: %w", ErrMultipleJWKSSize)
 	}
 
 	if options.KeySelector == nil {
