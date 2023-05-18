@@ -8,7 +8,7 @@ import (
 )
 
 // ErrMultipleJWKSSize is returned when the number of JWKS given are not enough to make a MultipleJWKS.
-var ErrMultipleJWKSSize = errors.New("multiple JWKS must have two or more remote JWK Set resources")
+var ErrMultipleJWKSSize = errors.New("multiple JWKS must have one or more remote JWK Set resources")
 
 // MultipleJWKS manages multiple JWKS and has a field for jwt.Keyfunc.
 type MultipleJWKS struct {
@@ -16,7 +16,7 @@ type MultipleJWKS struct {
 	sets        map[string]*JWKS // No lock is required because this map is read-only after initialization.
 }
 
-// GetMultiple creates a new MultipleJWKS. A map of length two or more JWKS URLs to Options is required.
+// GetMultiple creates a new MultipleJWKS. A map of length one or more JWKS URLs to Options is required.
 //
 // Be careful when choosing Options for each JWKS in the map. If RefreshUnknownKID is set to true for all JWKS in the
 // map then many refresh requests would take place each time a JWT is processed, this should be rate limited by
