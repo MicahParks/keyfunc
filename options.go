@@ -84,6 +84,14 @@ type Options struct {
 	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the
 	// ResponseExtractorStatusOK function is used. The default behavior changed in v1.4.0.
 	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
+
+	// TolerateInitialJWKHTTPError will tolerate any error from the initial HTTP JWKS request. If an error occurs,
+	// the RefreshErrorHandler will be given the error. The program will continue to run as if the error did not occur
+	// and a valid JWK Set with no keys was received in the response. This allows for the background goroutine to
+	// request the JWKS at a later time.
+	//
+	// It does not make sense to mark this field as true unless the background refresh goroutine is active.
+	TolerateInitialJWKHTTPError bool
 }
 
 // MultipleOptions is used to configure the behavior when multiple JWKS are used by MultipleJWKS.
