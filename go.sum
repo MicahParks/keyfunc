@@ -4,5 +4,7 @@ github.com/MicahParks/jwkset v0.4.1-0.20231210172644-b99a09294534 h1:AyiXQzurozL
 github.com/MicahParks/jwkset v0.4.1-0.20231210172644-b99a09294534/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/MicahParks/jwkset v0.4.1-0.20231210184232-f8dd8ef1f20f h1:aaP02JnDOhALvApyCjpgi+3O8VHvW7rvs3+DuKtlhaE=
 github.com/MicahParks/jwkset v0.4.1-0.20231210184232-f8dd8ef1f20f/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
+github.com/MicahParks/jwkset v0.4.1-0.20231210214924-212b7b14636b h1:oz56u5c1vtNxjMZ0tFbY78rJJ6fCEC5bbVhafTihUF8=
+github.com/MicahParks/jwkset v0.4.1-0.20231210214924-212b7b14636b/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/golang-jwt/jwt/v5 v5.0.0 h1:1n1XNM9hk7O9mnQoNBGolZvzebBQ7p93ULHRc28XJUE=
 github.com/golang-jwt/jwt/v5 v5.0.0/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=

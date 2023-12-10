@@ -37,17 +37,17 @@ func main() {
 		log.Fatalf("Failed to create a JWK from the given HMAC secret.\nError: %s.", err)
 	}
 
-	// Create JWK Set storage. This implements the jwkset.Client interface.
+	// Create JWK Set storage. This implements the jwkset.Storage interface.
 	store := jwkset.NewMemoryStorage()
-	err = store.WriteKey(ctx, jwk)
+	err = store.KeyWrite(ctx, jwk)
 	if err != nil {
 		log.Fatalf("Failed to write the given JWK to the store.\nError: %s.", err)
 	}
 
 	// Create the keyfunc.Keyfunc.
 	options := keyfunc.Options{
-		Client: store,
-		Ctx:    ctx,
+		Storage: store,
+		Ctx:     ctx,
 	}
 	jwks, err := keyfunc.New(options)
 	if err != nil {
