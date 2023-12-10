@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-
-	"github.com/MicahParks/keyfunc/v2"
 )
 
 const (
@@ -27,7 +25,7 @@ func main() {
 	s1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(remoteJWKS1))
 		if err != nil {
-			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err.Error())
+			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err)
 		}
 	}))
 	defer s1.Close()
@@ -35,7 +33,7 @@ func main() {
 	s2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(remoteJWKS2))
 		if err != nil {
-			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err.Error())
+			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err)
 		}
 	}))
 	defer s2.Close()
@@ -43,7 +41,7 @@ func main() {
 	recommendedOpts := keyfunc.Options{
 		Ctx: ctx,
 		RefreshErrorHandler: func(err error) {
-			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
+			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err)
 		},
 		RefreshInterval:   time.Hour,
 		RefreshRateLimit:  time.Minute * 5,
@@ -54,7 +52,7 @@ func main() {
 	// Create the given keys.
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		log.Fatalf("Failed to generate given key.\nError: %s", err.Error())
+		log.Fatalf("Failed to generate given key.\nError: %s", err)
 	}
 	eddsaGiven := keyfunc.NewGivenEdDSA(pub, keyfunc.GivenKeyOptions{
 		Algorithm: "EdDSA",
@@ -75,19 +73,19 @@ func main() {
 	}
 	multi, err := keyfunc.GetMultiple(multiple, opts)
 	if err != nil {
-		log.Fatalf("Failed to create multiple JWKS.\nError: %s", err.Error())
+		log.Fatalf("Failed to create multiple JWKS.\nError: %s", err)
 	}
 
 	token := jwt.New(jwt.SigningMethodEdDSA)
 	token.Header["kid"] = givenKeyID
 	signed, err := token.SignedString(priv)
 	if err != nil {
-		log.Fatalf("Failed to sign a JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to sign a JWT.\nError: %s", err)
 	}
 
 	token, err = jwt.Parse(signed, multi.Keyfunc)
 	if err != nil {
-		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to parse the JWT.\nError: %s", err)
 	}
 
 	if !token.Valid {

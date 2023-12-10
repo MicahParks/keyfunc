@@ -2,11 +2,10 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc/v2"
+	"github.com/MicahParks/keyfunc/v3"
 )
 
 func main() {
@@ -15,23 +14,10 @@ func main() {
 	// This is a local Keycloak JWKS endpoint for the master realm.
 	jwksURL := "http://localhost:8080/auth/realms/master/protocol/openid-connect/certs"
 
-	// Create the keyfunc options. Use an error handler that logs. Refresh the JWKS when a JWT signed by an unknown KID
-	// is found or at the specified interval. Rate limit these refreshes. Timeout the initial JWKS refresh request after
-	// 10 seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
-	options := keyfunc.Options{
-		RefreshErrorHandler: func(err error) {
-			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
-		},
-		RefreshInterval:   time.Hour,
-		RefreshRateLimit:  time.Minute * 5,
-		RefreshTimeout:    time.Second * 10,
-		RefreshUnknownKID: true,
-	}
-
 	// Create the JWKS from the resource at the given URL.
-	jwks, err := keyfunc.Get(jwksURL, options)
+	jwks, err := keyfunc.NewDefault([]string{jwksURL})
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
+		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err)
 	}
 
 	// Get a JWT to parse.
@@ -40,7 +26,7 @@ func main() {
 	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
-		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to parse the JWT.\nError: %s", err)
 	}
 
 	// Check if the token is valid.
@@ -48,7 +34,4 @@ func main() {
 		log.Fatalf("The token is not valid.")
 	}
 	log.Println("The token is valid.")
-
-	// End the background refresh goroutine when it's no longer needed.
-	jwks.EndBackground()
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc/v2"
+	"github.com/MicahParks/keyfunc/v3"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 	unsignedToken.Header["kid"] = exampleKID
 	jwtB64, err := unsignedToken.SignedString(key)
 	if err != nil {
-		log.Fatalf("Failed to self sign an HMAC token.\nError: %s.", err.Error())
+		log.Fatalf("Failed to self sign an HMAC token.\nError: %s.", err)
 	}
 
 	// Create the JWKS from the HMAC key.
@@ -31,7 +31,7 @@ func main() {
 	// Parse the token.
 	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 	if err != nil {
-		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to parse the JWT.\nError: %s", err)
 	}
 
 	// Check if the token is valid.

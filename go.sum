@@ -1,2 +1,8 @@
+github.com/MicahParks/jwkset v0.4.1-0.20231210161436-71231066032d h1:JtiiSr3yh/AeU15kEJiLmNIavoXT5mDWtKdjcDeT7IU=
+github.com/MicahParks/jwkset v0.4.1-0.20231210161436-71231066032d/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
+github.com/MicahParks/jwkset v0.4.1-0.20231210172644-b99a09294534 h1:AyiXQzurozLcPdrBmHx2GyXYiTU6mqYnTjnSssBSZBc=
+github.com/MicahParks/jwkset v0.4.1-0.20231210172644-b99a09294534/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
+github.com/MicahParks/jwkset v0.4.1-0.20231210184232-f8dd8ef1f20f h1:aaP02JnDOhALvApyCjpgi+3O8VHvW7rvs3+DuKtlhaE=
+github.com/MicahParks/jwkset v0.4.1-0.20231210184232-f8dd8ef1f20f/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/golang-jwt/jwt/v5 v5.0.0 h1:1n1XNM9hk7O9mnQoNBGolZvzebBQ7p93ULHRc28XJUE=
 github.com/golang-jwt/jwt/v5 v5.0.0/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
