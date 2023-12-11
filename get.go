@@ -49,14 +49,13 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 
 	err = jwks.refresh()
 	if err != nil {
-		if options.TolerateInitialJWKHTTPError {
-			if jwks.refreshErrorHandler != nil {
-				jwks.refreshErrorHandler(err)
-			}
-			jwks.keys = make(map[string]parsedJWK)
-		} else {
+		if !options.TolerateInitialJWKHTTPError {
 			return nil, err
 		}
+		if jwks.refreshErrorHandler != nil {
+			jwks.refreshErrorHandler(err)
+		}
+		jwks.keys = make(map[string]parsedJWK)
 	}
 
 	if jwks.refreshInterval != 0 || jwks.refreshUnknownKID {
