@@ -1,15 +1,3 @@
-github.com/MicahParks/jwkset v0.4.1-0.20231210161436-71231066032d h1:JtiiSr3yh/AeU15kEJiLmNIavoXT5mDWtKdjcDeT7IU=
-github.com/MicahParks/jwkset v0.4.1-0.20231210161436-71231066032d/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
-github.com/MicahParks/jwkset v0.4.1-0.20231210172644-b99a09294534 h1:AyiXQzurozLcPdrBmHx2GyXYiTU6mqYnTjnSssBSZBc=
-github.com/MicahParks/jwkset v0.4.1-0.20231210172644-b99a09294534/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
-github.com/MicahParks/jwkset v0.4.1-0.20231210184232-f8dd8ef1f20f h1:aaP02JnDOhALvApyCjpgi+3O8VHvW7rvs3+DuKtlhaE=
-github.com/MicahParks/jwkset v0.4.1-0.20231210184232-f8dd8ef1f20f/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
-github.com/MicahParks/jwkset v0.4.1-0.20231210214924-212b7b14636b h1:oz56u5c1vtNxjMZ0tFbY78rJJ6fCEC5bbVhafTihUF8=
-github.com/MicahParks/jwkset v0.4.1-0.20231210214924-212b7b14636b/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
-github.com/MicahParks/jwkset v0.4.1-0.20231210235101-054fe717c8c0 h1:F3k1m+6MgaV5BcWvCE7D4wEA2otmKcxxL22QJIPCfYI=
-github.com/MicahParks/jwkset v0.4.1-0.20231210235101-054fe717c8c0/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
-github.com/MicahParks/jwkset v0.4.1-0.20231210235240-f79a9b5605ea h1:PRrCk/WD2LiXBzPsO0tSqR6INYQYmJrSinDL9cCvWBg=
-github.com/MicahParks/jwkset v0.4.1-0.20231210235240-f79a9b5605ea/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/MicahParks/jwkset v0.5.1 h1:PoGL6oc7epa9qY8bj11IHHxquvY+xT2LAb/y2IZcftQ=
 github.com/MicahParks/jwkset v0.5.1/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/golang-jwt/jwt/v5 v5.0.0 h1:1n1XNM9hk7O9mnQoNBGolZvzebBQ7p93ULHRc28XJUE=
