@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	// Get the JWKS URL from your AWS region and userPoolId.
+	// Get the JWK Set URL from your AWS region and userPoolId.
 	//
 	// See the AWS docs here:
 	// https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
@@ -18,9 +18,10 @@ func main() {
 	userPoolID := "" // TODO Get the user pool ID of your AWS Cognito instance.
 	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, userPoolID)
 
+	// Create the keyfunc.Keyfunc.
 	jwks, err := keyfunc.NewDefault([]string{jwksURL})
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err)
+		log.Fatalf("Failed to create JWK Set from resource at the given URL.\nError: %s", err)
 	}
 
 	// Get a JWT to parse.

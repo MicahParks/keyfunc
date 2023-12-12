@@ -28,7 +28,7 @@ func main() {
 	s1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(remoteJWKS1))
 		if err != nil {
-			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err)
+			log.Fatalf("Failed to write the JWK Set to the response.\nError: %s", err)
 		}
 	}))
 	defer s1.Close()
@@ -36,7 +36,7 @@ func main() {
 	s2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(remoteJWKS2))
 		if err != nil {
-			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err)
+			log.Fatalf("Failed to write the JWK Set to the response.\nError: %s", err)
 		}
 	}))
 	defer s2.Close()
@@ -61,10 +61,10 @@ func main() {
 		log.Fatalf("Failed to create a JWK from the given HMAC secret.\nError: %s", err)
 	}
 
-	// Create the keyfunc.Keyfunc from the HTTP endpoints.
+	// Create the keyfunc.Keyfunc.
 	jwks, err := keyfunc.NewDefault([]string{s1.URL, s2.URL})
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err)
+		log.Fatalf("Failed to create JWK Set from resource at the given URL.\nError: %s", err)
 	}
 
 	// Use the underlying JWK Set storage to write the given EdDSA JWK.
@@ -75,7 +75,7 @@ func main() {
 
 	// Get a signed JWT.
 	token := jwt.New(jwt.SigningMethodEdDSA)
-	token.Header["kid"] = givenKeyID
+	token.Header[jwkset.HeaderKID] = givenKeyID
 	signed, err := token.SignedString(priv)
 	if err != nil {
 		log.Fatalf("Failed to sign a JWT.\nError: %s", err)

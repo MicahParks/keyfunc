@@ -9,15 +9,15 @@ import (
 )
 
 func main() {
-	// Get the JWKS URL.
+	// Get the JWK Set URL.
 	//
-	// This is a local Keycloak JWKS endpoint for the master realm.
+	// This is a local Keycloak JWK Set endpoint for the master realm.
 	jwksURL := "http://localhost:8080/auth/realms/master/protocol/openid-connect/certs"
 
-	// Create the JWKS from the resource at the given URL.
+	// Create the keyfunc.Keyfunc.
 	jwks, err := keyfunc.NewDefault([]string{jwksURL})
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err)
+		log.Fatalf("Failed to create JWK Set from resource at the given URL.\nError: %s", err)
 	}
 
 	// Get a JWT to parse.

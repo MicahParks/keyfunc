@@ -67,7 +67,7 @@ func NewDefault(urls []string) (Keyfunc, error) {
 }
 
 func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
-	kidInter, ok := token.Header["kid"]
+	kidInter, ok := token.Header[jwkset.HeaderKID]
 	if !ok {
 		return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKeyfunc)
 	}
