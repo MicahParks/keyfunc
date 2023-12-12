@@ -2,6 +2,7 @@ package keyfunc
 
 import (
 	"context"
+	"crypto"
 	"errors"
 	"fmt"
 
@@ -55,7 +56,7 @@ func New(options Options) (Keyfunc, error) {
 //
 // This will launch "refresh goroutines" to refresh the remote HTTP resources.
 func NewDefault(urls []string) (Keyfunc, error) {
-	client, err := jwkset.NewDefaultClient(urls)
+	client, err := jwkset.NewDefaultHTTPClient(urls)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +103,17 @@ func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
 		}
 	}
 
-	return jwk.Key(), nil
+	type publicKeyer interface {
+		Public() crypto.PublicKey
+	}
+
+	key := jwk.Key()
+	pk, ok := key.(publicKeyer)
+	if ok {
+		key = pk.Public()
+	}
+
+	return key, nil
 }
 func (k keyfunc) Storage() jwkset.Storage {
 	return k.storage

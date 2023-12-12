@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/MicahParks/keyfunc/v2)](https://goreportcard.com/report/github.com/MicahParks/keyfunc/v2) [![Go Reference](https://pkg.go.dev/badge/github.com/MicahParks/keyfunc/v2.svg)](https://pkg.go.dev/github.com/MicahParks/keyfunc/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/MicahParks/keyfunc/v3.svg)](https://pkg.go.dev/github.com/MicahParks/keyfunc/v3)
 
 # keyfunc
 
@@ -7,13 +7,7 @@ The purpose of this package is to provide a
 [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt) package using a JSON Web Key Set (JWK Set or JWKS) for
 parsing and verifying JSON Web Tokens (JWTs).
 
-The last version to support `github.com/golang-jwt/jwt/v4`
-is [`v1.9.0`](https://github.com/MicahParks/keyfunc/releases/tag/v1.9.0).
-
-There is legacy support for `github.com/dgrijalva/jwt-go` and its popular forks. It's in a separate project to keep this
-project minimal. If your use case supports a legacy fork, please
-see: [github.com/MicahParks/compatibility-keyfunc](https://github.com/MicahParks/compatibility-keyfunc). If an updated
-to `keyfunc` is needed for `github.com/golang-jwt/jwt/v4` users, it will be placed into this separate project.
+TODO link to AWS and Keycloak examples instead.
 
 It's common for an identity provider, such as [Keycloak](https://www.keycloak.org/)
 or [Amazon Cognito (AWS)](https://aws.amazon.com/cognito/) to expose a JWKS via an HTTPS endpoint. This package has the
@@ -22,44 +16,20 @@ ability to consume that JWKS and produce a
 HTTPS to ensure the keys are from the correct trusted source.
 
 This repository only depends on: [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt)
-
-`jwt.Keyfunc` signatures are imported from these, implemented, then exported as methods.
-
-## Supported Algorithms
-
-Currently, this package supports JWTs signed with a `kty` that matches one of the following:
-
-* `EC` [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
-* `RSA` [Rivest–Shamir–Adleman (RSA)](https://en.wikipedia.org/wiki/RSA_(cryptosystem))
-* `OKP` [Edwards-curve Digital Signature Algorithm (EdDSA)](https://en.wikipedia.org/wiki/EdDSA)
-* `OCT` [HMAC](https://en.wikipedia.org/wiki/HMAC), [AES Key Wrap](https://en.wikipedia.org/wiki/Key_Wrap), and others
-
-Additionally, the supported `EC` elliptical curve types are below:
-
-* `P-256`
-* `P-384`
-* `P-521`
-
-For `OKP`, EdDSA, only the `Ed25519` curve type is supported. (I have not found a standard library package that
-supports `Ed448`.)
-
-This _does_ include HMAC keys. For an example using HMAC keys, please see the `examples/hmac` directory. Do _not_ expose
-HMAC keys in public facing JWKS, as HMAC keys are secret keys that do not use public key cryptography.
-
-If there are cryptographic algorithms, curve types, or something else already standardized that you'd like supported in
-this Go package, please open an issue or pull request.
+and [github.com/MicahParks/jwkset](https://github.com/MicahParks/jwkset).
 
 ## Basic usage
 
 For complete examples, please see the `examples` directory.
 
 ```go
-import "github.com/MicahParks/keyfunc/v2"
+import "github.com/MicahParks/keyfunc/v3"
 ```
 
 #### A note on read-only keys
 
-The [`JWKS.ReadOnlyKeys`](https://pkg.go.dev/github.com/MicahParks/keyfunc/v2#JWKS.ReadOnlyKeys) method returns a read-only
+The [`JWKS.ReadOnlyKeys`](https://pkg.go.dev/github.com/MicahParks/keyfunc/v2#JWKS.ReadOnlyKeys) method returns a
+read-only
 copy of a `map[string]interface{}`. The key to this map is the key ID, `kid`, and the value is the cryptographic key.
 This is a useful map for use of keys within a JWKS outside of `github.com/golang-jwt/jwt/v5`.
 
@@ -77,7 +47,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-	log.Fatalln("JWKS_URL environment variable must be populated.")
+log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -133,16 +103,22 @@ if err != nil {
 }
 ```
 
-The [`JWKS.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc/v2#JWKS.Keyfunc) method will automatically select the
+The [`JWKS.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc/v2#JWKS.Keyfunc) method will automatically select
+the
 key with the matching `kid` (if present) and return its public key as the correct Go type to its caller.
 
-## Test coverage
+## Older versions
 
-Test coverage is currently `>85%`.
+Version `v3.X.X` of this project is a thin wrapper
+around [github.com/MicahParks/jwkset](https://github.com/MicahParks/jwkset).
 
-Testing could be improved by signing all JWTs during the tests themselves. Alternatively, using JWTs that do not expire
-would accomplish the same purpose. There are some hard-coded JWTs which are expired. This means the tests with hard
-coded JWTs cannot check for parsing and validation errors, just errors within the `jwt.Keyfunc` itself.
+The last version to support `github.com/golang-jwt/jwt/v4`
+is [`v1.9.0`](https://github.com/MicahParks/keyfunc/releases/tag/v1.9.0).
+
+There is legacy support for `github.com/dgrijalva/jwt-go` and its popular forks. It's in a separate project to keep this
+project minimal. If your use case supports a legacy fork, please
+see: [github.com/MicahParks/compatibility-keyfunc](https://github.com/MicahParks/compatibility-keyfunc). If an updated
+to `keyfunc` is needed for `github.com/golang-jwt/jwt/v4` users, it will be placed into this separate project.
 
 ## Additional features
 
@@ -188,22 +164,6 @@ These features can be configured by populating fields in the
   option is set.
 * There is support for creating one `jwt.Keyfunc` from multiple JWK Sets through the use of the `keyfunc.GetMultiple`.
 
-## Notes
-
-Trailing padding is required to be removed from base64url encoded keys inside a JWKS. This is because RFC 7517 defines
-base64url the same as RFC 7515 Section 2:
-
-* https://datatracker.ietf.org/doc/html/rfc7517#section-1.1
-* https://datatracker.ietf.org/doc/html/rfc7515#section-2
-
-However, this package will remove trailing padding on base64url encoded keys to account for improper implementations of
-JWKS.
-
-This package will check the `alg` in each JWK. If present, it will confirm the same `alg` is in a given JWT's header
-before returning the key for signature verification. If the `alg`s do not match, `keyfunc.ErrJWKAlgMismatch` will
-prevent the key being used for signature verification. If the `alg` is not present in the JWK, this check will not
-occur.
-
 ## Related projects
 
 ### [`github.com/MicahParks/jwkset`](https://github.com/MicahParks/jwkset):
@@ -222,12 +182,3 @@ primarily exists for these use cases:
 3. Many co-located services need to validate JWTs that were signed by a key that lives in a remote JWK Set.
 
 If you can integrate `keyfunc` directly into your program, you likely don't need JCP.
-
-## References
-
-This project was built and tested using various RFCs and services. The services are listed below:
-
-* [Keycloak](https://www.keycloak.org/)
-* [Sample JWKS Service](https://jwks-service.appspot.com/)
-* connect2id's [Server JWKSet Gen](https://connect2id.com/products/server/docs/config/jwk-set)
-  ([Source](https://bitbucket.org/connect2id/server-jwkset-gen/src/master/))

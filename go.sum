@@ -10,5 +10,7 @@ github.com/MicahParks/jwkset v0.4.1-0.20231210235101-054fe717c8c0 h1:F3k1m+6MgaV
 github.com/MicahParks/jwkset v0.4.1-0.20231210235101-054fe717c8c0/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/MicahParks/jwkset v0.4.1-0.20231210235240-f79a9b5605ea h1:PRrCk/WD2LiXBzPsO0tSqR6INYQYmJrSinDL9cCvWBg=
 github.com/MicahParks/jwkset v0.4.1-0.20231210235240-f79a9b5605ea/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
+github.com/MicahParks/jwkset v0.5.1 h1:PoGL6oc7epa9qY8bj11IHHxquvY+xT2LAb/y2IZcftQ=
+github.com/MicahParks/jwkset v0.5.1/go.mod h1:fOx7dCX+XgPDzcRbZzi9DMY3vyebWXmsz7XPqstr3ms=
 github.com/golang-jwt/jwt/v5 v5.0.0 h1:1n1XNM9hk7O9mnQoNBGolZvzebBQ7p93ULHRc28XJUE=
 github.com/golang-jwt/jwt/v5 v5.0.0/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
