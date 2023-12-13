@@ -45,8 +45,8 @@ func New(options Options) (Keyfunc, error) {
 		return nil, fmt.Errorf("%w: no JWK Set storage given in options", ErrKeyfunc)
 	}
 	k := keyfunc{
-		storage:      options.Storage,
 		ctx:          ctx,
+		storage:      options.Storage,
 		useWhitelist: options.UseWhitelist,
 	}
 	return k, nil
@@ -54,7 +54,7 @@ func New(options Options) (Keyfunc, error) {
 
 // NewDefault creates a new Keyfunc with a default JWK Set storage and options.
 //
-// This will launch "refresh goroutines" to refresh the remote HTTP resources.
+// This will launch "refresh goroutines" to automatically refresh the remote HTTP resources.
 func NewDefault(urls []string) (Keyfunc, error) {
 	client, err := jwkset.NewDefaultHTTPClient(urls)
 	if err != nil {
@@ -75,7 +75,11 @@ func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKeyfunc)
 	}
-	alg, ok := token.Header["alg"].(string)
+	algInter, ok := token.Header["alg"]
+	if !ok {
+		return nil, fmt.Errorf("%w: could not find alg in JWT header", ErrKeyfunc)
+	}
+	alg, ok := algInter.(string)
 	if !ok {
 		// For test coverage purposes, this should be impossible to reach because the JWT package rejects a token
 		// without an alg parameter in the header before calling jwt.Keyfunc.
@@ -99,7 +103,7 @@ func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist %q`, ErrKeyfunc, jwk.Marshal().USE, k.useWhitelist)
+			return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist`, ErrKeyfunc, jwk.Marshal().USE)
 		}
 	}
 
