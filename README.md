@@ -40,7 +40,7 @@ if err != nil {
 ```
 
 When using the `keyfunc.NewDefault` function, the JWK Set will be automatically refreshed using
-to [`jwkset.NewDefaultHTTPClient`](https://pkg.go.dev/github.com/MicahParks/jwkset#NewHTTPClient).
+[`jwkset.NewDefaultHTTPClient`](https://pkg.go.dev/github.com/MicahParks/jwkset#NewHTTPClient).
 
 It is also possible to create a `keyfunc.Keyfunc` from given keys like HMAC shared secrets. See `examples/hmac/main.go`.
 
