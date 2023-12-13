@@ -77,8 +77,7 @@ provides the below features, and more:
 
 ### [`github.com/MicahParks/jwkset`](https://github.com/MicahParks/jwkset):
 
-A JWK Set implementation. Currently, it is only server-side assets. `keyfunc` is my JWK Set client-side implementation.
-This project has not had a stable release yet.
+A JWK Set implementation. The `keyfunc` project is a wrapper around this project.
 
 ### [`github.com/MicahParks/jcp`](https://github.com/MicahParks/jcp):
 
