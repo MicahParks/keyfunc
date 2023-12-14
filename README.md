@@ -11,7 +11,7 @@ It's common for an identity providers, particularly those
 using [OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749)
 or [OpenID Connect](https://openid.net/developers/how-connect-works/), such
 as [Keycloak](https://github.com/MicahParks/keyfunc/blob/master/examples/keycloak/main.go)
-or [Amazon Cognito (AWS)](https://github.com/MicahParks/keyfunc/blob/jwkset/examples/aws_cognito/main.go) to expose a
+or [Amazon Cognito (AWS)](https://github.com/MicahParks/keyfunc/blob/master/examples/aws_cognito/main.go) to expose a
 JWK Set via an HTTPS endpoint. This package has the ability to consume that JWK Set and produce a
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Keyfunc). It is important that a JWK Set endpoint is
 using HTTPS to ensure the keys are from the correct trusted source.
