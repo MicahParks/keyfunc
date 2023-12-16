@@ -3,6 +3,7 @@ package keyfunc
 import (
 	"context"
 	"crypto"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -62,6 +63,43 @@ func NewDefault(urls []string) (Keyfunc, error) {
 	}
 	options := Options{
 		Storage: client,
+	}
+	return New(options)
+}
+
+// NewJWKJSON creates a new Keyfunc from raw JWK JSON.
+func NewJWKJSON(raw json.RawMessage) (Keyfunc, error) {
+	marshalOptions := jwkset.JWKMarshalOptions{
+		Private: true,
+	}
+	jwk, err := jwkset.NewJWKFromRawJSON(raw, marshalOptions, jwkset.JWKValidateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not create JWK from raw JSON", ErrKeyfunc)
+	}
+	store := jwkset.NewMemoryStorage()
+	err = store.KeyWrite(context.Background(), jwk)
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not write JWK to storage", ErrKeyfunc)
+	}
+	options := Options{
+		Storage: store,
+	}
+	return New(options)
+}
+
+// NewJWKSetJSON creates a new Keyfunc from raw JWK Set JSON.
+func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
+	var jwks jwkset.JWKSMarshal
+	err := json.Unmarshal(raw, &jwks)
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not unmarshal raw JWK Set JSON", ErrKeyfunc)
+	}
+	store, err := jwks.ToStorage()
+	if err != nil {
+		return nil, fmt.Errorf("%w: could not create JWK Set storage", ErrKeyfunc)
+	}
+	options := Options{
+		Storage: store,
 	}
 	return New(options)
 }
