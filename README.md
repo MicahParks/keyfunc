@@ -31,6 +31,10 @@ import "github.com/MicahParks/keyfunc/v3"
 
 ### Step 1: Create the `keyfunc.Keyfunc`
 
+The below example is for a remote HTTP resource.
+See [`examples/json/main.go`](https://github.com/MicahParks/keyfunc/blob/master/examples/json/main.go) for a JSON
+example.
+
 ```go
 // Create the keyfunc.Keyfunc.
 k, err := keyfunc.NewDefault([]string{server.URL})
