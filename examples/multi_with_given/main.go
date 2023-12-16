@@ -9,9 +9,10 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/MicahParks/jwkset"
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/MicahParks/keyfunc/v2"
+	"github.com/MicahParks/keyfunc/v3"
 )
 
 const (
@@ -27,7 +28,7 @@ func main() {
 	s1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(remoteJWKS1))
 		if err != nil {
-			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err.Error())
+			log.Fatalf("Failed to write the JWK Set to the response.\nError: %s", err)
 		}
 	}))
 	defer s1.Close()
@@ -35,61 +36,56 @@ func main() {
 	s2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(remoteJWKS2))
 		if err != nil {
-			log.Fatalf("Failed to write the JWKS to the response.\nError: %s", err.Error())
+			log.Fatalf("Failed to write the JWK Set to the response.\nError: %s", err)
 		}
 	}))
 	defer s2.Close()
 
-	recommendedOpts := keyfunc.Options{
-		Ctx: ctx,
-		RefreshErrorHandler: func(err error) {
-			log.Printf("There was an error with the jwt.Keyfunc\nError: %s", err.Error())
-		},
-		RefreshInterval:   time.Hour,
-		RefreshRateLimit:  time.Minute * 5,
-		RefreshTimeout:    time.Second * 10,
-		RefreshUnknownKID: true,
-	}
-
-	// Create the given keys.
+	// Create the given EdDSA key.
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		log.Fatalf("Failed to generate given key.\nError: %s", err.Error())
-	}
-	eddsaGiven := keyfunc.NewGivenEdDSA(pub, keyfunc.GivenKeyOptions{
-		Algorithm: "EdDSA",
-	})
-
-	// Attach the given keys to a copy of one of the options.
-	optsWithGiven := recommendedOpts
-	optsWithGiven.GivenKeys = make(map[string]keyfunc.GivenKey)
-	optsWithGiven.GivenKeys[givenKeyID] = eddsaGiven
-
-	multiple := map[string]keyfunc.Options{
-		s1.URL: optsWithGiven, // Only one of the options needs the given keys.
-		s2.URL: recommendedOpts,
+		log.Fatalf("Failed to generate given key.\nError: %s", err)
 	}
 
-	opts := keyfunc.MultipleOptions{
-		KeySelector: keyfunc.KeySelectorFirst,
+	// Turn the EdDSA key into a jwkset.JWK.
+	metadata := jwkset.JWKMetadataOptions{
+		ALG: jwkset.AlgEdDSA,
+		KID: givenKeyID,
+		USE: jwkset.UseSig,
 	}
-	multi, err := keyfunc.GetMultiple(multiple, opts)
+	options := jwkset.JWKOptions{
+		Metadata: metadata,
+	}
+	jwk, err := jwkset.NewJWKFromKey(pub, options)
 	if err != nil {
-		log.Fatalf("Failed to create multiple JWKS.\nError: %s", err.Error())
+		log.Fatalf("Failed to create a JWK from the given HMAC secret.\nError: %s", err)
 	}
 
+	// Create the keyfunc.Keyfunc.
+	jwks, err := keyfunc.NewDefault([]string{s1.URL, s2.URL})
+	if err != nil {
+		log.Fatalf("Failed to create JWK Set from resource at the given URL.\nError: %s", err)
+	}
+
+	// Use the underlying JWK Set storage to write the given EdDSA JWK.
+	err = jwks.Storage().KeyWrite(ctx, jwk)
+	if err != nil {
+		log.Fatalf("Failed to write the given JWK to the store.\nError: %s", err)
+	}
+
+	// Get a signed JWT.
 	token := jwt.New(jwt.SigningMethodEdDSA)
-	token.Header["kid"] = givenKeyID
+	token.Header[jwkset.HeaderKID] = givenKeyID
 	signed, err := token.SignedString(priv)
 	if err != nil {
-		log.Fatalf("Failed to sign a JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to sign a JWT.\nError: %s", err)
 	}
 
-	token, err = jwt.Parse(signed, multi.Keyfunc)
+	// Parse and validate the JWT.
+	token, err = jwt.Parse(signed, jwks.Keyfunc)
 	if err != nil {
-		log.Fatalf("Failed to parse the JWT.\nError: %s", err.Error())
+		log.Fatalf("Failed to parse the JWT.\nError: %s", err)
 	}
-
 	if !token.Valid {
 		log.Fatalf("The token is not valid.")
 	}
