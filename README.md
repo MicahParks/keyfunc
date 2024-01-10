@@ -16,11 +16,6 @@ JWK Set via an HTTPS endpoint. This package has the ability to consume that JWK 
 [`jwt.Keyfunc`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#Keyfunc). It is important that a JWK Set endpoint is
 using HTTPS to ensure the keys are from the correct trusted source.
 
-This repository only depends on:
-
-* [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt)
-* [github.com/MicahParks/jwkset](https://github.com/MicahParks/jwkset)
-
 ## Basic usage
 
 For complete examples, please see the `examples` directory.
@@ -73,6 +68,7 @@ the `.Storage()` method. Using the [github.com/MicahParks/jwkset](https://github
 provides the below features, and more:
 
 * An HTTP client that automatically updates one or more remote JWK Set resources.
+* An automatic refresh of remote HTTP resources when an unknown key ID (`kid`) is encountered.
 * X.509 URIs or embedded [certificate chains](https://pkg.go.dev/crypto/x509#Certificate), when a JWK contains them.
 * Support for private asymmetric keys.
 * Specified key operations and usage.
