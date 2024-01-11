@@ -74,12 +74,12 @@ func NewJWKJSON(raw json.RawMessage) (Keyfunc, error) {
 	}
 	jwk, err := jwkset.NewJWKFromRawJSON(raw, marshalOptions, jwkset.JWKValidateOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("%w: could not create JWK from raw JSON", ErrKeyfunc)
+		return nil, fmt.Errorf("%w: could not create JWK from raw JSON", errors.Join(err, ErrKeyfunc))
 	}
 	store := jwkset.NewMemoryStorage()
 	err = store.KeyWrite(context.Background(), jwk)
 	if err != nil {
-		return nil, fmt.Errorf("%w: could not write JWK to storage", ErrKeyfunc)
+		return nil, fmt.Errorf("%w: could not write JWK to storage", errors.Join(err, ErrKeyfunc))
 	}
 	options := Options{
 		Storage: store,
@@ -92,11 +92,11 @@ func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
 	var jwks jwkset.JWKSMarshal
 	err := json.Unmarshal(raw, &jwks)
 	if err != nil {
-		return nil, fmt.Errorf("%w: could not unmarshal raw JWK Set JSON", ErrKeyfunc)
+		return nil, fmt.Errorf("%w: could not unmarshal raw JWK Set JSON", errors.Join(err, ErrKeyfunc))
 	}
 	store, err := jwks.ToStorage()
 	if err != nil {
-		return nil, fmt.Errorf("%w: could not create JWK Set storage", ErrKeyfunc)
+		return nil, fmt.Errorf("%w: could not create JWK Set storage", errors.Join(err, ErrKeyfunc))
 	}
 	options := Options{
 		Storage: store,
