@@ -55,9 +55,17 @@ func New(options Options) (Keyfunc, error) {
 
 // NewDefault creates a new Keyfunc with a default JWK Set storage and options.
 //
-// This will launch "refresh goroutines" to automatically refresh the remote HTTP resources.
+// This will launch "refresh goroutine" to automatically refresh the remote HTTP resources.
 func NewDefault(urls []string) (Keyfunc, error) {
-	client, err := jwkset.NewDefaultHTTPClient(urls)
+	return NewDefaultCtx(context.Background(), urls)
+}
+
+// NewDefaultCtx creates a new Keyfunc with a default JWK Set storage and options. The context is used to end the
+// "refresh goroutine".
+//
+// This will launch "refresh goroutine" to automatically refresh the remote HTTP resources.
+func NewDefaultCtx(ctx context.Context, urls []string) (Keyfunc, error) {
+	client, err := jwkset.NewDefaultHTTPClientCtx(ctx, urls)
 	if err != nil {
 		return nil, err
 	}
