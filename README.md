@@ -40,7 +40,7 @@ if err != nil {
 
 When using the `keyfunc.NewDefault` function, the JWK Set will be automatically refreshed using
 [`jwkset.NewDefaultHTTPClient`](https://pkg.go.dev/github.com/MicahParks/jwkset#NewHTTPClient). This does launch a "
-refresh goroutine". If you want the ability to end this goroutine, use the `keyfunc.NewDefaultHTTPClientCtx` function.
+refresh goroutine". If you want the ability to end this goroutine, use the `keyfunc.NewDefaultCtx` function.
 
 It is also possible to create a `keyfunc.Keyfunc` from given keys like HMAC shared secrets. See `examples/hmac/main.go`.
 
