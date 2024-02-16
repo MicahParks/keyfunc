@@ -97,7 +97,7 @@ func main() {
 		remoteJWKSets[ur.String()] = store
 	}
 
-	// Create the JWK Set containing HTTP clients and given keys..
+	// Create the JWK Set containing HTTP clients and given keys.
 	jwksetHTTPClientOptions := jwkset.HTTPClientOptions{
 		Given:             given,
 		HTTPURLs:          remoteJWKSets,
