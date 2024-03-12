@@ -32,7 +32,7 @@ example.
 
 ```go
 // Create the keyfunc.Keyfunc.
-k, err := keyfunc.NewDefault([]string{server.URL})
+k, err := keyfunc.NewDefaultCtx(ctx, []string{server.URL}) // Context is used to cancel background refresh goroutine.
 if err != nil {
 	log.Fatalf("Failed to create a keyfunc.Keyfunc from the server's URL.\nError: %s", err)
 }
