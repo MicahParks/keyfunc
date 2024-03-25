@@ -112,58 +112,64 @@ func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
 	return New(options)
 }
 
-func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
-	kidInter, ok := token.Header[jwkset.HeaderKID]
-	if !ok {
-		return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKeyfunc)
-	}
-	kid, ok := kidInter.(string)
-	if !ok {
-		return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKeyfunc)
-	}
-	algInter, ok := token.Header["alg"]
-	if !ok {
-		return nil, fmt.Errorf("%w: could not find alg in JWT header", ErrKeyfunc)
-	}
-	alg, ok := algInter.(string)
-	if !ok {
-		// For test coverage purposes, this should be impossible to reach because the JWT package rejects a token
-		// without an alg parameter in the header before calling jwt.Keyfunc.
-		return nil, fmt.Errorf(`%w: the JWT header did not contain the "alg" parameter, which is required by RFC 7515 section 4.1.1`, ErrKeyfunc)
-	}
+func (k keyfunc) KeyfuncCtx(ctx context.Context) func(token *jwt.Token) (any, error) {
+	return func(token *jwt.Token) (any, error) {
+		kidInter, ok := token.Header[jwkset.HeaderKID]
+		if !ok {
+			return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKeyfunc)
+		}
+		kid, ok := kidInter.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKeyfunc)
+		}
+		algInter, ok := token.Header["alg"]
+		if !ok {
+			return nil, fmt.Errorf("%w: could not find alg in JWT header", ErrKeyfunc)
+		}
+		alg, ok := algInter.(string)
+		if !ok {
+			// For test coverage purposes, this should be impossible to reach because the JWT package rejects a token
+			// without an alg parameter in the header before calling jwt.Keyfunc.
+			return nil, fmt.Errorf(`%w: the JWT header did not contain the "alg" parameter, which is required by RFC 7515 section 4.1.1`, ErrKeyfunc)
+		}
 
-	jwk, err := k.storage.KeyRead(k.ctx, kid)
-	if err != nil {
-		return nil, fmt.Errorf("%w: could not read JWK from storage", errors.Join(err, ErrKeyfunc))
-	}
+		jwk, err := k.storage.KeyRead(ctx, kid)
+		if err != nil {
+			return nil, fmt.Errorf("%w: could not read JWK from storage", errors.Join(err, ErrKeyfunc))
+		}
 
-	if a := jwk.Marshal().ALG.String(); a != "" && a != alg {
-		return nil, fmt.Errorf(`%w: JWK "alg" parameter value %q does not match token "alg" parameter value %q`, ErrKeyfunc, a, alg)
-	}
-	if len(k.useWhitelist) > 0 {
-		found := false
-		for _, u := range k.useWhitelist {
-			if jwk.Marshal().USE == u {
-				found = true
-				break
+		if a := jwk.Marshal().ALG.String(); a != "" && a != alg {
+			return nil, fmt.Errorf(`%w: JWK "alg" parameter value %q does not match token "alg" parameter value %q`, ErrKeyfunc, a, alg)
+		}
+		if len(k.useWhitelist) > 0 {
+			found := false
+			for _, u := range k.useWhitelist {
+				if jwk.Marshal().USE == u {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist`, ErrKeyfunc, jwk.Marshal().USE)
 			}
 		}
-		if !found {
-			return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist`, ErrKeyfunc, jwk.Marshal().USE)
+
+		type publicKeyer interface {
+			Public() crypto.PublicKey
 		}
-	}
 
-	type publicKeyer interface {
-		Public() crypto.PublicKey
-	}
+		key := jwk.Key()
+		pk, ok := key.(publicKeyer)
+		if ok {
+			key = pk.Public()
+		}
 
-	key := jwk.Key()
-	pk, ok := key.(publicKeyer)
-	if ok {
-		key = pk.Public()
+		return key, nil
 	}
-
-	return key, nil
+}
+func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
+	keyF := k.KeyfuncCtx(k.ctx)
+	return keyF(token)
 }
 func (k keyfunc) Storage() jwkset.Storage {
 	return k.storage
