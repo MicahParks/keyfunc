@@ -20,6 +20,7 @@ var (
 // github.com/MicahParks/jwkset as a JWK Set storage.
 type Keyfunc interface {
 	Keyfunc(token *jwt.Token) (any, error)
+	KeyfuncCtx(ctx context.Context) func(token *jwt.Token) (any, error)
 	Storage() jwkset.Storage
 }
 
