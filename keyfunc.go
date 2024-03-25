@@ -20,7 +20,7 @@ var (
 // github.com/MicahParks/jwkset as a JWK Set storage.
 type Keyfunc interface {
 	Keyfunc(token *jwt.Token) (any, error)
-	KeyfuncCtx(ctx context.Context) func(token *jwt.Token) (any, error)
+	KeyfuncCtx(ctx context.Context) jwt.Keyfunc
 	Storage() jwkset.Storage
 }
 
@@ -113,7 +113,7 @@ func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
 	return New(options)
 }
 
-func (k keyfunc) KeyfuncCtx(ctx context.Context) func(token *jwt.Token) (any, error) {
+func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 	return func(token *jwt.Token) (any, error) {
 		kidInter, ok := token.Header[jwkset.HeaderKID]
 		if !ok {
