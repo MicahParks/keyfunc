@@ -8,4 +8,7 @@ require (
 	golang.org/x/time v0.9.0
 )
 
-retract v3.3.0 // Incorrect return type in keyfunc.Keyfunc interface
+retract (
+	v3.3.0 // Incorrect return type in keyfunc.Keyfunc interface
+	[v3.0.0, v3.3.5] // HTTP client only overwrites and appends JWK to local cache during refresh: https://github.com/MicahParks/jwkset/issues/40
+)
