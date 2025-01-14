@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"time"
 
 	"github.com/MicahParks/jwkset"
@@ -70,10 +69,6 @@ func main() {
 	// Create the JWK Set HTTP clients.
 	remoteJWKSets := make(map[string]jwkset.Storage)
 	for _, u := range []string{s1.URL, s2.URL} {
-		ur, err := url.ParseRequestURI(u)
-		if err != nil {
-			log.Fatalf("Failed to parse given URL %q: %s", u, err)
-		}
 		jwksetHTTPStorageOptions := jwkset.HTTPClientStorageOptions{
 			Client:                    http.DefaultClient, // Could be replaced with a custom client.
 			Ctx:                       ctx,                // Used to end background refresh goroutine.
@@ -84,17 +79,16 @@ func main() {
 			RefreshErrorHandler: func(ctx context.Context, err error) {
 				slog.Default().ErrorContext(ctx, "Failed to refresh HTTP JWK Set from remote HTTP resource.",
 					"error", err,
-					"url", ur.String(),
+					"url", u,
 				)
 			},
 			RefreshInterval: time.Hour,
-			Storage:         nil,
 		}
-		store, err := jwkset.NewStorageFromHTTP(ur, jwksetHTTPStorageOptions)
+		store, err := jwkset.NewStorageFromHTTP(u, jwksetHTTPStorageOptions)
 		if err != nil {
 			log.Fatalf("Failed to create HTTP client storage for %q: %s", u, err)
 		}
-		remoteJWKSets[ur.String()] = store
+		remoteJWKSets[u] = store
 	}
 
 	// Create the JWK Set containing HTTP clients and given keys.
