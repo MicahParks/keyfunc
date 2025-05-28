@@ -45,6 +45,7 @@ func TestNew(t *testing.T) {
 		}
 		_, _ = w.Write(rawJWKS)
 	}))
+	defer server.Close()
 
 	token := jwt.New(jwt.SigningMethodEdDSA)
 	token.Header[jwkset.HeaderKID] = keyID
@@ -64,7 +65,7 @@ func TestNew(t *testing.T) {
 	}
 	k, err := New(options)
 	if err != nil {
-		t.Fatalf("Failed to create Keyfunc. Error: %s", err)
+		t.Fatalf("Failed to create keyfunc. Error: %s", err)
 	}
 
 	_, err = jwt.Parse(signed, k.Keyfunc)
@@ -95,7 +96,7 @@ func TestNew(t *testing.T) {
 	options.Storage = clientStore
 	k, err = New(options)
 	if err != nil {
-		t.Fatalf("Failed to create Keyfunc. Error: %s", err)
+		t.Fatalf("Failed to create keyfunc. Error: %s", err)
 	}
 
 	_, err = jwt.Parse(signed, k.Keyfunc)
@@ -109,7 +110,12 @@ func TestNew(t *testing.T) {
 
 	_, err = NewDefault([]string{server.URL})
 	if err != nil {
-		t.Fatalf("Failed to create Keyfunc. Error: %s", err)
+		t.Fatalf("Failed to create keyfunc. Error: %s", err)
+	}
+
+	_, err = NewDefaultOverrideCtx(ctx, []string{server.URL}, Override{})
+	if err != nil {
+		t.Fatalf("Failed to create keyfunc with overrides. Error: %s", err)
 	}
 }
 
