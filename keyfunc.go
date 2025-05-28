@@ -111,14 +111,17 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 			)
 		}
 	}
-	refreshInterval := time.Hour
 	if override.RefreshErrorHandlerFunc != nil {
 		refreshErrorHandler = override.RefreshErrorHandlerFunc
 	}
+	refreshInterval := time.Hour
 	if override.RefreshInterval > 0 {
 		refreshInterval = override.RefreshInterval
 	}
 	refreshUnknownKID := rate.NewLimiter(rate.Every(5*time.Minute), 1)
+	if override.RefreshUnknownKID != nil {
+		refreshUnknownKID = override.RefreshUnknownKID
+	}
 
 	clientOptions := jwkset.HTTPClientOptions{
 		HTTPURLs:          make(map[string]jwkset.Storage),
