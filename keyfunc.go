@@ -34,8 +34,18 @@ type Options struct {
 	UseWhitelist []jwkset.USE
 }
 
+// Override is used to change specific default behaviors.
 type Override struct {
-	RefreshInterval   time.Duration
+	// RateLimitWaitMax is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	RateLimitWaitMax time.Duration
+	// RefreshErrorHandlerFunc is a function that accepts the URL of the remote JWK Set storage and returns the
+	// RefreshErrorHandler from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
+	RefreshErrorHandlerFunc func(u string) func(ctx context.Context, err error)
+	// RefreshInterval is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
+	RefreshInterval time.Duration
+	// RefreshUnknownKID is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	RefreshUnknownKID *rate.Limiter
+	// ValidationSkipAll is copied to SkipAll in https://pkg.go.dev/github.com/MicahParks/jwkset#JWKValidateOptions
 	ValidationSkipAll bool
 }
 
@@ -89,26 +99,38 @@ func NewDefaultCtx(ctx context.Context, urls []string) (Keyfunc, error) {
 //
 // This will launch "refresh goroutine" to automatically refresh remote HTTP resources.
 func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override) (Keyfunc, error) {
-	refreshInterval := time.Hour
-	if override.RefreshInterval > 0 {
-		refreshInterval = override.RefreshInterval
+	rateLimitWaitMax := time.Minute
+	if override.RateLimitWaitMax != 0 {
+		rateLimitWaitMax = override.RateLimitWaitMax
 	}
-	clientOptions := jwkset.HTTPClientOptions{
-		HTTPURLs:          make(map[string]jwkset.Storage),
-		RateLimitWaitMax:  time.Minute,
-		RefreshUnknownKID: rate.NewLimiter(rate.Every(5*time.Minute), 1),
-	}
-	for _, u := range urls {
-		refreshErrorHandler := func(ctx context.Context, err error) {
+	refreshErrorHandler := func(u string) func(ctx context.Context, err error) {
+		return func(ctx context.Context, err error) {
 			slog.Default().ErrorContext(ctx, "Failed to refresh HTTP JWK Set from remote HTTP resource.",
 				"error", err,
 				"url", u,
 			)
 		}
+	}
+	refreshInterval := time.Hour
+	if override.RefreshErrorHandlerFunc != nil {
+		refreshErrorHandler = override.RefreshErrorHandlerFunc
+	}
+	if override.RefreshInterval > 0 {
+		refreshInterval = override.RefreshInterval
+	}
+	refreshUnknownKID := rate.NewLimiter(rate.Every(5*time.Minute), 1)
+
+	clientOptions := jwkset.HTTPClientOptions{
+		HTTPURLs:          make(map[string]jwkset.Storage),
+		RateLimitWaitMax:  rateLimitWaitMax,
+		RefreshUnknownKID: refreshUnknownKID,
+	}
+	for _, u := range urls {
+		errorHandler := refreshErrorHandler(u)
 		options := jwkset.HTTPClientStorageOptions{
 			Ctx:                       ctx,
 			NoErrorReturnFirstHTTPReq: true,
-			RefreshErrorHandler:       refreshErrorHandler,
+			RefreshErrorHandler:       errorHandler,
 			RefreshInterval:           refreshInterval,
 			ValidateOptions: jwkset.JWKValidateOptions{
 				SkipAll: override.ValidationSkipAll,
