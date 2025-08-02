@@ -194,11 +194,69 @@ func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
 	return New(options)
 }
 
+// tryAllKeys attempts to validate the token against all available keys when kid lookup fails or is missing
+func (k keyfunc) tryAllKeys(ctx context.Context, token *jwt.Token) (any, error) {
+	keys, err := k.storage.KeyReadAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%w: fallback failed - unable to read all keys: %w", ErrKeyfunc, err)
+	}
+	if len(keys) == 0 {
+		return nil, fmt.Errorf("%w: no keys available in storage", ErrKeyfunc)
+	}
+	algInter, ok := token.Header["alg"]
+	if !ok {
+		return nil, fmt.Errorf("%w: could not find alg in JWT header", ErrKeyfunc)
+	}
+	alg, ok := algInter.(string)
+	if !ok {
+		return nil, fmt.Errorf(`%w: the JWT header did not contain the "alg" parameter, which is required by RFC 7515 section 4.1.1`, ErrKeyfunc)
+	}
+	var lastErr error
+	var validationErrors []error
+	for _, jwk := range keys {
+		// Check algorithm match
+		if jwkAlg := jwk.Marshal().ALG.String(); jwkAlg != "" && jwkAlg != alg {
+			validationErrors = append(validationErrors, fmt.Errorf("key %s: algorithm mismatch (jwk: %s, token: %s)", jwk.Marshal().KID, jwkAlg, alg))
+			continue
+		}
+		// Check use whitelist if configured
+		if len(k.useWhitelist) > 0 {
+			found := false
+			for _, u := range k.useWhitelist {
+				if jwk.Marshal().USE == u {
+					found = true
+					break
+				}
+			}
+			if !found {
+				validationErrors = append(validationErrors, fmt.Errorf("key %s: use parameter %q not in whitelist", jwk.Marshal().KID, jwk.Marshal().USE))
+				continue
+			}
+		}
+		// Extract the key
+		type publicKeyer interface {
+			Public() crypto.PublicKey
+		}
+		key := jwk.Key()
+		pk, ok := key.(publicKeyer)
+		if ok {
+			key = pk.Public()
+		}
+		return key, nil
+	}
+
+	// If we tried all keys and none worked, return a comprehensive error
+	if len(validationErrors) > 0 {
+		return nil, fmt.Errorf("%w: no valid key found among %d keys. Validation errors: %v", ErrKeyfunc, len(keys), validationErrors)
+	}
+
+	return nil, fmt.Errorf("%w: no valid key found among %d keys: %w", ErrKeyfunc, len(keys), lastErr)
+}
 func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 	return func(token *jwt.Token) (any, error) {
 		kidInter, ok := token.Header[jwkset.HeaderKID]
 		if !ok {
-			return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKeyfunc)
+			return k.tryAllKeys(ctx, token)
 		}
 		kid, ok := kidInter.(string)
 		if !ok {

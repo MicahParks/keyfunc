@@ -175,3 +175,56 @@ func TestNewJWKSetJSON(t *testing.T) {
 		t.Fatalf("The token is not valid.")
 	}
 }
+
+func TestJWTWithoutKIDInHeader(t *testing.T) {
+	ctx := context.Background()
+
+	// Generate ED25519 key pair.
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate ED25519 key: %s", err)
+	}
+
+	// Create JWK with metadata (optional kid inside the JWK).
+	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{
+		Metadata: jwkset.JWKMetadataOptions{
+			USE: jwkset.UseSig, // It's a signature key.
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create JWK from private key: %s", err)
+	}
+
+	// Store JWK in memory.
+	memStore := jwkset.NewMemoryStorage()
+	if err := memStore.KeyWrite(ctx, jwk); err != nil {
+		t.Fatalf("Failed to write key to store: %s", err)
+	}
+
+	// Create JWT WITHOUT kid in the header.
+	token := jwt.New(jwt.SigningMethodEdDSA)
+	// DO NOT set token.Header["kid"]
+	signedJWT, err := token.SignedString(priv)
+	if err != nil {
+		t.Fatalf("Failed to sign JWT: %s", err)
+	}
+
+	// Create keyfunc with in-memory JWKSet.
+	kf, err := New(Options{
+		Ctx:          ctx,
+		Storage:      memStore,
+		UseWhitelist: []jwkset.USE{jwkset.UseSig},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create keyfunc: %s", err)
+	}
+
+	// Parse JWT and expect it to succeed by matching one key in JWKS (without kid).
+	parsedToken, err := jwt.Parse(signedJWT, kf.Keyfunc)
+	if err != nil {
+		t.Fatalf("Failed to parse JWT without KID: %s", err)
+	}
+	if !parsedToken.Valid {
+		t.Fatal("Token parsed but is not valid")
+	}
+}
