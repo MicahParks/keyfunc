@@ -25,6 +25,7 @@ type Keyfunc interface {
 	Keyfunc(token *jwt.Token) (any, error)
 	KeyfuncCtx(ctx context.Context) jwt.Keyfunc
 	Storage() jwkset.Storage
+	VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet, error)
 }
 
 // Options are used to create a new Keyfunc.
@@ -198,7 +199,7 @@ func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 	return func(token *jwt.Token) (any, error) {
 		kidInter, ok := token.Header[jwkset.HeaderKID]
 		if !ok {
-			return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKeyfunc)
+			return k.VerificationKeySet(ctx)
 		}
 		kid, ok := kidInter.(string)
 		if !ok {
@@ -236,10 +237,6 @@ func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 			}
 		}
 
-		type publicKeyer interface {
-			Public() crypto.PublicKey
-		}
-
 		key := jwk.Key()
 		pk, ok := key.(publicKeyer)
 		if ok {
@@ -255,4 +252,24 @@ func (k keyfunc) Keyfunc(token *jwt.Token) (any, error) {
 }
 func (k keyfunc) Storage() jwkset.Storage {
 	return k.storage
+}
+func (k keyfunc) VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet, error) {
+	jwk, err := k.storage.KeyReadAll(ctx)
+	if err != nil {
+		return jwt.VerificationKeySet{}, fmt.Errorf("failed to read all JWK from storage: %w", errors.Join(err, ErrKeyfunc))
+	}
+	var allKeys jwt.VerificationKeySet
+	for _, j := range jwk {
+		key := j.Key()
+		pk, ok := key.(publicKeyer)
+		if ok {
+			key = pk.Public()
+		}
+		allKeys.Keys = append(allKeys.Keys, key)
+	}
+	return allKeys, nil
+}
+
+type publicKeyer interface {
+	Public() crypto.PublicKey
 }
