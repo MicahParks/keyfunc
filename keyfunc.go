@@ -195,10 +195,26 @@ func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
 }
 
 func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
+	type publicKeyer interface {
+		Public() crypto.PublicKey
+	}
 	return func(token *jwt.Token) (any, error) {
 		kidInter, ok := token.Header[jwkset.HeaderKID]
 		if !ok {
-			return nil, fmt.Errorf("%w: could not find kid in JWT header", ErrKeyfunc)
+			jwk, err := k.Storage().KeyReadAll(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read all JWK from storage: %w", errors.Join(err, ErrKeyfunc))
+			}
+			var allKeys jwt.VerificationKeySet
+			for _, j := range jwk {
+				key := j.Key()
+				pk, ok := key.(publicKeyer)
+				if ok {
+					key = pk.Public()
+				}
+				allKeys.Keys = append(allKeys.Keys, key)
+			}
+			return allKeys, nil
 		}
 		kid, ok := kidInter.(string)
 		if !ok {
@@ -234,10 +250,6 @@ func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 			if !found {
 				return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist`, ErrKeyfunc, jwk.Marshal().USE)
 			}
-		}
-
-		type publicKeyer interface {
-			Public() crypto.PublicKey
 		}
 
 		key := jwk.Key()
