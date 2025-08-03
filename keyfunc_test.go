@@ -206,34 +206,56 @@ func TestVerificationKeySet(t *testing.T) {
 
 func TestKeyfuncCtx_NoKIDHeader_CallsVerificationKeySet(t *testing.T) {
 	ctx := context.Background()
-	_, priv, err := ed25519.GenerateKey(rand.Reader)
+
+	// Generate two key pairs.
+	_, priv1, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		t.Fatalf("Failed to generate ED25519 key pair: %v", err)
+		t.Fatalf("Failed to generate ED25519 key pair 1: %v", err)
 	}
-	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{})
+	_, priv2, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		t.Fatalf("Failed to create JWK: %v", err)
+		t.Fatalf("Failed to generate ED25519 key pair 2: %v", err)
 	}
-	store := jwkset.NewMemoryStorage()
-	err = store.KeyWrite(ctx, jwk)
+
+	jwk1, err := jwkset.NewJWKFromKey(priv1, jwkset.JWKOptions{})
 	if err != nil {
-		t.Fatalf("Failed to write JWK: %v", err)
+		t.Fatalf("Failed to create JWK 1: %v", err)
 	}
-	k, err := New(Options{Ctx: ctx, Storage: store})
+	jwk2, err := jwkset.NewJWKFromKey(priv2, jwkset.JWKOptions{})
 	if err != nil {
-		t.Fatalf("Failed to create Keyfunc: %v", err)
+		t.Fatalf("Failed to create JWK 2: %v", err)
 	}
-	token := jwt.New(jwt.SigningMethodEdDSA)
-	// Do NOT set the KID header
-	tokenString, err := token.SignedString(priv)
-	if err != nil {
-		t.Fatalf("Failed to sign token: %v", err)
+
+	orders := [][]jwkset.JWK{
+		{jwk1, jwk2},
+		{jwk2, jwk1},
 	}
-	parsedToken, err := jwt.Parse(tokenString, k.KeyfuncCtx(ctx))
-	if err != nil {
-		t.Fatalf("Parse failed: %v", err)
-	}
-	if !parsedToken.Valid {
-		t.Fatalf("Expected token to be valid")
+	privs := []ed25519.PrivateKey{priv1, priv2}
+
+	for i, order := range orders {
+		store := jwkset.NewMemoryStorage()
+		for _, jwk := range order {
+			err = store.KeyWrite(ctx, jwk)
+			if err != nil {
+				t.Fatalf("Failed to write JWK: %v", err)
+			}
+		}
+		k, err := New(Options{Ctx: ctx, Storage: store})
+		if err != nil {
+			t.Fatalf("Failed to create Keyfunc: %v", err)
+		}
+		// Sign a token with the corresponding private key (no KID header)
+		token := jwt.New(jwt.SigningMethodEdDSA)
+		tokenString, err := token.SignedString(privs[i])
+		if err != nil {
+			t.Fatalf("Failed to sign token: %v", err)
+		}
+		parsedToken, err := jwt.Parse(tokenString, k.KeyfuncCtx(ctx))
+		if err != nil {
+			t.Fatalf("Parse failed (order %d): %v", i+1, err)
+		}
+		if !parsedToken.Valid {
+			t.Fatalf("Expected token to be valid (order %d)", i+1)
+		}
 	}
 }
