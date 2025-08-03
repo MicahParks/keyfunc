@@ -259,3 +259,42 @@ func TestNoKIDHeaderCallsVerificationKeySet(t *testing.T) {
 		}
 	}
 }
+
+func TestNoKIDHeaderNoMatchingJWK(t *testing.T) {
+	ctx := context.Background()
+
+	_, missingFromSet, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate ED25519 key pair: %v", err)
+	}
+
+	_, presentInSet, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate other ED25519 key pair: %v", err)
+	}
+	jwk, err := jwkset.NewJWKFromKey(presentInSet, jwkset.JWKOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create JWK: %v", err)
+	}
+	store := jwkset.NewMemoryStorage()
+	err = store.KeyWrite(ctx, jwk)
+	if err != nil {
+		t.Fatalf("Failed to write JWK: %v", err)
+	}
+
+	k, err := New(Options{Ctx: ctx, Storage: store})
+	if err != nil {
+		t.Fatalf("Failed to create Keyfunc: %v", err)
+	}
+
+	token := jwt.New(jwt.SigningMethodEdDSA)
+	tokenString, err := token.SignedString(missingFromSet)
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+
+	_, err = jwt.Parse(tokenString, k.KeyfuncCtx(ctx))
+	if err == nil {
+		t.Fatalf("Expected error due to no matching JWK, but got none")
+	}
+}
