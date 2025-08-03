@@ -204,7 +204,7 @@ func TestVerificationKeySet(t *testing.T) {
 	}
 }
 
-func TestKeyfuncCtx_NoKIDHeader_CallsVerificationKeySet(t *testing.T) {
+func TestNoKIDHeaderCallsVerificationKeySet(t *testing.T) {
 	ctx := context.Background()
 
 	// Generate two key pairs.
