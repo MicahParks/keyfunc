@@ -25,6 +25,7 @@ type Keyfunc interface {
 	Keyfunc(token *jwt.Token) (any, error)
 	KeyfuncCtx(ctx context.Context) jwt.Keyfunc
 	Storage() jwkset.Storage
+	VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet, error)
 }
 
 // Options are used to create a new Keyfunc.
