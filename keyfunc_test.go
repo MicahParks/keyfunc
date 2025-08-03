@@ -175,3 +175,65 @@ func TestNewJWKSetJSON(t *testing.T) {
 		t.Fatalf("The token is not valid.")
 	}
 }
+
+func TestVerificationKeySet(t *testing.T) {
+	ctx := context.Background()
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate ED25519 key pair: %v", err)
+	}
+	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create JWK: %v", err)
+	}
+	store := jwkset.NewMemoryStorage()
+	err = store.KeyWrite(ctx, jwk)
+	if err != nil {
+		t.Fatalf("Failed to write JWK: %v", err)
+	}
+	k, err := New(Options{Ctx: ctx, Storage: store})
+	if err != nil {
+		t.Fatalf("Failed to create Keyfunc: %v", err)
+	}
+	vks, err := k.VerificationKeySet(ctx)
+	if err != nil {
+		t.Fatalf("VerificationKeySet failed: %v", err)
+	}
+	if len(vks.Keys) != 1 {
+		t.Fatalf("Expected 1 key, got %d", len(vks.Keys))
+	}
+}
+
+func TestKeyfuncCtx_NoKIDHeader_CallsVerificationKeySet(t *testing.T) {
+	ctx := context.Background()
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate ED25519 key pair: %v", err)
+	}
+	jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create JWK: %v", err)
+	}
+	store := jwkset.NewMemoryStorage()
+	err = store.KeyWrite(ctx, jwk)
+	if err != nil {
+		t.Fatalf("Failed to write JWK: %v", err)
+	}
+	k, err := New(Options{Ctx: ctx, Storage: store})
+	if err != nil {
+		t.Fatalf("Failed to create Keyfunc: %v", err)
+	}
+	token := jwt.New(jwt.SigningMethodEdDSA)
+	// Do NOT set the KID header
+	tokenString, err := token.SignedString(priv)
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+	parsedToken, err := jwt.Parse(tokenString, k.KeyfuncCtx(ctx))
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	if !parsedToken.Valid {
+		t.Fatalf("Expected token to be valid")
+	}
+}
