@@ -37,7 +37,7 @@ type Options struct {
 
 // Override is used to change specific default behaviors.
 type Override struct {
-	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	HTTPTimeout time.Duration
 	// RateLimitWaitMax is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
 	RateLimitWaitMax time.Duration
