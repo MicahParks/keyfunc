@@ -37,6 +37,8 @@ type Options struct {
 
 // Override is used to change specific default behaviors.
 type Override struct {
+	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	HTTPTimeout time.Duration
 	// RateLimitWaitMax is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
 	RateLimitWaitMax time.Duration
 	// RefreshErrorHandlerFunc is a function that accepts the URL of the remote JWK Set storage and returns the
@@ -140,6 +142,11 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 				SkipAll: override.ValidationSkipAll,
 			},
 		}
+
+		if override.HTTPTimeout > 0 {
+			options.HTTPTimeout = override.HTTPTimeout
+		}
+
 		c, err := jwkset.NewStorageFromHTTP(u, options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create HTTP client storage for %q: %w", u, errors.Join(err, jwkset.ErrNewClient))
