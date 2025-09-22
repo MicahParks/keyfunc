@@ -1,4 +1,4 @@
-module github.com/MicahParks/keyfunc/v3
+module github.com/wundergraph/keyfunc/v3
 
 go 1.21
 
