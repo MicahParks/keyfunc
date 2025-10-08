@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/MicahParks/jwkset"
@@ -37,6 +38,8 @@ type Options struct {
 
 // Override is used to change specific default behaviors.
 type Override struct {
+	// Client is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
+	Client *http.Client
 	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	HTTPTimeout time.Duration
 	// RateLimitWaitMax is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
@@ -134,6 +137,7 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 	for _, u := range urls {
 		errorHandler := refreshErrorHandler(u)
 		options := jwkset.HTTPClientStorageOptions{
+			Client:                    override.Client,
 			Ctx:                       ctx,
 			NoErrorReturnFirstHTTPReq: true,
 			RefreshErrorHandler:       errorHandler,
