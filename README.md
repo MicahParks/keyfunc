@@ -74,6 +74,12 @@ provides the below features, and more:
 * Support for private asymmetric keys.
 * Specified key operations and usage.
 
+## Cache Behavior and safety
+
+- Thread safety: `JWKS` is safe for concurrent `Keyfunc` calls and background refresh because internal maps and refresh state are guarded.
+- Caching: Keys are cached in-memory; refresh honors `RefreshErrorHandler` and `RefreshInterval` (or `RefreshUnknownKID`) to repopulate the cache. A successful refresh replaces the entire key set.
+- Constructor errors: `NewDefault`, `NewGiven`, and `NewJSON` return a non-nil `*JWKS` when parsing succeeds; they return a non-nil `error` (and a nil JWKS) if the input JWKS cannot be parsed or validated.
+
 ## Related projects
 
 ### [`github.com/MicahParks/jwkset`](https://github.com/MicahParks/jwkset):
