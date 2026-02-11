@@ -42,6 +42,8 @@ type Override struct {
 	Client *http.Client
 	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	HTTPTimeout time.Duration
+	// NoErrorReturnFirstHTTPReq is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
+	NoErrorReturnFirstHTTPReq *bool
 	// RateLimitWaitMax is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
 	RateLimitWaitMax time.Duration
 	// RefreshErrorHandlerFunc is a function that accepts the URL of the remote JWK Set storage and returns the
@@ -128,6 +130,10 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 	if override.RefreshUnknownKID != nil {
 		refreshUnknownKID = override.RefreshUnknownKID
 	}
+	noErrorReturnFirstHTTPReq := true
+	if override.NoErrorReturnFirstHTTPReq != nil {
+		noErrorReturnFirstHTTPReq = *override.NoErrorReturnFirstHTTPReq
+	}
 
 	clientOptions := jwkset.HTTPClientOptions{
 		HTTPURLs:          make(map[string]jwkset.Storage),
@@ -139,7 +145,7 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 		options := jwkset.HTTPClientStorageOptions{
 			Client:                    override.Client,
 			Ctx:                       ctx,
-			NoErrorReturnFirstHTTPReq: true,
+			NoErrorReturnFirstHTTPReq: noErrorReturnFirstHTTPReq,
 			RefreshErrorHandler:       errorHandler,
 			RefreshInterval:           refreshInterval,
 			ValidateOptions: jwkset.JWKValidateOptions{
