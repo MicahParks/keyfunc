@@ -27,16 +27,13 @@ type Keyfunc interface {
 	Keyfunc(token *jwt.Token) (any, error)
 	KeyfuncCtx(ctx context.Context) jwt.Keyfunc
 	Storage() jwkset.Storage
-	// VerificationKeySet returns every key in storage whose "use" parameter is allowed by Options.UseWhitelist.
 	VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet, error)
 }
 
 // Options are used to create a new Keyfunc.
 type Options struct {
-	Ctx     context.Context
-	Storage jwkset.Storage
-	// UseWhitelist, if not empty, rejects any JWK whose "use" parameter is not in the list. This applies to JWTs with
-	// and without a kid header.
+	Ctx          context.Context
+	Storage      jwkset.Storage
 	UseWhitelist []jwkset.USE
 }
 
