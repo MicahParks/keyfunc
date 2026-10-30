@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/MicahParks/jwkset"
@@ -26,13 +27,16 @@ type Keyfunc interface {
 	Keyfunc(token *jwt.Token) (any, error)
 	KeyfuncCtx(ctx context.Context) jwt.Keyfunc
 	Storage() jwkset.Storage
+	// VerificationKeySet returns every key in storage whose "use" parameter is allowed by Options.UseWhitelist.
 	VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet, error)
 }
 
 // Options are used to create a new Keyfunc.
 type Options struct {
-	Ctx          context.Context
-	Storage      jwkset.Storage
+	Ctx     context.Context
+	Storage jwkset.Storage
+	// UseWhitelist, if not empty, rejects any JWK whose "use" parameter is not in the list. This applies to JWTs with
+	// and without a kid header.
 	UseWhitelist []jwkset.USE
 }
 
@@ -220,14 +224,6 @@ func NewJWKSetJSON(raw json.RawMessage) (Keyfunc, error) {
 
 func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 	return func(token *jwt.Token) (any, error) {
-		kidInter, ok := token.Header[jwkset.HeaderKID]
-		if !ok {
-			return k.VerificationKeySet(ctx)
-		}
-		kid, ok := kidInter.(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKeyfunc)
-		}
 		algInter, ok := token.Header["alg"]
 		if !ok {
 			return nil, fmt.Errorf("%w: could not find alg in JWT header", ErrKeyfunc)
@@ -238,6 +234,14 @@ func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 			// without an alg parameter in the header before calling jwt.Keyfunc.
 			return nil, fmt.Errorf(`%w: the JWT header did not contain the "alg" parameter, which is required by RFC 7515 section 4.1.1`, ErrKeyfunc)
 		}
+		kidInter, ok := token.Header[jwkset.HeaderKID]
+		if !ok {
+			return k.verificationKeySet(ctx, alg)
+		}
+		kid, ok := kidInter.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: could not convert kid in JWT header to string", ErrKeyfunc)
+		}
 
 		jwk, err := k.storage.KeyRead(ctx, kid)
 		if err != nil {
@@ -247,17 +251,8 @@ func (k keyfunc) KeyfuncCtx(ctx context.Context) jwt.Keyfunc {
 		if a := jwk.Marshal().ALG.String(); a != "" && a != alg {
 			return nil, fmt.Errorf(`%w: JWK "alg" parameter value %q does not match token "alg" parameter value %q`, ErrKeyfunc, a, alg)
 		}
-		if len(k.useWhitelist) > 0 {
-			found := false
-			for _, u := range k.useWhitelist {
-				if jwk.Marshal().USE == u {
-					found = true
-					break
-				}
-			}
-			if !found {
-				return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist`, ErrKeyfunc, jwk.Marshal().USE)
-			}
+		if !k.useAllowed(jwk) {
+			return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not in whitelist`, ErrKeyfunc, jwk.Marshal().USE)
 		}
 
 		key := jwk.Key()
@@ -277,12 +272,24 @@ func (k keyfunc) Storage() jwkset.Storage {
 	return k.storage
 }
 func (k keyfunc) VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet, error) {
+	return k.verificationKeySet(ctx, "")
+}
+
+// verificationKeySet returns every key in storage that passes the same checks applied to a JWT with a kid header. If
+// alg is empty, the JWK "alg" parameter is not checked.
+func (k keyfunc) verificationKeySet(ctx context.Context, alg string) (jwt.VerificationKeySet, error) {
 	jwk, err := k.storage.KeyReadAll(ctx)
 	if err != nil {
 		return jwt.VerificationKeySet{}, fmt.Errorf("failed to read all JWK from storage: %w", errors.Join(err, ErrKeyfunc))
 	}
 	var allKeys jwt.VerificationKeySet
 	for _, j := range jwk {
+		if a := j.Marshal().ALG.String(); alg != "" && a != "" && a != alg {
+			continue
+		}
+		if !k.useAllowed(j) {
+			continue
+		}
 		key := j.Key()
 		pk, ok := key.(publicKeyer)
 		if ok {
@@ -291,6 +298,10 @@ func (k keyfunc) VerificationKeySet(ctx context.Context) (jwt.VerificationKeySet
 		allKeys.Keys = append(allKeys.Keys, key)
 	}
 	return allKeys, nil
+}
+
+func (k keyfunc) useAllowed(jwk jwkset.JWK) bool {
+	return len(k.useWhitelist) == 0 || slices.Contains(k.useWhitelist, jwk.Marshal().USE)
 }
 
 type publicKeyer interface {
