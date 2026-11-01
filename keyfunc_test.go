@@ -170,6 +170,98 @@ func TestNew(t *testing.T) {
 	})
 }
 
+func TestNewDefaultOverrideCtxPrioritizeHTTP(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	newKey := func() (ed25519.PrivateKey, jwkset.JWK) {
+		_, priv, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			t.Fatalf("Failed to generate ED25519 key pair. Error: %s", err)
+		}
+		jwk, err := jwkset.NewJWKFromKey(priv, jwkset.JWKOptions{
+			Metadata: jwkset.JWKMetadataOptions{
+				KID: keyID,
+				USE: jwkset.UseSig,
+			},
+		})
+		if err != nil {
+			t.Fatalf("Failed to create JWK from ED25519 private key. Error: %s", err)
+		}
+		return priv, jwk
+	}
+	sign := func(priv ed25519.PrivateKey) string {
+		token := jwt.New(jwt.SigningMethodEdDSA)
+		token.Header[jwkset.HeaderKID] = keyID
+		signed, err := token.SignedString(priv)
+		if err != nil {
+			t.Fatalf("Failed to sign JWT. Error: %s", err)
+		}
+		return signed
+	}
+
+	httpPriv, httpJWK := newKey()
+	serverStore := jwkset.NewMemoryStorage()
+	err := serverStore.KeyWrite(ctx, httpJWK)
+	if err != nil {
+		t.Fatalf("Failed to write ED25519 key to server store. Error: %s", err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawJWKS, err := serverStore.JSONPrivate(ctx)
+		if err != nil {
+			t.Fatalf("Failed to get JWK Set JSON from server store. Error: %s", err)
+		}
+		_, _ = w.Write(rawJWKS)
+	}))
+	defer server.Close()
+
+	givenPriv, givenJWK := newKey()
+	givenStore := jwkset.NewMemoryStorage()
+	err = givenStore.KeyWrite(ctx, givenJWK)
+	if err != nil {
+		t.Fatalf("Failed to write ED25519 key to given store. Error: %s", err)
+	}
+
+	httpSigned := sign(httpPriv)
+	givenSigned := sign(givenPriv)
+
+	tc := map[string]struct {
+		prioritizeHTTP bool
+		valid          string
+		invalid        string
+	}{
+		"Given first": {
+			prioritizeHTTP: false,
+			valid:          givenSigned,
+			invalid:        httpSigned,
+		},
+		"HTTP first": {
+			prioritizeHTTP: true,
+			valid:          httpSigned,
+			invalid:        givenSigned,
+		},
+	}
+	for name, tt := range tc {
+		t.Run(name, func(t *testing.T) {
+			k, err := NewDefaultOverrideCtx(ctx, []string{server.URL}, Override{
+				Given:          givenStore,
+				PrioritizeHTTP: tt.prioritizeHTTP,
+			})
+			if err != nil {
+				t.Fatalf("Failed to create keyfunc. Error: %s", err)
+			}
+			_, err = jwt.Parse(tt.valid, k.Keyfunc)
+			if err != nil {
+				t.Fatalf("Failed to parse JWT signed by the prioritized key. Error: %s", err)
+			}
+			_, err = jwt.Parse(tt.invalid, k.Keyfunc)
+			if !errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+				t.Fatalf("Expected jwt.ErrTokenSignatureInvalid for JWT signed by the shadowed key, but got %v.", err)
+			}
+		})
+	}
+}
+
 func TestNewErr(t *testing.T) {
 	_, err := New(Options{})
 	if !errors.Is(err, ErrKeyfunc) {

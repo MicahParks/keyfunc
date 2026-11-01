@@ -40,12 +40,14 @@ type Options struct {
 type Override struct {
 	// Client is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	Client *http.Client
-	// Given is from from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	// Given is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
 	Given jwkset.Storage
 	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	HTTPTimeout time.Duration
 	// NoErrorReturnFirstHTTPReq is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	NoErrorReturnFirstHTTPReq *bool
+	// PrioritizeHTTP is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	PrioritizeHTTP bool
 	// RateLimitWaitMax is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
 	RateLimitWaitMax time.Duration
 	// RefreshErrorHandlerFunc is a function that accepts the URL of the remote JWK Set storage and returns the
@@ -140,6 +142,7 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 	clientOptions := jwkset.HTTPClientOptions{
 		Given:             override.Given,
 		HTTPURLs:          make(map[string]jwkset.Storage),
+		PrioritizeHTTP:    override.PrioritizeHTTP,
 		RateLimitWaitMax:  rateLimitWaitMax,
 		RefreshUnknownKID: refreshUnknownKID,
 	}
