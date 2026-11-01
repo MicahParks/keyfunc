@@ -40,6 +40,8 @@ type Options struct {
 type Override struct {
 	// Client is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	Client *http.Client
+	// Given is from from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientOptions
+	Given jwkset.Storage
 	// HTTPTimeout is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
 	HTTPTimeout time.Duration
 	// NoErrorReturnFirstHTTPReq is from https://pkg.go.dev/github.com/MicahParks/jwkset#HTTPClientStorageOptions
@@ -136,6 +138,7 @@ func NewDefaultOverrideCtx(ctx context.Context, urls []string, override Override
 	}
 
 	clientOptions := jwkset.HTTPClientOptions{
+		Given:             override.Given,
 		HTTPURLs:          make(map[string]jwkset.Storage),
 		RateLimitWaitMax:  rateLimitWaitMax,
 		RefreshUnknownKID: refreshUnknownKID,

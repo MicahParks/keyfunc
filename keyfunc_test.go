@@ -117,6 +117,57 @@ func TestNew(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create keyfunc with overrides. Error: %s", err)
 	}
+
+	t.Run("OverrideGiven", func(t *testing.T) {
+		// Create a new key that will be present in Given but not the server's JWKS
+		const givenKeyID = "given-key-id"
+		_, givenPriv, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			t.Fatalf("Failed to generate ED25519 key pair. Error: %s", err)
+		}
+		givenJwk, err := jwkset.NewJWKFromKey(givenPriv, jwkset.JWKOptions{
+			Metadata: jwkset.JWKMetadataOptions{
+				KID: givenKeyID,
+				USE: jwkset.UseSig,
+			},
+		})
+		if err != nil {
+			t.Fatalf("Failed to create JWK from ED25519 private key. Error: %s", err)
+		}
+
+		// And sign a token with it for later verification
+		gToken := jwt.New(jwt.SigningMethodEdDSA)
+		gToken.Header[jwkset.HeaderKID] = givenKeyID
+		gSigned, err := gToken.SignedString(givenPriv)
+		if err != nil {
+			t.Fatalf("Failed to sign JWT. Error: %s", err)
+		}
+
+		givenStore := jwkset.NewMemoryStorage()
+		err = givenStore.KeyWrite(ctx, givenJwk)
+		if err != nil {
+			t.Fatalf("Failed to write ED25519 public key to given store. Error: %s", err)
+		}
+
+		overrideKeyfunc, err := NewDefaultOverrideCtx(ctx, []string{server.URL}, Override{
+			Given: givenStore,
+		})
+		if err != nil {
+			t.Fatalf("Failed to create keyfunc with Given override. Error: %s", err)
+		}
+
+		// The original JWT signed with the key from the server should still validate
+		_, err = jwt.Parse(signed, overrideKeyfunc.Keyfunc)
+		if err != nil {
+			t.Fatalf("Failed to parse test JWT. Error: %s", err)
+		}
+
+		// And so should one signed with the given key
+		_, err = jwt.Parse(gSigned, overrideKeyfunc.Keyfunc)
+		if err != nil {
+			t.Fatalf("Failed to parse given JWT. Error: %s", err)
+		}
+	})
 }
 
 func TestNewErr(t *testing.T) {
