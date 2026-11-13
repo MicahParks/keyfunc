@@ -441,3 +441,109 @@ func TestNoKIDHeaderNoMatchingJWK(t *testing.T) {
 		t.Fatalf("Expected error due to no matching JWK, but got none")
 	}
 }
+
+func TestNoKIDHeaderUseWhitelist(t *testing.T) {
+	ctx := context.Background()
+
+	encSecret := []byte("encryption key known to the attacker")
+	sigSecret := []byte("signing key unknown to the attacker")
+	encJWK, err := jwkset.NewJWKFromKey(encSecret, jwkset.JWKOptions{
+		Marshal:  jwkset.JWKMarshalOptions{Private: true},
+		Metadata: jwkset.JWKMetadataOptions{KID: "enc-key", USE: jwkset.UseEnc},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create enc JWK: %v", err)
+	}
+	sigJWK, err := jwkset.NewJWKFromKey(sigSecret, jwkset.JWKOptions{
+		Marshal:  jwkset.JWKMarshalOptions{Private: true},
+		Metadata: jwkset.JWKMetadataOptions{KID: "sig-key", USE: jwkset.UseSig},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create sig JWK: %v", err)
+	}
+
+	store := jwkset.NewMemoryStorage()
+	err = store.KeyWrite(ctx, encJWK)
+	if err != nil {
+		t.Fatalf("Failed to write enc JWK: %v", err)
+	}
+	k, err := New(Options{Ctx: ctx, Storage: store, UseWhitelist: []jwkset.USE{jwkset.UseSig}})
+	if err != nil {
+		t.Fatalf("Failed to create Keyfunc: %v", err)
+	}
+
+	encSigned, err := jwt.New(jwt.SigningMethodHS256).SignedString(encSecret)
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+	_, err = jwt.Parse(encSigned, k.KeyfuncCtx(ctx))
+	if !errors.Is(err, jwt.ErrTokenUnverifiable) {
+		t.Fatalf("Expected ErrTokenUnverifiable for token signed by key not in use whitelist, got: %v", err)
+	}
+
+	err = store.KeyWrite(ctx, sigJWK)
+	if err != nil {
+		t.Fatalf("Failed to write sig JWK: %v", err)
+	}
+	vks, err := k.VerificationKeySet(ctx)
+	if err != nil {
+		t.Fatalf("VerificationKeySet failed: %v", err)
+	}
+	if len(vks.Keys) != 1 {
+		t.Fatalf("Expected 1 key, got %d", len(vks.Keys))
+	}
+
+	_, err = jwt.Parse(encSigned, k.KeyfuncCtx(ctx))
+	if !errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+		t.Fatalf("Expected ErrTokenSignatureInvalid for token signed by key not in use whitelist, got: %v", err)
+	}
+
+	sigSigned, err := jwt.New(jwt.SigningMethodHS256).SignedString(sigSecret)
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+	_, err = jwt.Parse(sigSigned, k.KeyfuncCtx(ctx))
+	if err != nil {
+		t.Fatalf("Failed to parse token signed by key in use whitelist: %v", err)
+	}
+}
+
+func TestNoKIDHeaderAlgMismatch(t *testing.T) {
+	ctx := context.Background()
+
+	secret := []byte("HS512 only key")
+	jwk, err := jwkset.NewJWKFromKey(secret, jwkset.JWKOptions{
+		Marshal:  jwkset.JWKMarshalOptions{Private: true},
+		Metadata: jwkset.JWKMetadataOptions{ALG: jwkset.AlgHS512},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create JWK: %v", err)
+	}
+	store := jwkset.NewMemoryStorage()
+	err = store.KeyWrite(ctx, jwk)
+	if err != nil {
+		t.Fatalf("Failed to write JWK: %v", err)
+	}
+	k, err := New(Options{Ctx: ctx, Storage: store})
+	if err != nil {
+		t.Fatalf("Failed to create Keyfunc: %v", err)
+	}
+
+	hs256, err := jwt.New(jwt.SigningMethodHS256).SignedString(secret)
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+	_, err = jwt.Parse(hs256, k.KeyfuncCtx(ctx))
+	if !errors.Is(err, jwt.ErrTokenUnverifiable) {
+		t.Fatalf("Expected ErrTokenUnverifiable for token alg not matching JWK alg, got: %v", err)
+	}
+
+	hs512, err := jwt.New(jwt.SigningMethodHS512).SignedString(secret)
+	if err != nil {
+		t.Fatalf("Failed to sign token: %v", err)
+	}
+	_, err = jwt.Parse(hs512, k.KeyfuncCtx(ctx))
+	if err != nil {
+		t.Fatalf("Failed to parse token with alg matching JWK alg: %v", err)
+	}
+}
